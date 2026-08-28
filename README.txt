@@ -38,6 +38,22 @@ You'll land on a menu each time you run it:
   [3] Change game folder
   [4] Exit
 
+BEFORE IT DOWNLOADS ANYTHING:
+
+Any time it's about to download, it checks first and shows you what's
+actually missing or out of date - which editions have new songs, how
+many files, and the total size - then asks:
+
+  [1] Download now
+  [2] Show full file list
+  [3] Cancel
+
+If nothing has changed, it just says "everything is already up to date"
+and downloads nothing. If your copy of Legacy.exe or a Kinect .dll
+differs from the server's, it asks before replacing it, so a patched or
+modded setup won't get overwritten. And if your game folder is set one
+level off, it offers to correct it for you.
+
 It only ever adds or updates files - it never deletes anything on its
 own. The one exception: if you uncheck an edition you'd previously
 downloaded, it'll ask you directly whether to delete those files or
