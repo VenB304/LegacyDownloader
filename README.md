@@ -29,6 +29,8 @@ on first run.
 - **Dry-run preview**: before downloading, shows per-edition counts and total
   size. If nothing differs it reports "everything up to date" and downloads
   nothing; otherwise it asks before transferring.
-- **Protected files**: `Legacy.exe`, `Kinect10.dll`, `Kinect20.dll` and
-  `config.xml` each get a per-file confirm before being overwritten, so patched
-  or modded binaries survive an update.
+- **Protected files**: `Legacy.exe`, `Kinect10.dll` and `Kinect20.dll` each get
+  a per-file confirm before being overwritten, so patched or modded binaries
+  survive an update. `config.xml` (local game settings) is fetched once on a
+  fresh install and never overwritten afterward — syncing the server's copy was
+  resetting players' resolution / windowed-mode choices on every update.

@@ -52,9 +52,11 @@ If nothing has changed, it just says "everything is already up to date"
 and downloads nothing. If your copy of Legacy.exe or a Kinect .dll
 differs from the server's, it asks before replacing it, so a patched or
 modded setup won't get overwritten. If you haven't modded your game,
-just answer yes to those - it means the game itself got an update. And
-if your game folder is set one level off, it offers to correct it for
-you.
+just answer yes to those - it means the game itself got an update. Your
+settings file (config.xml) is downloaded once on the first install and
+then never touched again, so updates won't reset your resolution or
+windowed/fullscreen choice. And if your game folder is set one level
+off, it offers to correct it for you.
 
 It only ever adds or updates files - it never deletes anything on its
 own. The one exception: if you uncheck an edition you'd previously

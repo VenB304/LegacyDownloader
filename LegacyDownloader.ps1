@@ -311,6 +311,13 @@ function Invoke-RcloneCopy([string]$Source, [string]$Dest, [string[]]$ExtraArgs 
 function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
     Write-Host "Updating base game files (exe, DLLs, Support, .ipk)..."
     $excludeArgs = @('--exclude', 'maps/**')
+    # config.xml is the game's local settings file (resolution, windowed vs
+    # fullscreen, etc). Fetch it once on a fresh install, then never overwrite
+    # it - syncing the server's copy was resetting people's settings on every
+    # update.
+    if (Test-Path ([System.IO.Path]::Combine($GamePath, 'config.xml'))) {
+        $excludeArgs += @('--exclude', '/config.xml')
+    }
     foreach ($e in $ExtraExcludes) { $excludeArgs += @('--exclude', $e) }
     Invoke-RcloneCopy "$Conn`LegacyPC - Game" $GamePath $excludeArgs
     Write-Host ""
@@ -420,12 +427,27 @@ function Show-UpdatePreview {
         $maps = [PSCustomObject]@{ Files = @($mf); Bytes = $mb }
     }
 
-    # ---- separate the base files people commonly modify ----
-    $protected = @('legacy.exe', 'kinect10.dll', 'kinect20.dll', 'config.xml')
-    $baseProtected = @($base.Files | Where-Object { $protected -contains (Split-Path -Leaf $_).ToLower() })
-    $baseNormal    = @($base.Files | Where-Object { $protected -notcontains (Split-Path -Leaf $_).ToLower() })
+    # ---- sort the changed base files into three buckets ----
+    #   ask    - files a player might have modded: confirm before overwriting
+    #   normal - plain content: update silently
+    #   config.xml - local settings: keep whatever's on disk, only fetch it if
+    #                it's missing entirely (Invoke-BaseSync also enforces this)
+    $askNames = @('legacy.exe', 'kinect10.dll', 'kinect20.dll')
+    $haveSettings   = Test-Path ([System.IO.Path]::Combine($GamePath, 'config.xml'))
+    $keptSettings   = $false   # server's config.xml differs but we're keeping ours
+    $baseAsk    = @()
+    $baseNormal = @()
+    foreach ($f in $base.Files) {
+        $leaf = (Split-Path -Leaf $f).ToLower()
+        if ($leaf -eq 'config.xml') {
+            if ($haveSettings) { $keptSettings = $true }   # never overwrite existing settings
+            else { $baseNormal += $f }                     # missing - let it download
+            continue
+        }
+        if ($askNames -contains $leaf) { $baseAsk += $f } else { $baseNormal += $f }
+    }
 
-    $totalFiles = $base.Files.Count + $maps.Files.Count
+    $totalFiles = $baseNormal.Count + $baseAsk.Count + $maps.Files.Count
     $totalBytes = $base.Bytes + $maps.Bytes
 
     Write-Host ""
@@ -452,13 +474,14 @@ function Show-UpdatePreview {
 
     if ($baseNormal.Count -gt 0) {
         $baseLine = "Base game : {0} file(s) to update" -f $baseNormal.Count
-        if ($baseProtected.Count -gt 0) { $baseLine += " (+ {0} moddable file(s), see below)" -f $baseProtected.Count }
+        if ($baseAsk.Count -gt 0) { $baseLine += " (+ {0} moddable file(s), see below)" -f $baseAsk.Count }
         Write-Host $baseLine
-    } elseif ($baseProtected.Count -gt 0) {
-        Write-Host ("Base game : {0} moddable file(s) differ, see below" -f $baseProtected.Count)
+    } elseif ($baseAsk.Count -gt 0) {
+        Write-Host ("Base game : {0} moddable file(s) differ, see below" -f $baseAsk.Count)
     } else {
         Write-Host "Base game : up to date"
     }
+    if ($keptSettings) { Write-Host "            (server's config.xml differs - keeping your settings)" }
 
     if ($maps.Files.Count -gt 0) {
         $byEd = [ordered]@{}
@@ -480,10 +503,10 @@ function Show-UpdatePreview {
     Write-Host ("Total: {0} file(s), about {1}" -f $totalFiles, (Format-Bytes $totalBytes))
     Write-Host ""
 
-    # Modifiable base files: ask one at a time, default No, so an update
-    # can't silently clobber a patched exe or the Kinect shim.
+    # Moddable base files: ask one at a time so an update can't silently
+    # clobber a patched exe or the Kinect shim.
     $excludes = @()
-    foreach ($pf in $baseProtected) {
+    foreach ($pf in $baseAsk) {
         $leaf = Split-Path -Leaf $pf
         Write-Host "The server's copy of '$leaf' differs from yours." -ForegroundColor Yellow
         Write-Host "If you haven't modded your game, this is just a game update - answer yes."
@@ -496,7 +519,7 @@ function Show-UpdatePreview {
     }
     $result.BaseExcludes = $excludes
 
-    if (($baseNormal.Count + $maps.Files.Count + $baseProtected.Count - $excludes.Count) -le 0) {
+    if (($baseNormal.Count + $maps.Files.Count + $baseAsk.Count - $excludes.Count) -le 0) {
         Write-Host "Nothing left to download." -ForegroundColor Green
         Write-Host ""
         return $result
@@ -515,10 +538,11 @@ function Show-UpdatePreview {
                 Write-Host "Base game:"
                 foreach ($f in $baseNormal) { Write-Host "  $f" }
             }
-            foreach ($pf in $baseProtected) {
+            foreach ($pf in $baseAsk) {
                 $tag = if ($excludes -contains $pf) { "(keeping yours)" } else { "(will overwrite)" }
                 Write-Host ("  {0}  {1}" -f $pf, $tag)
             }
+            if ($keptSettings) { Write-Host "  config.xml  (keeping your settings)" }
             if ($maps.Files.Count -gt 0) {
                 Write-Host "Songs:"
                 foreach ($f in ($maps.Files | Sort-Object)) { Write-Host "  $f" }
