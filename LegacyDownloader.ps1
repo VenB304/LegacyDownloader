@@ -486,7 +486,8 @@ function Show-UpdatePreview {
     foreach ($pf in $baseProtected) {
         $leaf = Split-Path -Leaf $pf
         Write-Host "The server's copy of '$leaf' differs from yours." -ForegroundColor Yellow
-        Write-Host "If you've patched or modded it (Kinect, etc.), keep your version."
+        Write-Host "If you haven't modded your game, this is just a game update - answer yes."
+        Write-Host "If you've patched or modded it (Kinect, custom Legacy.exe, etc.), answer no to keep yours."
         if (-not (Confirm-YesNo "Overwrite your '$leaf' with the server's copy?")) {
             $excludes += $pf
             Write-Host "Keeping your '$leaf'."
