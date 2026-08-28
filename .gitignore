@@ -1,0 +1,11 @@
+# Local / per-install state (config.txt is auto-created on first run)
+config.txt
+config.txt.bak
+config.txt.orig
+rclone.conf
+
+# Third-party binary - download from https://rclone.org/downloads/ (Windows amd64)
+rclone.exe
+
+# Distributable bundle / build artifacts
+*.zip
