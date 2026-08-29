@@ -4,33 +4,72 @@ Self-contained PowerShell tool that downloads and updates **Legacy Offline PC**
 and its song "editions" from the public ovosimpatico Nextcloud share, using
 [rclone](https://rclone.org/).
 
+V4 adds a WinForms GUI (default), a text-menu console front-end, and 12-language
+support. Everything else — size-only comparison, folder-level detection, dry-run
+preview, protected files — carries over from V3.
+
+## Usage
+
+**GUI (default):** double-click `LegacyDownloader.bat`.
+
+**Text/console menu:** double-click `LegacyDownloader-Console.bat`, or run
+`LegacyDownloader.ps1 -Console` from a terminal.
+
+## Language
+
+Pick a language from the dropdown in the top-right corner of the GUI, or via
+option `[4] Language` in the console menu. The choice is saved as `LANG=` in
+`config.txt` and auto-detected from your Windows UI language on first run.
+
+12 languages supported:
+English, Français, Deutsch, Español, Italiano, Português, Nederlands,
+日本語, 한국어, 简体中文, 繁體中文, Русский.
+
+> **Console font note:** the GUI renders every language correctly.
+> The *text/console* front-end needs a font with the right glyphs — Japanese,
+> Korean, Chinese, and Russian may show as boxes in the default console font.
+> Use the GUI for those languages, or change the console font to one that
+> covers the script. (`[Console]::OutputEncoding` is forced to UTF-8
+> automatically.)
+
 ## Files
 
-- `LegacyDownloader.ps1` — the tool
-- `LegacyDownloader.bat` — launcher (double-click this)
+- `LegacyDownloader.ps1` — thin launcher (imports Core, runs preflight, loads front-end)
+- `LegacyDownloader.bat` — → GUI (default)
+- `LegacyDownloader-Console.bat` — → text/console menu
+- `LegacyDownloader.Core.psm1` — all pure logic (no `Write-Host` / `Read-Host`)
+- `LegacyDownloader.Console.ps1` — text/menu front-end
+- `LegacyDownloader.Gui.ps1` — WinForms GUI front-end
+- `lang/*.json` — string tables for all 12 languages
+- `rclone.exe` *(gitignored — see below)*
 - `README.txt` — end-user instructions (ships inside the distributable bundle)
 
 ## Running from a clone
 
-`rclone.exe` is **not** committed (85 MB). Download it from
-<https://rclone.org/downloads/> (Windows amd64), drop `rclone.exe` in this
-folder, then run `LegacyDownloader.bat`. `config.txt` is created automatically
-on first run.
+`rclone.exe` is **not** committed (~85 MB). Download the Windows amd64 build
+from <https://rclone.org/downloads/>, drop `rclone.exe` in this folder, then
+run `LegacyDownloader.bat`. `config.txt` is created automatically on first run.
 
-## v3 notes
+## Technical notes (V3 + V4)
 
-- **Size-only comparison** (`--size-only`): exFAT rounds modification times to a
-  2-second grid, so the old size+mtime check re-downloaded roughly half the
-  library on every run when the game lived on an external exFAT drive. A real
-  song/patch update always changes the file size, so size is the reliable signal.
+- **Size-only comparison** (`--size-only`): exFAT rounds modification times to
+  a 2-second grid, so a mtime-based check re-downloaded roughly half the library
+  on every run when the game lived on an external exFAT drive. File size is the
+  reliable signal — a real update always changes it.
 - **Game-folder level detection**: if `Legacy.exe` isn't directly in the
-  configured folder but is one level up or down (the Nextcloud share nests the
-  game under a `LegacyPC - Game` folder), the tool offers to fix `config.txt`.
-- **Dry-run preview**: before downloading, shows per-edition counts and total
-  size. If nothing differs it reports "everything up to date" and downloads
-  nothing; otherwise it asks before transferring.
-- **Protected files**: `Legacy.exe`, `Kinect10.dll` and `Kinect20.dll` each get
-  a per-file confirm before being overwritten, so patched or modded binaries
-  survive an update. `config.xml` (local game settings) is fetched once on a
-  fresh install and never overwritten afterward — syncing the server's copy was
-  resetting players' resolution / windowed-mode choices on every update.
+  configured folder (the Nextcloud share nests the game under a sub-folder),
+  the tool detects the real location and offers to update `config.txt`.
+- **Dry-run preview**: before downloading, shows per-edition file counts and
+  total size. If nothing differs it reports "everything up to date" and skips
+  the transfer entirely.
+- **Protected files**: `Legacy.exe` and `Kinect*.dll` get a per-file confirm
+  before being overwritten, so patched or modded binaries survive an update.
+  `config.xml` (local game settings) is fetched once on a fresh install and
+  never overwritten afterward — syncing the server's copy was resetting players'
+  resolution / windowed-mode choices on every update.
+- **GUI progress**: uses rclone's `--use-json-log` stats records for live
+  per-file and overall progress. Dry-run (preview) uses plain-text output so
+  rclone's "Skipped copy" lines remain parseable.
+- **GUI headless test**: set env var `LEGACY_GUI_SELFTEST=1` before running
+  `LegacyDownloader.ps1` — builds every form, dumps the control tree, and exits
+  before `Application.Run`. Used in CI-style checks without a display.
