@@ -5,6 +5,10 @@
 #   * the GUI  (LegacyDownloader.Gui.ps1)      - default, when present
 #   * the text menu (LegacyDownloader.Console.ps1) - with -Console, or when
 #     the GUI script isn't there
+#
+# The GUI is normally launched with a hidden console (LegacyDownloader.vbs /
+# .bat), so anything fatal here has to surface as a message box, not a
+# Write-Host / Read-Host the user will never see.
 param([switch]$Console)
 
 $ErrorActionPreference = 'Stop'
@@ -36,11 +40,32 @@ $ScanArgs         = $Core.ScanArgs
 $bootCfg = Load-Config
 $null = Initialize-Language -Code $bootCfg.Lang
 
+# Decide the front-end up front - it changes how fatal errors are shown.
+$GuiScript     = Join-Path $ScriptDir 'LegacyDownloader.Gui.ps1'
+$ConsoleScript = Join-Path $ScriptDir 'LegacyDownloader.Console.ps1'
+$UseGui        = (-not $Console) -and (Test-Path $GuiScript)
+
+function Show-FatalError([string]$Message) {
+    if ($UseGui) {
+        try {
+            Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+            [System.Windows.Forms.MessageBox]::Show(
+                $Message, 'Legacy Downloader',
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
+        } catch {
+            Write-Host $Message -ForegroundColor Red
+        }
+    } else {
+        Write-Host $Message -ForegroundColor Red
+        Write-Host ""
+        Read-Host (T 'common.press_enter_close') | Out-Null
+    }
+}
+
 # --- preflight: rclone.exe must be present and runnable ---
 if (-not (Test-Path $Rclone)) {
-    Write-Host (T 'entry.rclone_missing') -ForegroundColor Red
-    Write-Host ""
-    Read-Host (T 'common.press_enter_close') | Out-Null
+    Show-FatalError (T 'entry.rclone_missing')
     exit 1
 }
 
@@ -48,22 +73,20 @@ try {
     & $Rclone version @RcloneConfigArgs *> $null
     if ($LASTEXITCODE -ne 0) { throw "exit code $LASTEXITCODE" }
 } catch {
-    Write-Host (T 'entry.rclone_broken') -ForegroundColor Red
-    Write-Host ""
-    Read-Host (T 'common.press_enter_close') | Out-Null
+    Show-FatalError (T 'entry.rclone_broken')
     exit 1
 }
 
-$GuiScript     = Join-Path $ScriptDir 'LegacyDownloader.Gui.ps1'
-$ConsoleScript = Join-Path $ScriptDir 'LegacyDownloader.Console.ps1'
-
-if (-not $Console -and (Test-Path $GuiScript)) {
-    . $GuiScript
+if ($UseGui) {
+    try {
+        . $GuiScript
+    } catch {
+        Show-FatalError (("{0}`n`n{1}" -f (T 'entry.gui_crashed'), $_.Exception.Message))
+        exit 1
+    }
 } elseif (Test-Path $ConsoleScript) {
     . $ConsoleScript
 } else {
-    Write-Host (T 'entry.no_frontend') -ForegroundColor Red
-    Write-Host ""
-    Read-Host (T 'common.press_enter_close') | Out-Null
+    Show-FatalError (T 'entry.no_frontend')
     exit 1
 }

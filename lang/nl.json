@@ -20,6 +20,7 @@
   "entry.rclone_missing": "FOUT: rclone.exe ontbreekt in deze map. Download het pakket opnieuw.",
   "entry.rclone_broken": "FOUT: rclone.exe is aanwezig maar start niet.\nDit komt meestal doordat de antivirus het in quarantaine heeft geplaatst\n(rclone wordt soms als 'hacktool' gemarkeerd omdat aanvallers het ook\ngebruiken - het is een legitiem en veel gebruikt open-source programma).\nControleer de quarantaine of geschiedenis van je antivirus voor rclone.exe,\nherstel of sta het toe en probeer het opnieuw.",
   "entry.no_frontend": "FOUT: geen interface gevonden (LegacyDownloader.Console.ps1 ontbreekt).",
+  "entry.gui_crashed": "Legacy Downloader is een probleem tegengekomen en kan niet doorgaan:",
 
   "error.cant_create_folder": "Kon die map niet aanmaken: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Bijhouden: {editions}",
   "gui.tracking_auto": "Bijhouden: alles",
   "gui.tracking_none": "Bijhouden: nog niets geselecteerd",
-  "gui.btn_check": "Op updates controleren",
+  "gui.btn_check": "Downloaden / Controleren op updates",
   "gui.btn_exit": "Afsluiten",
   "gui.btn_stop": "Stoppen",
   "gui.progress_scanning": "Controleren wat je al hebt (nog geen downloads)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - mislukt (rclone exit {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Basisspel",
+  "gui.firstrun_base": "Basisspel wordt gedownload - je kunt daarna songpakketten kiezen.",
   "gui.job_allsongs": "Alle nummereditties",
   "gui.job_edition": "Editie {edition}",
   "gui.done_title": "Klaar",
@@ -178,7 +180,7 @@
   "gui.err_title": "Fout",
   "gui.folder_unset_warn": "Kies eerst je spelmap (de knop Wijzigen naast \"Spelmap\").",
   "gui.setup_title": "Welkom",
-  "gui.setup_body": "Dit downloadt Legacy Offline PC en de nummers voor je, en\ncontroleert op nieuwe nummers elke keer dat je het uitvoert.\n\nHeb je het spel al op deze pc?",
+  "gui.setup_body": "Dit downloadt Legacy Offline PC voor je. Eerst het spel;\nwelke songpakketten je wilt, kies je daarna. Het controleert\nook op nieuwe nummers elke keer dat je het uitvoert.\n\nHeb je het spel al op deze pc?",
   "gui.setup_have": "Ik heb het al",
   "gui.setup_get": "Download het voor mij",
   "gui.setup_pick_have": "Selecteer je Legacy Offline PC-map (die met Legacy.exe erin)",

@@ -1,4 +1,4 @@
-Import-Module 'C:\LegacyOffline\LegacyDownloader.Core.psm1' -Force
+Import-Module (Join-Path (Split-Path -Parent $PSScriptRoot) 'LegacyDownloader.Core.psm1') -Force -DisableNameChecking
 
 $tests = @(
     @{ Ed = '1';    Expected = 'Just Dance' },

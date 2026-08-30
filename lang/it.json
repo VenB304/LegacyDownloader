@@ -20,6 +20,7 @@
   "entry.rclone_missing": "ERRORE: rclone.exe non è presente in questa cartella. Scarica di nuovo il pacchetto.",
   "entry.rclone_broken": "ERRORE: rclone.exe è presente ma non si avvia.\nDi solito è l'antivirus che lo ha messo in quarantena (rclone viene a volte\nsegnalato come 'hacktool' perché lo usano anche gli attaccanti - è uno\nstrumento open source legittimo e molto diffuso). Controlla la quarantena\no la cronologia del tuo antivirus per rclone.exe, ripristinalo o\nautorizzalo, poi riavvia.",
   "entry.no_frontend": "ERRORE: nessuna interfaccia trovata (LegacyDownloader.Console.ps1 mancante).",
+  "entry.gui_crashed": "Legacy Downloader ha riscontrato un problema e non può continuare:",
 
   "error.cant_create_folder": "Impossibile creare la cartella: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Traccio: {editions}",
   "gui.tracking_auto": "Traccio: tutto",
   "gui.tracking_none": "Traccio: niente selezionato ancora",
-  "gui.btn_check": "Controlla aggiornamenti",
+  "gui.btn_check": "Scarica / Controlla aggiornamenti",
   "gui.btn_exit": "Esci",
   "gui.btn_stop": "Ferma",
   "gui.progress_scanning": "Controllo di quello che hai già (nessun download per ora)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - fallito (rclone exit {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Gioco base",
+  "gui.firstrun_base": "Download del gioco base - potrai scegliere i pacchetti di canzoni al termine.",
   "gui.job_allsongs": "Tutte le edizioni di canzoni",
   "gui.job_edition": "Edizione {edition}",
   "gui.done_title": "Completato",
@@ -178,7 +180,7 @@
   "gui.err_title": "Errore",
   "gui.folder_unset_warn": "Scegli prima la tua cartella di gioco (il pulsante Cambia accanto a \"Cartella di gioco\").",
   "gui.setup_title": "Benvenuto",
-  "gui.setup_body": "Questo scarica Legacy Offline PC e le sue canzoni per te, e\ncontrolla le nuove canzoni ogni volta che lo esegui.\n\nHai già il gioco su questo PC?",
+  "gui.setup_body": "Questo scarica Legacy Offline PC per te. Prima il gioco;\nquali pacchetti di canzoni vuoi lo scegli dopo. Controlla anche\nle nuove canzoni ogni volta che lo esegui.\n\nHai già il gioco su questo PC?",
   "gui.setup_have": "Ce l'ho già",
   "gui.setup_get": "Scaricalo per me",
   "gui.setup_pick_have": "Seleziona la tua cartella Legacy Offline PC (quella con Legacy.exe)",

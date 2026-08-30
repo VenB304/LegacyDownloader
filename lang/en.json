@@ -20,6 +20,7 @@
   "entry.rclone_missing": "ERROR: rclone.exe is missing from this folder. Re-download the bundle.",
   "entry.rclone_broken": "ERROR: rclone.exe is here but won't run.\nThis is usually antivirus quarantining it (rclone is sometimes\nflagged as a 'hacktool' since attackers also use it - it's a\nlegitimate, widely-used open-source tool). Check your\nantivirus's quarantine/history for rclone.exe, restore or\nallow it, then run this again.",
   "entry.no_frontend": "ERROR: no front-end found (LegacyDownloader.Console.ps1 is missing).",
+  "entry.gui_crashed": "Legacy Downloader ran into a problem and can't continue:",
 
   "error.cant_create_folder": "Couldn't create that folder: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Tracking: {editions}",
   "gui.tracking_auto": "Tracking: everything",
   "gui.tracking_none": "Tracking: nothing selected yet",
-  "gui.btn_check": "Check for updates",
+  "gui.btn_check": "Download / Check for updates",
   "gui.btn_exit": "Exit",
   "gui.btn_stop": "Stop",
   "gui.progress_scanning": "Checking what you already have (no downloads yet)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - failed (rclone exit {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Base game",
+  "gui.firstrun_base": "Downloading the base game - you can choose song packs once it's done.",
   "gui.job_allsongs": "All song editions",
   "gui.job_edition": "Edition {edition}",
   "gui.done_title": "Done",
@@ -178,7 +180,7 @@
   "gui.err_title": "Error",
   "gui.folder_unset_warn": "Pick your game folder first (the Change button next to \"Game folder\").",
   "gui.setup_title": "Welcome",
-  "gui.setup_body": "This downloads Legacy Offline PC and its songs for you, and\nchecks for new songs whenever you run it.\n\nDo you already have the game on this PC?",
+  "gui.setup_body": "This downloads Legacy Offline PC for you. It grabs the game first;\nyou choose which song packs you want afterward. It also checks for\nnew songs whenever you run it.\n\nDo you already have the game on this PC?",
   "gui.setup_have": "I already have it",
   "gui.setup_get": "Download it for me",
   "gui.setup_pick_have": "Select your Legacy Offline PC folder (the one with Legacy.exe in it)",

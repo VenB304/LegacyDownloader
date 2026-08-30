@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$langDir = 'C:\LegacyOffline\lang'
+$langDir = Join-Path (Split-Path -Parent $PSScriptRoot) 'lang'
 $en = ([IO.File]::ReadAllText((Join-Path $langDir 'en.json'), [Text.Encoding]::UTF8)) | ConvertFrom-Json
 $enKeys = [System.Collections.Generic.HashSet[string]]::new()
 foreach ($p in $en.PSObject.Properties) { [void]$enKeys.Add($p.Name) }

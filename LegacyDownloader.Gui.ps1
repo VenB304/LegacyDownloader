@@ -31,6 +31,8 @@ $script:ScanIgnoredWrongLevel = $false
 $script:Job       = $null                 # current Start-RcloneCopy handle
 $script:Queue     = @()                   # remaining {Label;Source;Dest;Extra}
 $script:LastObject = ''
+$script:FirstRunMode  = $null             # 'get' / 'have' when the setup dialog just ran
+$script:AutoRunDone   = $false            # one-shot guard for the first-run auto action
 
 # ---- embedded flag bitmaps (20x15 PNGs) ----
 $script:FlagB64 = @{
@@ -123,9 +125,12 @@ function Ask-YesNo([string]$Text, [string]$Title) {
         [System.Windows.Forms.MessageBoxButtons]::YesNo,
         [System.Windows.Forms.MessageBoxIcon]::Question) -eq [System.Windows.Forms.DialogResult]::Yes)
 }
-function Pick-Folder([string]$Desc) {
+function Pick-Folder([string]$Desc, [string]$InitialPath) {
     $d = New-Object System.Windows.Forms.FolderBrowserDialog
     $d.Description = $Desc; $d.ShowNewFolderButton = $true
+    if (-not [string]::IsNullOrWhiteSpace($InitialPath) -and (Test-Path -LiteralPath $InitialPath)) {
+        $d.SelectedPath = $InitialPath
+    }
     $res = $d.ShowDialog($script:Form)
     if ($res -eq [System.Windows.Forms.DialogResult]::OK) { return $d.SelectedPath.TrimEnd('\') }
     return $null
@@ -140,6 +145,9 @@ function Format-Eta([int]$Seconds) {
 function Append-Log([string]$Line) {
     if ($null -eq $script:TxtLog) { return }
     $script:TxtLog.AppendText($Line + "`r`n")
+    # keep the newest line in view even when the box isn't focused
+    $script:TxtLog.SelectionStart = $script:TxtLog.TextLength
+    $script:TxtLog.ScrollToCaret()
 }
 
 # ===========================================================================
@@ -681,6 +689,7 @@ function Run-SetupDialog {
     }
     Save-Config -GamePath $path -Editions $script:Cfg.Editions -Lang $script:Cfg.Lang
     $script:Cfg = Load-Config
+    return $mode   # 'have' or 'get' - the caller auto-starts a check after "get"
 }
 
 # ===========================================================================
@@ -826,9 +835,30 @@ function On-Check {
     Begin-Scan $false
 }
 
+# First run via "Download it for me": no preview, no scan - just pull the base
+# game straight away (rclone --size-only fetches whatever's missing). Song packs
+# are a deliberate next step once it's done.
+function Start-FirstRunBaseDownload {
+    if ($script:Busy) { return }
+    $gp = $script:Cfg.GamePath
+    if ([string]::IsNullOrWhiteSpace($gp)) { return }
+    $exArgs = @()
+    foreach ($e in (Get-BaseSyncExcludes -GamePath $gp)) { $exArgs += @('--exclude', $e) }
+    $job = @{
+        Label  = (T 'gui.job_base')
+        Source = ($script:Conn + 'LegacyPC - Game')
+        Dest   = $gp
+        Extra  = $exArgs
+    }
+    $script:TxtLog.Clear()
+    Append-Log (T 'gui.firstrun_base')
+    Append-Log '----'
+    Start-Downloads @($job)
+}
+
 function On-ChangeFolder {
     if (-not $script:Ready -or $script:Busy) { return }
-    $p = Pick-Folder (T 'menu.picker_change')
+    $p = Pick-Folder (T 'menu.picker_change') $script:Cfg.GamePath
     if (-not $p) { return }
     if (-not (Test-GameFolder $p)) {
         if (-not (Ask-YesNo (T 'menu.exe_not_found_use_anyway') (T 'gui.window_title'))) { return }
@@ -1078,6 +1108,20 @@ function Build-MainForm {
             $script:FlagBitmaps.Clear()
         })
 
+    # First run via "Download it for me" - the moment the window is up, start
+    # pulling the base game with no preview. Songs are a deliberate second step.
+    # "I already have it" just lands here with no auto-action. If the chosen
+    # folder already has Legacy.exe, fall back to a normal checked update so a
+    # patched/modded copy isn't overwritten blindly.
+    $script:Form.Add_Shown({
+            param($s, $e)
+            if ($script:AutoRunDone) { return }
+            $script:AutoRunDone = $true
+            if ($script:FirstRunMode -eq 'get' -and -not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
+                if (Test-GameFolder $script:Cfg.GamePath) { On-Check } else { Start-FirstRunBaseDownload }
+            }
+        })
+
     Apply-I18n
     $script:Ready = $true
 }
@@ -1087,7 +1131,7 @@ function Build-MainForm {
 # ===========================================================================
 
 if (-not $env:LEGACY_GUI_SELFTEST -and [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
-    Run-SetupDialog
+    $script:FirstRunMode = Run-SetupDialog
 }
 
 Build-MainForm

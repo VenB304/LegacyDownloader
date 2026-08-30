@@ -20,6 +20,7 @@
   "entry.rclone_missing": "ERREUR : rclone.exe est introuvable dans ce dossier. Retéléchargez l'archive.",
   "entry.rclone_broken": "ERREUR : rclone.exe est présent mais ne démarre pas.\nEn général, c'est l'antivirus qui l'a mis en quarantaine (rclone est\nparfois signalé comme « hacktool » car des attaquants l'utilisent aussi\n- c'est un outil open source légitime et très répandu). Vérifiez la\nquarantaine ou l'historique de votre antivirus pour rclone.exe,\nrestaurez-le ou autorisez-le, puis relancez.",
   "entry.no_frontend": "ERREUR : aucune interface trouvée (LegacyDownloader.Console.ps1 est manquant).",
+  "entry.gui_crashed": "Legacy Downloader a rencontré un problème et ne peut pas continuer :",
 
   "error.cant_create_folder": "Impossible de créer ce dossier : {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Suivi : {editions}",
   "gui.tracking_auto": "Suivi : tout",
   "gui.tracking_none": "Suivi : rien de sélectionné pour l'instant",
-  "gui.btn_check": "Vérifier les mises à jour",
+  "gui.btn_check": "Télécharger / Vérifier les mises à jour",
   "gui.btn_exit": "Quitter",
   "gui.btn_stop": "Arrêter",
   "gui.progress_scanning": "Vérification de ce que vous avez déjà (aucun téléchargement pour l'instant)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - échec (rclone code {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Jeu de base",
+  "gui.firstrun_base": "Téléchargement du jeu de base - vous pourrez choisir les packs de chansons ensuite.",
   "gui.job_allsongs": "Toutes les éditions de chansons",
   "gui.job_edition": "Édition {edition}",
   "gui.done_title": "Terminé",
@@ -178,7 +180,7 @@
   "gui.err_title": "Erreur",
   "gui.folder_unset_warn": "Choisissez d'abord votre dossier de jeu (le bouton Changer à côté de « Dossier du jeu »).",
   "gui.setup_title": "Bienvenue",
-  "gui.setup_body": "Ceci télécharge Legacy Offline PC et ses chansons pour vous, et\nvérifie les nouvelles chansons à chaque lancement.\n\nAvez-vous déjà le jeu sur ce PC ?",
+  "gui.setup_body": "Ceci télécharge Legacy Offline PC pour vous. Le jeu d'abord ;\nvous choisissez ensuite les packs de chansons voulus. Il vérifie\naussi les nouvelles chansons à chaque lancement.\n\nAvez-vous déjà le jeu sur ce PC ?",
   "gui.setup_have": "Je l'ai déjà",
   "gui.setup_get": "Téléchargez-le pour moi",
   "gui.setup_pick_have": "Sélectionnez votre dossier Legacy Offline PC (celui qui contient Legacy.exe)",

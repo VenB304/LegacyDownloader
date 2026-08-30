@@ -523,7 +523,16 @@ function Get-UpdatePlan {
             if ($haveSettings) { $plan.KeptSettings = $true } else { $baseNormal += $f }
             continue
         }
-        if ($askNames -contains $leaf) { $baseAsk += $f } else { $baseNormal += $f }
+        # A protected file only counts as "moddable, ask before overwriting" when
+        # the user actually has a local copy. On a first install / empty folder
+        # every base file "would copy", including legacy.exe and the Kinect DLLs -
+        # those are just the initial download, not a modified copy to protect.
+        if ($askNames -contains $leaf) {
+            $localCopy = [System.IO.Path]::Combine($GamePath, ($f -replace '/', '\'))
+            if (Test-Path -LiteralPath $localCopy) { $baseAsk += $f } else { $baseNormal += $f }
+        } else {
+            $baseNormal += $f
+        }
     }
 
     $plan.BaseNormal    = @($baseNormal)

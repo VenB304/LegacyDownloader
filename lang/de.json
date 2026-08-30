@@ -20,6 +20,7 @@
   "entry.rclone_missing": "FEHLER: rclone.exe fehlt in diesem Ordner. Lade das Paket erneut herunter.",
   "entry.rclone_broken": "FEHLER: rclone.exe ist vorhanden, startet aber nicht.\nMeist hat das Antivirenprogramm es in Quarantäne verschoben (rclone wird\nmanchmal als „Hacktool“ eingestuft, weil auch Angreifer es nutzen - es ist\nein legitimes, weit verbreitetes Open-Source-Werkzeug). Sieh in der\nQuarantäne bzw. im Verlauf deines Antivirenprogramms nach rclone.exe,\nstelle es wieder her bzw. erlaube es und starte dann erneut.",
   "entry.no_frontend": "FEHLER: Keine Oberfläche gefunden (LegacyDownloader.Console.ps1 fehlt).",
+  "entry.gui_crashed": "Legacy Downloader hat ein Problem festgestellt und kann nicht fortfahren:",
 
   "error.cant_create_folder": "Ordner konnte nicht erstellt werden: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Verfolgt: {editions}",
   "gui.tracking_auto": "Verfolgt: alles",
   "gui.tracking_none": "Verfolgt: noch nichts ausgewählt",
-  "gui.btn_check": "Nach Updates suchen",
+  "gui.btn_check": "Herunterladen / Nach Updates suchen",
   "gui.btn_exit": "Beenden",
   "gui.btn_stop": "Stopp",
   "gui.progress_scanning": "Prüfe, was bereits vorhanden ist (noch keine Downloads)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - fehlgeschlagen (rclone-Code {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Basisspiel",
+  "gui.firstrun_base": "Basisspiel wird heruntergeladen - Songpakete kannst du danach auswählen.",
   "gui.job_allsongs": "Alle Song-Editionen",
   "gui.job_edition": "Edition {edition}",
   "gui.done_title": "Fertig",
@@ -178,7 +180,7 @@
   "gui.err_title": "Fehler",
   "gui.folder_unset_warn": "Wähle zuerst deinen Spielordner (die Schaltfläche „Ändern“ neben „Spielordner“).",
   "gui.setup_title": "Willkommen",
-  "gui.setup_body": "Dies lädt Legacy Offline PC und seine Songs für dich herunter und\nsucht bei jedem Start nach neuen Songs.\n\nHast du das Spiel schon auf diesem PC?",
+  "gui.setup_body": "Dies lädt Legacy Offline PC für dich herunter. Zuerst kommt das Spiel;\nwelche Song-Pakete du willst, wählst du danach. Es sucht außerdem bei\njedem Start nach neuen Songs.\n\nHast du das Spiel schon auf diesem PC?",
   "gui.setup_have": "Ich habe es schon",
   "gui.setup_get": "Lade es für mich herunter",
   "gui.setup_pick_have": "Wähle deinen Legacy Offline PC-Ordner (den mit Legacy.exe darin)",

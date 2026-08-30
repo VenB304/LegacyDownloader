@@ -20,6 +20,7 @@
   "entry.rclone_missing": "ERRO: rclone.exe não foi encontrado nesta pasta. Baixe o pacote novamente.",
   "entry.rclone_broken": "ERRO: rclone.exe está aqui mas não executa.\nGeralmente é o antivírus que o colocou em quarentena (rclone às vezes é\nmarcado como 'hacktool' porque atacantes também o usam - é uma ferramenta\nopen source legítima e muito usada). Verifique a quarentena ou o histórico\ndo seu antivírus para rclone.exe, restaure ou permita-o e tente novamente.",
   "entry.no_frontend": "ERRO: nenhuma interface encontrada (LegacyDownloader.Console.ps1 está faltando).",
+  "entry.gui_crashed": "O Legacy Downloader encontrou um problema e não pode continuar:",
 
   "error.cant_create_folder": "Não foi possível criar essa pasta: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "Rastreando: {editions}",
   "gui.tracking_auto": "Rastreando: tudo",
   "gui.tracking_none": "Rastreando: nada selecionado ainda",
-  "gui.btn_check": "Verificar atualizações",
+  "gui.btn_check": "Baixar / Verificar atualizações",
   "gui.btn_exit": "Sair",
   "gui.btn_stop": "Parar",
   "gui.progress_scanning": "Verificando o que você já tem (nenhum download por enquanto)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - falhou (rclone exit {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "Jogo base",
+  "gui.firstrun_base": "Baixando o jogo base - você poderá escolher pacotes de músicas quando terminar.",
   "gui.job_allsongs": "Todas as edições de músicas",
   "gui.job_edition": "Edição {edition}",
   "gui.done_title": "Concluído",
@@ -178,7 +180,7 @@
   "gui.err_title": "Erro",
   "gui.folder_unset_warn": "Escolha primeiro sua pasta do jogo (o botão Alterar ao lado de \"Pasta do jogo\").",
   "gui.setup_title": "Bem-vindo",
-  "gui.setup_body": "Isto baixa Legacy Offline PC e suas músicas para você, e\nverifica por novas músicas sempre que executar.\n\nVocê já tem o jogo neste PC?",
+  "gui.setup_body": "Isto baixa Legacy Offline PC para você. Primeiro o jogo;\nvocê escolhe depois quais pacotes de músicas quer. Também\nverifica novas músicas sempre que executar.\n\nVocê já tem o jogo neste PC?",
   "gui.setup_have": "Já tenho",
   "gui.setup_get": "Baixe para mim",
   "gui.setup_pick_have": "Selecione sua pasta Legacy Offline PC (aquela com Legacy.exe)",

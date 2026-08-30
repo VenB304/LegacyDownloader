@@ -8,7 +8,9 @@ no accounts, nothing else to install.
 USAGE
 -----
 
-Double-click "LegacyDownloader.bat" to open the GUI.
+Double-click "LegacyDownloader.bat" to open the GUI. No console window
+is left sitting behind it. (It hands off to "LegacyDownloader.vbs" -
+you can double-click that one directly too.)
 
 Prefer a plain text/console menu instead? Double-click
 "LegacyDownloader-Console.bat", or run LegacyDownloader.ps1 -Console
@@ -25,10 +27,12 @@ or want it downloaded for you:
     Legacy.exe inside it, then press Select Folder.
 
   - Don't have it yet: a window pops up - pick or create an empty
-    folder for the game to live in, then press Select Folder. It
-    downloads the base game there for you.
+    folder for the game to live in, then press Select Folder. The
+    main window opens and immediately starts downloading the base
+    game - no prompt, it just goes.
 
-Either way, you'll then choose which songs you want:
+From the main window's "Songs" section you then choose what you want
+(the base-game download, if any, keeps running in the background):
 
   - Everything - downloads every edition, and automatically includes
     new ones the maker adds later. No further action needed, ever.
@@ -41,8 +45,8 @@ Either way, you'll then choose which songs you want:
 AFTER SETUP
 -----------
 
-The GUI stays open and shows your current status. Hit "Check for
-updates" whenever you want new songs.
+The GUI stays open and shows your current status. Hit "Download /
+Check for updates" whenever you want new songs.
 
 In the console menu you'll see:
 

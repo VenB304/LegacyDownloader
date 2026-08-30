@@ -1,4 +1,5 @@
-$content = [IO.File]::ReadAllText('C:\LegacyOffline\lang\zh-Hans.json', [Text.Encoding]::UTF8)
+$target = if ($args.Count -ge 1) { $args[0] } else { Join-Path (Split-Path -Parent $PSScriptRoot) 'lang\zh-Hans.json' }
+$content = [IO.File]::ReadAllText($target, [Text.Encoding]::UTF8)
 # Find all positions of ASCII double-quote
 $pos = 0
 $inKey = $false

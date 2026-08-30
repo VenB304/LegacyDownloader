@@ -30,5 +30,5 @@ foreach ($key in ($out.Keys | Sort-Object)) {
     $lines += "    '$key' = '$($out[$key])'"
 }
 $lines += '}'
-$lines -join "`r`n" | Set-Content -Encoding UTF8 -Path 'C:\LegacyOffline\tools\flag-data.txt'
+$lines -join "`r`n" | Set-Content -Encoding UTF8 -Path (Join-Path $PSScriptRoot 'flag-data.txt')
 Write-Host "Written to flag-data.txt"

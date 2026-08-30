@@ -10,10 +10,17 @@ preview, protected files — carries over from V3.
 
 ## Usage
 
-**GUI (default):** double-click `LegacyDownloader.bat`.
+**GUI (default):** double-click `LegacyDownloader.bat`. It hands off to
+`LegacyDownloader.vbs`, which starts the GUI with no console window left
+behind. Double-clicking `LegacyDownloader.vbs` directly is fully flash-free.
 
 **Text/console menu:** double-click `LegacyDownloader-Console.bat`, or run
 `LegacyDownloader.ps1 -Console` from a terminal.
+
+On a first run started with **"Download it for me"**, the GUI opens and
+immediately starts downloading the **base game** (no preview) — song packs are
+a deliberate second step you pick afterward. If the folder you choose already
+contains `Legacy.exe`, it falls back to a normal checked update with a preview.
 
 ## Language
 
@@ -35,7 +42,8 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 ## Files
 
 - `LegacyDownloader.ps1` — thin launcher (imports Core, runs preflight, loads front-end)
-- `LegacyDownloader.bat` — → GUI (default)
+- `LegacyDownloader.vbs` — starts the GUI with a hidden console (no leftover window)
+- `LegacyDownloader.bat` — → GUI (default); just calls the `.vbs`
 - `LegacyDownloader-Console.bat` — → text/console menu
 - `LegacyDownloader.Core.psm1` — all pure logic (no `Write-Host` / `Read-Host`)
 - `LegacyDownloader.Console.ps1` — text/menu front-end

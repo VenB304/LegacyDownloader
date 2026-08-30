@@ -20,6 +20,7 @@
   "entry.rclone_missing": "エラー: このフォルダに rclone.exe がありません。パッケージを再ダウンロードしてください。",
   "entry.rclone_broken": "エラー: rclone.exe は存在しますが起動できません。\nほとんどの場合、アンチウイルスソフトが検疫しています (rclone は攻撃者も\n使用するため「hacktool」として検出されることがありますが、広く使われている\n正規のオープンソースツールです)。アンチウイルスの検疫または履歴で\nrclone.exe を確認し、復元または許可してから再実行してください。",
   "entry.no_frontend": "エラー: フロントエンドが見つかりません (LegacyDownloader.Console.ps1 がありません)。",
+  "entry.gui_crashed": "Legacy Downloader で問題が発生したため続行できません:",
 
   "error.cant_create_folder": "フォルダを作成できませんでした: {error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "追跡中: {editions}",
   "gui.tracking_auto": "追跡中: すべて",
   "gui.tracking_none": "追跡中: まだ何も選択されていません",
-  "gui.btn_check": "更新を確認",
+  "gui.btn_check": "ダウンロード / 更新を確認",
   "gui.btn_exit": "終了",
   "gui.btn_stop": "停止",
   "gui.progress_scanning": "すでに持っているものを確認しています (まだダウンロードはしません)...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - 失敗 (rclone exit {code})",
   "gui.eta_unknown": "?",
   "gui.job_base": "基本ゲーム",
+  "gui.firstrun_base": "基本ゲームをダウンロードしています - 完了後に曲パックを選べます。",
   "gui.job_allsongs": "全曲エディション",
   "gui.job_edition": "エディション {edition}",
   "gui.done_title": "完了",
@@ -178,7 +180,7 @@
   "gui.err_title": "エラー",
   "gui.folder_unset_warn": "まずゲームフォルダを選択してください (「ゲームフォルダ」の横にある変更ボタン)。",
   "gui.setup_title": "ようこそ",
-  "gui.setup_body": "このプログラムは Legacy Offline PC とその曲をダウンロードし、\n起動するたびに新しい曲を確認します。\n\nこのPCにすでにゲームはありますか?",
+  "gui.setup_body": "このプログラムは Legacy Offline PC をダウンロードします。まずゲーム本体を取得し、\nどの曲パックが欲しいかは後で選べます。起動するたびに新しい曲も確認します。\n\nこのPCにすでにゲームはありますか?",
   "gui.setup_have": "すでに持っています",
   "gui.setup_get": "ダウンロードしてほしい",
   "gui.setup_pick_have": "Legacy Offline PC のフォルダを選択してください (Legacy.exe があるフォルダ)",

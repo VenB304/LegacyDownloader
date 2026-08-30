@@ -20,6 +20,7 @@
   "entry.rclone_missing": "錯誤：此資料夾中缺少 rclone.exe，請重新下載安裝包。",
   "entry.rclone_broken": "錯誤：rclone.exe 存在但無法執行。\n這通常是因為防毒軟體將其隔離（rclone 有時被標記為\n「hacktool」，因為攻擊者也會使用它——它是一個合法的、\n廣泛使用的開源工具）。請檢查防毒軟體的隔離區或\n歷程中的 rclone.exe，還原或允許它，然後再次執行。",
   "entry.no_frontend": "錯誤：找不到前端介面（LegacyDownloader.Console.ps1 遺失）。",
+  "entry.gui_crashed": "Legacy Downloader 發生問題，無法繼續：",
 
   "error.cant_create_folder": "無法建立該資料夾：{error}",
 
@@ -153,7 +154,7 @@
   "gui.tracking": "正在追蹤：{editions}",
   "gui.tracking_auto": "正在追蹤：全部",
   "gui.tracking_none": "正在追蹤：尚未選擇任何內容",
-  "gui.btn_check": "檢查更新",
+  "gui.btn_check": "下載 / 檢查更新",
   "gui.btn_exit": "結束",
   "gui.btn_stop": "停止",
   "gui.progress_scanning": "正在檢查您已有的內容（暫不下載）...",
@@ -163,6 +164,7 @@
   "gui.progress_failed_line": "{label} - 失敗（rclone exit {code}）",
   "gui.eta_unknown": "?",
   "gui.job_base": "基礎遊戲",
+  "gui.firstrun_base": "正在下載基礎遊戲 - 完成後可以選擇歌曲包。",
   "gui.job_allsongs": "所有歌曲版本",
   "gui.job_edition": "版本 {edition}",
   "gui.done_title": "完成",
@@ -178,7 +180,7 @@
   "gui.err_title": "錯誤",
   "gui.folder_unset_warn": "請先選擇您的遊戲資料夾（「遊戲資料夾」旁邊的變更按鈕）。",
   "gui.setup_title": "歡迎",
-  "gui.setup_body": "這將為您下載 Legacy Offline PC 及其歌曲，\n並在每次執行時檢查新歌曲。\n\n此電腦上已有遊戲嗎？",
+  "gui.setup_body": "這將為您下載 Legacy Offline PC。先取得遊戲本體，\n之後您再選擇想要的歌曲包。每次執行時它還會檢查新歌曲。\n\n此電腦上已有遊戲嗎？",
   "gui.setup_have": "已有遊戲",
   "gui.setup_get": "請為我下載",
   "gui.setup_pick_have": "選擇您的 Legacy Offline PC 資料夾（包含 Legacy.exe 的資料夾）",

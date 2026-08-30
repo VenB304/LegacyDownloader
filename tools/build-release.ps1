@@ -1,12 +1,10 @@
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$root = 'C:\LegacyOffline'
+$root = Split-Path -Parent $PSScriptRoot
 $zipPath = Join-Path $root 'LegacyDownloaderV4.zip'
 $oldZip = Join-Path $root 'LegacyDownloaderV3.zip'
-$handoff = Join-Path $root 'HANDOFF-phase4-5.md'
 
 if (Test-Path $oldZip) { Remove-Item -Force $oldZip }
-if (Test-Path $handoff) { Remove-Item -Force $handoff }
 
 $stageDir = Join-Path $env:TEMP ("legacy_v4_stage_" + [System.Guid]::NewGuid().ToString('N'))
 $tempZip  = Join-Path $env:TEMP ("LegacyDownloaderV4_" + [System.Guid]::NewGuid().ToString('N') + ".zip")
@@ -16,6 +14,7 @@ New-Item -ItemType Directory -Path (Join-Path $stageDir 'lang') -Force | Out-Nul
 
 $filesToCopy = @(
     'LegacyDownloader.ps1',
+    'LegacyDownloader.vbs',
     'LegacyDownloader.bat',
     'LegacyDownloader-Console.bat',
     'LegacyDownloader.Core.psm1',
@@ -51,8 +50,9 @@ try {
 }
 
 Write-Host "`nTotal entries in LegacyDownloaderV4.zip: $count"
-if ($count -eq 20) {
+$expected = $filesToCopy.Count + (Get-ChildItem (Join-Path $root 'lang') -Filter *.json).Count
+if ($count -eq $expected) {
     Write-Host "V4 PACKAGE BUILD SUCCESSFUL!" -ForegroundColor Green
 } else {
-    Write-Host "WARNING: Unexpected entry count: $count" -ForegroundColor Red
+    Write-Host "WARNING: expected $expected entries, got $count" -ForegroundColor Red
 }
