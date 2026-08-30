@@ -9,3 +9,6 @@ rclone.exe
 
 # Distributable bundle / build artifacts
 *.zip
+
+# Local dev/build scripts - not part of the shipped tool
+tools/
