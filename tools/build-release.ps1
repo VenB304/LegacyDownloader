@@ -1,13 +1,18 @@
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$root = Split-Path -Parent $PSScriptRoot
-$zipPath = Join-Path $root 'LegacyDownloaderV4.zip'
-$oldZip = Join-Path $root 'LegacyDownloaderV3.zip'
+# Bump this for a new release; the zip name and messages follow.
+$version = 'V5'
 
-if (Test-Path $oldZip) { Remove-Item -Force $oldZip }
+$root    = Split-Path -Parent $PSScriptRoot
+$zipPath = Join-Path $root "LegacyDownloader$version.zip"
 
-$stageDir = Join-Path $env:TEMP ("legacy_v4_stage_" + [System.Guid]::NewGuid().ToString('N'))
-$tempZip  = Join-Path $env:TEMP ("LegacyDownloaderV4_" + [System.Guid]::NewGuid().ToString('N') + ".zip")
+# drop any older LegacyDownloaderV*.zip so the folder only ever has the current one
+Get-ChildItem $root -Filter 'LegacyDownloaderV*.zip' -File |
+    Where-Object { $_.FullName -ne $zipPath } |
+    ForEach-Object { Write-Host "removing old $($_.Name)"; Remove-Item -Force $_.FullName }
+
+$stageDir = Join-Path $env:TEMP ("legacy_${version}_stage_" + [System.Guid]::NewGuid().ToString('N'))
+$tempZip  = Join-Path $env:TEMP ("LegacyDownloader${version}_" + [System.Guid]::NewGuid().ToString('N') + ".zip")
 
 New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $stageDir 'lang') -Force | Out-Null
@@ -49,10 +54,10 @@ try {
     $zip.Dispose()
 }
 
-Write-Host "`nTotal entries in LegacyDownloaderV4.zip: $count"
+Write-Host "`nTotal entries in $(Split-Path -Leaf $zipPath): $count"
 $expected = $filesToCopy.Count + (Get-ChildItem (Join-Path $root 'lang') -Filter *.json).Count
 if ($count -eq $expected) {
-    Write-Host "V4 PACKAGE BUILD SUCCESSFUL!" -ForegroundColor Green
+    Write-Host "$version PACKAGE BUILD SUCCESSFUL!" -ForegroundColor Green
 } else {
     Write-Host "WARNING: expected $expected entries, got $count" -ForegroundColor Red
 }

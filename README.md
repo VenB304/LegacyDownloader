@@ -4,9 +4,12 @@ Self-contained PowerShell tool that downloads and updates **Legacy Offline PC**
 and its song "editions" from the public ovosimpatico Nextcloud share, using
 [rclone](https://rclone.org/).
 
-V4 adds a WinForms GUI (default), a text-menu console front-end, and 12-language
-support. Everything else — size-only comparison, folder-level detection, dry-run
-preview, protected files — carries over from V3.
+The V4 line added a WinForms GUI (default), a text-menu console front-end, and
+12-language support. **V5** refines the first run (picking a folder now starts
+the base-game download straight away), hides the launcher console window, and
+fixes the update check flagging a fresh install's `Legacy.exe` / Kinect DLLs as
+"modified". Size-only comparison, folder-level detection, dry-run preview and
+protected files all carry over from V3.
 
 ## Usage
 
@@ -58,7 +61,7 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 from <https://rclone.org/downloads/>, drop `rclone.exe` in this folder, then
 run `LegacyDownloader.bat`. `config.txt` is created automatically on first run.
 
-## Technical notes (V3 + V4)
+## Technical notes (V3–V5)
 
 - **Size-only comparison** (`--size-only`): exFAT rounds modification times to
   a 2-second grid, so a mtime-based check re-downloaded roughly half the library
