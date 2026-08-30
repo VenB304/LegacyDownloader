@@ -60,8 +60,11 @@ In the console menu you'll see:
 BEFORE IT DOWNLOADS ANYTHING
 -----------------------------
 
-It always checks first and shows what's actually missing or out of
-date - which editions have new songs, how many files, and the total
+(One exception: the very first base-game download, right after you
+pick a folder in "Download it for me", just starts - no preview.)
+
+For updates it checks first and shows what's actually missing or out
+of date - which editions have new songs, how many files, and the total
 size. In the GUI a preview window appears with a "Download now" button.
 In the console menu it asks:
 
