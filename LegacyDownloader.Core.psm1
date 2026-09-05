@@ -173,6 +173,16 @@ function Initialize-Language {
 
 function Get-LanguageCode { return $script:LangCode }
 
+# Languages with a docs/tutorial/<code>.md file. Update this list whenever a
+# new translation is added; anything not listed falls back to English.
+$script:TutorialLangs = @('en', 'fr', 'es')
+
+function Get-TutorialUrl {
+    param([string]$Code)
+    $code = if ($script:TutorialLangs -contains $Code) { $Code } else { 'en' }
+    return "https://github.com/VenB304/LegacyDownloader/blob/main/docs/tutorial/$code.md"
+}
+
 function T {
     # Translate a key. Missing keys fall back to English, then to the key
     # itself. {placeholder} tokens are filled from the optional -Vars hash.
@@ -672,4 +682,4 @@ Export-ModuleMember -Function `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
     Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `
-    Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode
+    Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl

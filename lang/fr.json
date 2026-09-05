@@ -201,5 +201,7 @@
   "gui.filelist_title": "Fichiers à télécharger",
   "gui.cancel_download_q": "Un téléchargement est en cours. L'arrêter et fermer ?",
   "gui.list_tag_keep": "le vôtre est conservé",
-  "gui.list_tag_overwrite": "sera remplacé"
+  "gui.list_tag_overwrite": "sera remplacé",
+  "gui.tutorial_link": "Besoin d'aide ? Ouvrir le tutoriel",
+  "gui.tutorial_open_failed": "Impossible d'ouvrir votre navigateur. Copiez ce lien :\n{url}"
 }

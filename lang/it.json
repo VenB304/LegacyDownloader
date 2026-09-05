@@ -201,5 +201,7 @@
   "gui.filelist_title": "File da scaricare",
   "gui.cancel_download_q": "È in corso un download. Fermarlo e chiudere?",
   "gui.list_tag_keep": "mantieni il tuo",
-  "gui.list_tag_overwrite": "verrà sovrascritto"
+  "gui.list_tag_overwrite": "verrà sovrascritto",
+  "gui.tutorial_link": "Serve aiuto? Apri il tutorial",
+  "gui.tutorial_open_failed": "Impossibile aprire il browser. Copia questo link:\n{url}"
 }

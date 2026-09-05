@@ -201,5 +201,7 @@
   "gui.filelist_title": "待下载文件",
   "gui.cancel_download_q": "正在下载。停止并关闭？",
   "gui.list_tag_keep": "保留您的版本",
-  "gui.list_tag_overwrite": "将被覆盖"
+  "gui.list_tag_overwrite": "将被覆盖",
+  "gui.tutorial_link": "需要帮助？打开教程",
+  "gui.tutorial_open_failed": "无法打开浏览器，请复制以下链接：\n{url}"
 }

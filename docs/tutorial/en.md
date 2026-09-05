@@ -4,7 +4,7 @@ Legacy Downloader gets **Legacy Offline PC** and its song packs onto your
 computer and keeps them updated. You don't need any technical knowledge to
 use it — just follow the pictures below, in order.
 
-Other languages: *(links added as each translation lands)*
+Other languages: [Français](fr.md) · [Español](es.md)
 
 ---
 
@@ -57,7 +57,7 @@ section below — that's also a known false positive.
 
 A **Welcome** window appears next.
 
-<!-- TODO screenshot: images/03-welcome.png -->
+![Welcome dialog with flag language picker](images/03-welcome-en.png)
 
 
 - **Wrong language showing?** Click the flag dropdown in the corner and pick
@@ -89,7 +89,7 @@ open** until it finishes; you'll see progress moving in the window.
 
 Once the base game is in place, you land here:
 
-<!-- TODO screenshot: images/04-main-window.png -->
+![Legacy Downloader main window](images/04-main-window-en.png)
 
 
 - **Game folder** — where your game lives. **Change...** lets you point it
@@ -112,7 +112,7 @@ Clicking the big button doesn't download anything right away — it first
 just slide back and forth with no percentage shown — that's normal, it
 means it's still comparing your files against the server, not stuck.
 
-<!-- TODO screenshot: images/05-preview.png -->
+![Update check preview dialog](images/05-preview-en.png)
 
 Once it's done checking, a window lists what it found, with a total size.
 Click **Download now** to actually get the files, or **Cancel** if you

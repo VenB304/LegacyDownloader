@@ -201,5 +201,7 @@
   "gui.filelist_title": "Archivos por descargar",
   "gui.cancel_download_q": "Hay una descarga en curso. ¿Detenerla y cerrar?",
   "gui.list_tag_keep": "se conserva el tuyo",
-  "gui.list_tag_overwrite": "se sobrescribirá"
+  "gui.list_tag_overwrite": "se sobrescribirá",
+  "gui.tutorial_link": "¿Necesitas ayuda? Abrir el tutorial",
+  "gui.tutorial_open_failed": "No se pudo abrir tu navegador. Copia este enlace:\n{url}"
 }

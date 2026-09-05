@@ -201,5 +201,7 @@
   "gui.filelist_title": "Te downloaden bestanden",
   "gui.cancel_download_q": "Er wordt gedownload. Stoppen en sluiten?",
   "gui.list_tag_keep": "jouwe bewaren",
-  "gui.list_tag_overwrite": "wordt overschreven"
+  "gui.list_tag_overwrite": "wordt overschreven",
+  "gui.tutorial_link": "Hulp nodig? Open de tutorial",
+  "gui.tutorial_open_failed": "Kon je browser niet openen. Kopieer deze link:\n{url}"
 }

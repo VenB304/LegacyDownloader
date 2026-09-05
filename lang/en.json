@@ -201,5 +201,7 @@
   "gui.filelist_title": "Files to download",
   "gui.cancel_download_q": "A download is running. Stop it and close?",
   "gui.list_tag_keep": "keeping yours",
-  "gui.list_tag_overwrite": "will overwrite"
+  "gui.list_tag_overwrite": "will overwrite",
+  "gui.tutorial_link": "Need help? Open the tutorial",
+  "gui.tutorial_open_failed": "Couldn't open your browser. Copy this link:\n{url}"
 }

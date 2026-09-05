@@ -437,8 +437,12 @@ function Show-PreviewDialog($Plan) {
     $y = 204
     $clb = $null
     if ($ba.Count -gt 0) {
-        $hint = New-Label (T 'gui.preview_moddable_hint') 14 $y 468 44
-        $y += 48
+        $hintText = T 'gui.preview_moddable_hint'
+        $hintSize = [System.Windows.Forms.TextRenderer]::MeasureText(
+            $hintText, $script:FontBase, (New-Object System.Drawing.Size(468, 0)),
+            [System.Windows.Forms.TextFormatFlags]::WordBreak)
+        $hint = New-Label $hintText 14 $y 468 ($hintSize.Height + 6)
+        $y += $hint.Height + 6
         $clb = New-Object System.Windows.Forms.CheckedListBox
         $clb.CheckOnClick = $true
         $clb.Font = $script:FontBase
@@ -451,9 +455,19 @@ function Show-PreviewDialog($Plan) {
         $f.Controls.Add($clb)
     }
 
-    $btnFiles  = New-Btn (T 'gui.btn_show_files') 14 $y 140 32 $false
-    $btnDl     = New-Btn (T 'gui.btn_download_now') 250 $y 130 32 $true
-    $btnCancel = New-Btn (T 'gui.btn_cancel') 388 $y 94 32 $false
+    # Widths are measured from the actual (translated) text so a longer
+    # translation than English never gets clipped; Download stays centered
+    # in whatever middle space is left between Files and Cancel.
+    $btnFiles  = New-Btn (T 'gui.btn_show_files') 14 $y 0 32 $false
+    $btnDl     = New-Btn (T 'gui.btn_download_now') 0 $y 0 32 $true
+    $btnCancel = New-Btn (T 'gui.btn_cancel') 0 $y 0 32 $false
+    foreach ($b in @($btnFiles, $btnDl, $btnCancel)) {
+        $b.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $btnCancel.Left = 496 - 14 - $btnCancel.Width
+    $midStart = $btnFiles.Right + 10
+    $midEnd = $btnCancel.Left - 10
+    $btnDl.Left = $midStart + [Math]::Max(0, [int](($midEnd - $midStart - $btnDl.Width) / 2))
     $y += 46
 
     $btnFiles.Add_Click({
@@ -589,7 +603,7 @@ function Run-SetupDialog {
     $f.ForeColor = $script:ColorText
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
-    $f.ClientSize = New-Object System.Drawing.Size(460, 230)
+    $f.ClientSize = New-Object System.Drawing.Size(460, 260)
     $f.MinimizeBox = $false; $f.MaximizeBox = $false
 
     # Top right language selector
@@ -649,12 +663,20 @@ function Run-SetupDialog {
     $bHave = New-Btn (T 'gui.setup_have') 18 168 206 38 $false
     $bGet  = New-Btn (T 'gui.setup_get') 236 168 206 38 $true
 
+    $lnkTutorial = New-Object System.Windows.Forms.LinkLabel
+    $lnkTutorial.Text = T 'gui.tutorial_link'
+    $lnkTutorial.Font = $script:FontBase
+    $lnkTutorial.LinkColor = $script:ColorPrimary
+    $lnkTutorial.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    $lnkTutorial.SetBounds(18, 216, 424, 22)
+
     $reapplySetupLang = {
-        $f.Text       = T 'gui.setup_title'
-        $lblLang.Text = T 'gui.lang_label'
-        $lbl.Text     = T 'gui.setup_body'
-        $bHave.Text   = T 'gui.setup_have'
-        $bGet.Text    = T 'gui.setup_get'
+        $f.Text          = T 'gui.setup_title'
+        $lblLang.Text    = T 'gui.lang_label'
+        $lbl.Text        = T 'gui.setup_body'
+        $bHave.Text      = T 'gui.setup_have'
+        $bGet.Text       = T 'gui.setup_get'
+        $lnkTutorial.Text = T 'gui.tutorial_link'
     }
 
     $cmbLang.Add_SelectedIndexChanged({
@@ -673,7 +695,16 @@ function Run-SetupDialog {
 
     $bHave.Add_Click({ param($s, $e) $f.Tag = 'have'; $f.Close() })
     $bGet.Add_Click({ param($s, $e) $f.Tag = 'get'; $f.Close() })
-    $f.Controls.AddRange(@($lblLang, $cmbLang, $lbl, $bHave, $bGet))
+    $lnkTutorial.Add_LinkClicked({
+        param($s, $e)
+        $url = Get-TutorialUrl (Get-LanguageCode)
+        try {
+            Start-Process $url | Out-Null
+        } catch {
+            Info-Box (T 'gui.tutorial_open_failed' @{ url = $url }) (T 'gui.err_title')
+        }
+    })
+    $f.Controls.AddRange(@($lblLang, $cmbLang, $lbl, $bHave, $bGet, $lnkTutorial))
     $f.ShowDialog() | Out-Null
     $mode = [string]$f.Tag
     $f.Dispose()

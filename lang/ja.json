@@ -201,5 +201,7 @@
   "gui.filelist_title": "ダウンロードするファイル",
   "gui.cancel_download_q": "ダウンロードが実行中です。停止して閉じますか?",
   "gui.list_tag_keep": "あなたのものを保持",
-  "gui.list_tag_overwrite": "上書きされます"
+  "gui.list_tag_overwrite": "上書きされます",
+  "gui.tutorial_link": "お困りですか? チュートリアルを開く",
+  "gui.tutorial_open_failed": "ブラウザを開けませんでした。次のリンクをコピーしてください:\n{url}"
 }
