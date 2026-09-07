@@ -80,26 +80,8 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 from <https://rclone.org/downloads/>, drop `rclone.exe` in this folder, then
 run `LegacyDownloader.bat`. `config.txt` is created automatically on first run.
 
-## Technical notes (V3–V5)
+## For contributors
 
-- **Size-only comparison** (`--size-only`): exFAT rounds modification times to
-  a 2-second grid, so a mtime-based check re-downloaded roughly half the library
-  on every run when the game lived on an external exFAT drive. File size is the
-  reliable signal — a real update always changes it.
-- **Game-folder level detection**: if `Legacy.exe` isn't directly in the
-  configured folder (the Nextcloud share nests the game under a sub-folder),
-  the tool detects the real location and offers to update `config.txt`.
-- **Dry-run preview**: before downloading, shows per-edition file counts and
-  total size. If nothing differs it reports "everything up to date" and skips
-  the transfer entirely.
-- **Protected files**: `Legacy.exe` and `Kinect*.dll` get a per-file confirm
-  before being overwritten, so patched or modded binaries survive an update.
-  `config.xml` (local game settings) is fetched once on a fresh install and
-  never overwritten afterward — syncing the server's copy was resetting players'
-  resolution / windowed-mode choices on every update.
-- **GUI progress**: uses rclone's `--use-json-log` stats records for live
-  per-file and overall progress. Dry-run (preview) uses plain-text output so
-  rclone's "Skipped copy" lines remain parseable.
-- **GUI headless test**: set env var `LEGACY_GUI_SELFTEST=1` before running
-  `LegacyDownloader.ps1` — builds every form, dumps the control tree, and exits
-  before `Application.Run`. Used in CI-style checks without a display.
+Implementation details (size-only comparison, folder-level detection, the
+GUI's progress plumbing, etc.) live in [docs/technical-notes.md](docs/technical-notes.md)
+rather than here, to keep this README focused on using the tool.
