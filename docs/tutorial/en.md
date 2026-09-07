@@ -13,8 +13,7 @@ Other languages: [Français](fr.md) · [Español](es.md)
 For anyone who just wants the short version:
 
 1. Download the zip from the [Releases page](../../releases) and extract it.
-2. Double-click `LegacyDownloader.bat`. If Windows shows a blue warning
-   screen, click **More info → Run anyway** (see [step 2](#2-windows-shows-a-blue-warning-screen-thats-normal) below — this is expected, not a virus).
+2. Double-click `LegacyDownloader.bat`.
 3. Follow the on-screen welcome steps, pick your songs, and click
    **Download / Check for updates**.
 4. When it says "You're all set!", open `Legacy.exe` in your game folder to
@@ -32,33 +31,17 @@ walkthrough below has a picture for every screen.
    folder (Desktop is fine). Don't run it from inside the zip window itself.
 3. Open the extracted folder and double-click **`LegacyDownloader.bat`**.
 
-<!-- TODO screenshot: images/01-extracted-folder.png -->
+![Extracted folder contents](images/01-extracted-folder.png)
 
+> If your antivirus flags `rclone.exe` (a file inside this folder), see the
+> [Troubleshooting](#troubleshooting) section below — that's a known false
+> positive, not an actual problem with the download.
 
-## 2. Windows shows a blue warning screen — that's normal
-
-The first time you run it, Windows may show a full blue screen saying
-**"Windows protected your PC"**. This happens to almost every small,
-independently-made program — Windows just doesn't recognize it yet, the
-same way it wouldn't recognize any brand-new app on its first run anywhere.
-It does **not** mean it found a virus.
-
-<!-- TODO screenshot: images/02-smartscreen.png -->
-
-
-1. Click the small **"More info"** text.
-2. A **"Run anyway"** button appears — click it.
-
-You should only need to do this once. If your antivirus separately flags
-`rclone.exe` (a file inside this folder), see the [Troubleshooting](#troubleshooting)
-section below — that's also a known false positive.
-
-## 3. First run — Welcome screen
+## 2. First run — Welcome screen
 
 A **Welcome** window appears next.
 
 ![Welcome dialog with flag language picker](images/03-welcome-en.png)
-
 
 - **Wrong language showing?** Click the flag dropdown in the corner and pick
   yours — the whole program switches instantly.
@@ -85,12 +68,11 @@ open** until it finishes; you'll see progress moving in the window.
 > Songs are a separate, second step — the first download is just the base
 > game itself, so don't worry that no songs appeared yet.
 
-## 4. The main window
+## 3. The main window
 
 Once the base game is in place, you land here:
 
 ![Legacy Downloader main window](images/04-main-window-en.png)
-
 
 - **Game folder** — where your game lives. **Change...** lets you point it
   somewhere else if you ever move the game.
@@ -105,7 +87,7 @@ Once the base game is in place, you land here:
   whatever you picked, and click it again any time later to check for new
   songs or updates.
 
-## 5. Checking for updates
+## 4. Checking for updates
 
 Clicking the big button doesn't download anything right away — it first
 **checks** what you're missing. While it's checking, the progress bar may
@@ -134,7 +116,7 @@ Your in-game settings (screen resolution, windowed/fullscreen) are never
 touched by an update, modded or not.
 </details>
 
-## 6. While it downloads
+## 5. While it downloads
 
 The progress bar and the log box below it update live — you'll see the game
 and each song pack listed as they finish, one by one. **Don't close the
@@ -144,7 +126,7 @@ window while this is running.** When everything's done, you'll see:
 
 That's your confirmation it worked — go start the game.
 
-## 7. Coming back later for new songs
+## 6. Coming back later for new songs
 
 Just run `LegacyDownloader.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs
@@ -180,14 +162,16 @@ navigated with number keys:
 
 ## Troubleshooting
 
-- **Blue "Windows protected your PC" screen** — expected, see [step 2](#2-windows-shows-a-blue-warning-screen-thats-normal).
-  Click More info → Run anyway.
 - **Antivirus quarantines or deletes `rclone.exe`** — a known false
   positive. Some antivirus tools flag `rclone` as a "hacktool" because
   attackers can also use it, but it's a legitimate, widely-used open-source
   tool, and it's the only thing this program uses to fetch files. Restore it
   from your antivirus's quarantine/history, allow it, then run
   `LegacyDownloader.bat` again.
+- **A security warning pops up when you double-click `LegacyDownloader.bat`**
+  — this can happen the first time you run any downloaded script. Click
+  through it ("More info → Run anyway", or similar wording) — it's expected
+  for a small independently-made tool, not a sign anything's wrong.
 - **"rclone.exe is missing" message** — re-download the zip and extract
   again; don't run the tool from inside the zip viewer.
 - **Nothing seems to happen when I click a folder button** — the picker

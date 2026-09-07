@@ -14,10 +14,7 @@ Pour ceux qui veulent juste la version courte :
 
 1. Téléchargez le zip depuis la [page des Releases](../../releases) et
    extrayez-le.
-2. Double-cliquez sur `LegacyDownloader.bat`. Si Windows affiche un écran
-   bleu d'avertissement, cliquez sur **Informations complémentaires →
-   Exécuter quand même** (voir l'[étape 2](#2-windows-affiche-un-écran-davertissement-bleu-cest-normal)
-   ci-dessous — c'est normal, ce n'est pas un virus).
+2. Double-cliquez sur `LegacyDownloader.bat`.
 3. Suivez les étapes de l'écran de bienvenue, choisissez vos chansons, puis
    cliquez sur **« Télécharger / Vérifier les mises à jour »**.
 4. Quand le message **« Vous êtes à jour »** apparaît, ouvrez `Legacy.exe`
@@ -36,26 +33,13 @@ décrit, le guide détaillé ci-dessous contient une image pour chaque écran.
    l'intérieur de la fenêtre du zip.
 3. Ouvrez le dossier extrait et double-cliquez sur **`LegacyDownloader.bat`**.
 
-<!-- TODO screenshot: images/01-extracted-folder.png -->
+![Contenu du dossier extrait](images/01-extracted-folder.png)
 
-## 2. Windows affiche un écran d'avertissement bleu — c'est normal
+> Si votre antivirus signale `rclone.exe` (un fichier dans ce dossier),
+> consultez la section [Dépannage](#dépannage) ci-dessous — c'est un faux
+> positif connu, pas un vrai problème avec le téléchargement.
 
-Au premier lancement, Windows peut afficher un écran bleu en plein écran
-disant **« Windows a protégé votre ordinateur »**. Cela arrive à presque
-tous les petits logiciels indépendants — Windows ne le reconnaît pas
-encore, comme pour n'importe quelle nouvelle application lors de son
-premier lancement. Cela ne signifie **pas** qu'un virus a été détecté.
-
-<!-- TODO screenshot: images/02-smartscreen.png -->
-
-1. Cliquez sur le petit lien **« Informations complémentaires »**.
-2. Un bouton **« Exécuter quand même »** apparaît — cliquez dessus.
-
-Vous ne devriez avoir à faire cela qu'une seule fois. Si votre antivirus
-signale séparément `rclone.exe` (un fichier dans ce dossier), consultez la
-section [Dépannage](#dépannage) ci-dessous — c'est aussi un faux positif connu.
-
-## 3. Premier lancement — écran de bienvenue
+## 2. Premier lancement — écran de bienvenue
 
 Une fenêtre **« Bienvenue »** apparaît ensuite.
 
@@ -89,7 +73,7 @@ jusqu'à la fin ; la progression s'affiche dans la fenêtre.
 > uniquement le jeu de base ; ne vous inquiétez donc pas si aucune chanson
 > n'apparaît encore.
 
-## 4. La fenêtre principale
+## 3. La fenêtre principale
 
 Une fois le jeu de base en place, vous arrivez ici :
 
@@ -109,7 +93,7 @@ Une fois le jeu de base en place, vous arrivez ici :
   Cliquez dessus pour récupérer ce que vous avez choisi, et cliquez à
   nouveau plus tard pour vérifier les nouvelles chansons ou mises à jour.
 
-## 5. Vérification des mises à jour
+## 4. Vérification des mises à jour
 
 Cliquer sur le gros bouton ne télécharge rien immédiatement — il
 **vérifie** d'abord ce qui manque ou a changé. Pendant la vérification, la
@@ -139,7 +123,7 @@ Vos réglages en jeu (résolution, plein écran/fenêtré) ne sont jamais
 touchés par une mise à jour, moddée ou non.
 </details>
 
-## 6. Pendant le téléchargement
+## 5. Pendant le téléchargement
 
 La barre de progression et le journal en dessous se mettent à jour en
 direct — vous verrez le jeu et chaque pack de chansons listés au fur et à
@@ -151,7 +135,7 @@ que cela s'exécute.** Une fois tout terminé, vous verrez :
 
 C'est votre confirmation que tout a fonctionné — allez lancer le jeu.
 
-## 7. Revenir plus tard pour de nouvelles chansons
+## 6. Revenir plus tard pour de nouvelles chansons
 
 Relancez simplement `LegacyDownloader.bat` à tout moment. Il se souvient de
 votre dossier et de vos choix de chansons, et cliquer sur **« Télécharger /
@@ -191,9 +175,6 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 
 ## Dépannage
 
-- **Écran bleu « Windows a protégé votre ordinateur »** — attendu, voir
-  l'[étape 2](#2-windows-affiche-un-écran-davertissement-bleu-cest-normal).
-  Cliquez sur Informations complémentaires → Exécuter quand même.
 - **L'antivirus met `rclone.exe` en quarantaine ou le supprime** — un faux
   positif connu. Certains antivirus signalent `rclone` comme un « outil de
   piratage » car des attaquants peuvent aussi l'utiliser, mais c'est un
@@ -201,6 +182,11 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
   utilisé par ce programme pour récupérer les fichiers. Restaurez-le depuis
   la quarantaine/l'historique de votre antivirus, autorisez-le, puis
   relancez `LegacyDownloader.bat`.
+- **Un avertissement de sécurité apparaît quand vous double-cliquez sur
+  `LegacyDownloader.bat`** — cela peut arriver la première fois que vous
+  exécutez un script téléchargé. Cliquez pour continuer (« Informations
+  complémentaires → Exécuter quand même », ou une formulation similaire) —
+  c'est normal pour un petit outil indépendant, pas un signe de problème.
 - **Message « rclone.exe est manquant »** — retéléchargez le zip et
   extrayez-le à nouveau ; n'exécutez pas l'outil depuis l'intérieur de la
   fenêtre du zip.

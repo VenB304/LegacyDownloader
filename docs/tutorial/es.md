@@ -15,10 +15,7 @@ Para quien solo quiera la versión corta:
 
 1. Descarga el zip desde la [página de Releases](../../releases) y
    extráelo.
-2. Haz doble clic en `LegacyDownloader.bat`. Si Windows muestra una
-   pantalla azul de advertencia, haz clic en **Más información → Ejecutar
-   de todas formas** (mira el [paso 2](#2-windows-muestra-una-pantalla-azul-de-advertencia-es-normal)
-   más abajo — es lo esperado, no es un virus).
+2. Haz doble clic en `LegacyDownloader.bat`.
 3. Sigue los pasos de la pantalla de bienvenida, elige tus canciones y haz
    clic en **«Descargar / Buscar actualizaciones»**.
 4. Cuando aparezca el mensaje **«Estás al día»**, abre `Legacy.exe` en tu
@@ -37,27 +34,14 @@ de abajo tiene una imagen para cada pantalla.
    ventana del zip.
 3. Abre la carpeta extraída y haz doble clic en **`LegacyDownloader.bat`**.
 
-<!-- TODO screenshot: images/01-extracted-folder.png -->
+![Contenido de la carpeta extraída](images/01-extracted-folder.png)
 
-## 2. Windows muestra una pantalla azul de advertencia — es normal
+> Si tu antivirus marca `rclone.exe` (un archivo dentro de esta carpeta),
+> consulta la sección de [Solución de problemas](#solución-de-problemas) más
+> abajo — es un falso positivo conocido, no un problema real con la
+> descarga.
 
-La primera vez que lo ejecutas, Windows puede mostrar una pantalla azul a
-pantalla completa que dice **«Windows protegió tu PC»**. Esto le pasa a
-casi cualquier programa pequeño e independiente — Windows simplemente
-todavía no lo reconoce, igual que pasaría con cualquier aplicación nueva en
-su primer uso. **No** significa que se haya encontrado un virus.
-
-<!-- TODO screenshot: images/02-smartscreen.png -->
-
-1. Haz clic en el pequeño enlace **«Más información»**.
-2. Aparece un botón **«Ejecutar de todas formas»** — haz clic en él.
-
-Solo deberías necesitar hacer esto una vez. Si tu antivirus marca por
-separado `rclone.exe` (un archivo dentro de esta carpeta), consulta la
-sección de [Solución de problemas](#solución-de-problemas) más abajo — eso
-también es un falso positivo conocido.
-
-## 3. Primer inicio — pantalla de bienvenida
+## 2. Primer inicio — pantalla de bienvenida
 
 A continuación aparece una ventana de **«Bienvenido»**.
 
@@ -90,7 +74,7 @@ verás el progreso avanzando en la ventana.
 > juego base, así que no te preocupes si todavía no aparece ninguna
 > canción.
 
-## 4. La ventana principal
+## 3. La ventana principal
 
 Una vez que el juego base está en su sitio, llegas aquí:
 
@@ -109,7 +93,7 @@ Una vez que el juego base está en su sitio, llegas aquí:
   obtener lo que elegiste, y vuelve a hacer clic más adelante para buscar
   canciones nuevas o actualizaciones.
 
-## 5. Comprobación de actualizaciones
+## 4. Comprobación de actualizaciones
 
 Hacer clic en el botón grande no descarga nada de inmediato — primero
 **comprueba** qué te falta o ha cambiado. Mientras comprueba, la barra de
@@ -139,7 +123,7 @@ Tus ajustes dentro del juego (resolución, pantalla completa/ventana) nunca
 se tocan con una actualización, esté modificado o no.
 </details>
 
-## 6. Durante la descarga
+## 5. Durante la descarga
 
 La barra de progreso y el registro de abajo se actualizan en vivo — verás
 el juego y cada paquete de canciones listados a medida que terminan, uno
@@ -150,7 +134,7 @@ Cuando todo termine, verás:
 
 Esa es tu confirmación de que todo funcionó — ve a iniciar el juego.
 
-## 7. Volver más tarde por canciones nuevas
+## 6. Volver más tarde por canciones nuevas
 
 Simplemente ejecuta `LegacyDownloader.bat` de nuevo cuando quieras. Recuerda
 tu carpeta y tus canciones elegidas, y hacer clic en **«Descargar / Buscar
@@ -189,9 +173,6 @@ lugar. Mismas funciones, navegando con teclas numéricas:
 
 ## Solución de problemas
 
-- **Pantalla azul «Windows protegió tu PC»** — esperado, mira el
-  [paso 2](#2-windows-muestra-una-pantalla-azul-de-advertencia-es-normal).
-  Haz clic en Más información → Ejecutar de todas formas.
 - **El antivirus pone en cuarentena o borra `rclone.exe`** — un falso
   positivo conocido. Algunos antivirus marcan `rclone` como una
   «herramienta de hackeo» porque los atacantes también pueden usarla, pero
@@ -199,6 +180,11 @@ lugar. Mismas funciones, navegando con teclas numéricas:
   que usa este programa para obtener archivos. Restáuralo desde la
   cuarentena/historial de tu antivirus, permítelo, y vuelve a ejecutar
   `LegacyDownloader.bat`.
+- **Aparece un aviso de seguridad al hacer doble clic en
+  `LegacyDownloader.bat`** — esto puede pasar la primera vez que ejecutas
+  cualquier script descargado. Haz clic para continuar («Más información →
+  Ejecutar de todas formas», o algo similar) — es normal para una
+  herramienta pequeña e independiente, no una señal de que algo va mal.
 - **Mensaje «falta rclone.exe»** — vuelve a descargar el zip y extráelo de
   nuevo; no ejecutes la herramienta desde dentro del visor del zip.
 - **No pasa nada al hacer clic en un botón de carpeta** — la ventana de
