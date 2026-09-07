@@ -43,7 +43,7 @@ $null = Initialize-Language -Code $bootCfg.Lang
 # Decide the front-end up front - it changes how fatal errors are shown.
 $GuiScript     = Join-Path $ScriptDir 'LegacyDownloader.Gui.ps1'
 $ConsoleScript = Join-Path $ScriptDir 'LegacyDownloader.Console.ps1'
-$UseGui        = (-not $Console) -and (Test-Path $GuiScript)
+$UseGui        = (-not $Console) -and (Test-Path -LiteralPath $GuiScript)
 
 function Show-FatalError([string]$Message) {
     if ($UseGui) {
@@ -64,7 +64,7 @@ function Show-FatalError([string]$Message) {
 }
 
 # --- preflight: rclone.exe must be present and runnable ---
-if (-not (Test-Path $Rclone)) {
+if (-not (Test-Path -LiteralPath $Rclone)) {
     Show-FatalError (T 'entry.rclone_missing')
     exit 1
 }
@@ -84,7 +84,7 @@ if ($UseGui) {
         Show-FatalError (("{0}`n`n{1}" -f (T 'entry.gui_crashed'), $_.Exception.Message))
         exit 1
     }
-} elseif (Test-Path $ConsoleScript) {
+} elseif (Test-Path -LiteralPath $ConsoleScript) {
     . $ConsoleScript
 } else {
     Show-FatalError (T 'entry.no_frontend')

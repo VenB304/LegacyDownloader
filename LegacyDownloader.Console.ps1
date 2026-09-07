@@ -107,7 +107,7 @@ function Show-FolderPicker([string]$Description) {
 
 function Ensure-Directory([string]$Path) {
     try {
-        New-Item -ItemType Directory -Force -Path $Path -ErrorAction Stop | Out-Null
+        New-Item -ItemType Directory -Force -LiteralPath $Path -ErrorAction Stop | Out-Null
         return $true
     } catch {
         Write-Host (T 'error.cant_create_folder' @{ error = $_.Exception.Message }) -ForegroundColor Red
@@ -121,7 +121,11 @@ function Invoke-RcloneCopy([string]$Source, [string]$Dest, [string[]]$ExtraArgs 
         $quotedSource = ConvertTo-QuotedArg $Source
         $quotedDest   = ConvertTo-QuotedArg $Dest
         $quotedCommonArgs = $CommonArgs | ForEach-Object { ConvertTo-QuotedArg $_ }
-        $argLine = (@('copy', $quotedSource, $quotedDest) + $quotedCommonArgs + $ExtraArgs) -join ' '
+        # $ExtraArgs carries --exclude <pattern> pairs; a pattern with a space
+        # (a moddable file the user chose to keep) must be quoted like everything
+        # else or rclone splits it into two argv tokens.
+        $quotedExtra  = $ExtraArgs | ForEach-Object { ConvertTo-QuotedArg $_ }
+        $argLine = (@('copy', $quotedSource, $quotedDest) + $quotedCommonArgs + $quotedExtra) -join ' '
         Start-Process -FilePath $Rclone -ArgumentList $argLine -NoNewWindow -Wait
     } finally {
         Exit-NoScrollBuffer $savedBuffer
@@ -135,7 +139,7 @@ function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
     # fullscreen, etc). Fetch it once on a fresh install, then never overwrite
     # it - syncing the server's copy was resetting people's settings on every
     # update.
-    if (Test-Path ([System.IO.Path]::Combine($GamePath, 'config.xml'))) {
+    if (Test-Path -LiteralPath ([System.IO.Path]::Combine($GamePath, 'config.xml'))) {
         $excludeArgs += @('--exclude', '/config.xml')
     }
     foreach ($e in $ExtraExcludes) { $excludeArgs += @('--exclude', $e) }
@@ -151,7 +155,7 @@ function Invoke-EditionSync([string]$GamePath, [string]$Edition) {
 
 function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
     $mapsDir = Join-Path $GamePath 'maps'
-    if (-not $Confirmed -and (Test-GameFolder $GamePath) -and -not (Test-Path $mapsDir)) {
+    if (-not $Confirmed -and (Test-GameFolder $GamePath) -and -not (Test-Path -LiteralPath $mapsDir)) {
         Write-Host (T 'sync.maps_missing_warn') -ForegroundColor Yellow
         Write-Host "  $mapsDir"
         Write-Host (T 'sync.maps_missing_level')
@@ -524,10 +528,10 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions) {
             # to fetch (the user unchecked these on purpose).
             foreach ($ed in $removed) {
                 $localDir = Join-Path $GamePath "maps\$ed"
-                if (Test-Path $localDir) {
+                if (Test-Path -LiteralPath $localDir) {
                     if (Confirm-YesNo (T 'maps.delete_or_keep' @{ edition = $ed })) {
                         try {
-                            Remove-Item -Recurse -Force $localDir -ErrorAction Stop
+                            Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop
                             Write-Host (T 'maps.deleted' @{ edition = $ed })
                         } catch {
                             Write-Host (T 'maps.cant_delete' @{ edition = $ed }) -ForegroundColor Yellow
@@ -544,7 +548,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions) {
                 Invoke-BaseSync $GamePath $prev.BaseExcludes
             }
 
-            return if ($selected.Count -eq $remote.Count) { 'AUTO' } else { ($selected -join ',') }
+            if ($selected.Count -eq $remote.Count) { return 'AUTO' } else { return ($selected -join ',') }
         }
 
         if ($backToTop) { continue }
