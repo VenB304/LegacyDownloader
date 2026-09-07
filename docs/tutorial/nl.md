@@ -14,7 +14,7 @@ Andere talen: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
 
 Voor wie gewoon de korte versie wil:
 
-1. Download de zip van de [Releases-pagina](../../releases) en pak hem
+1. Download de zip van de [Releases-pagina](https://github.com/VenB304/LegacyDownloader/releases) en pak hem
    uit.
 2. Dubbelklik op `LegacyDownloader.bat`.
 3. Volg de stappen van het welkomstscherm, kies je nummers en klik op
@@ -29,7 +29,7 @@ uitgebreide handleiding hieronder een afbeelding voor elk scherm.
 
 ## 1. Downloaden en uitpakken
 
-1. Haal de nieuwste `LegacyDownloaderVX.zip` op van de [Releases-pagina](../../releases).
+1. Haal de nieuwste `LegacyDownloaderVX.zip` op van de [Releases-pagina](https://github.com/VenB304/LegacyDownloader/releases).
 2. Pak hem uit — rechtsklik op de zip → **Alles uitpakken...** → kies een
    normale map (het Bureaublad is prima). Voer het niet uit vanuit het
    zip-venster zelf.

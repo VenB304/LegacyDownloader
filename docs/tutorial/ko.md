@@ -14,7 +14,7 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 
 짧은 버전만 원하는 분들을 위해:
 
-1. [릴리스 페이지](../../releases)에서 zip을 다운로드하고 압축을 풉니다.
+1. [릴리스 페이지](https://github.com/VenB304/LegacyDownloader/releases)에서 zip을 다운로드하고 압축을 풉니다.
 2. `LegacyDownloader.bat`를 더블클릭합니다.
 3. 환영 화면의 안내를 따라가며 노래를 선택하고 **"다운로드 / 업데이트
    확인"**을 클릭합니다.
@@ -28,7 +28,7 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 
 ## 1. 다운로드하고 압축 풀기
 
-1. [릴리스 페이지](../../releases)에서 최신 `LegacyDownloaderVX.zip`을
+1. [릴리스 페이지](https://github.com/VenB304/LegacyDownloader/releases)에서 최신 `LegacyDownloaderVX.zip`을
    받습니다.
 2. 압축을 풉니다 — zip 파일을 마우스 오른쪽 버튼으로 클릭 → **압축 풀기...**
    → 일반 폴더를 선택합니다(바탕화면도 괜찮습니다). zip 창 안에서 직접

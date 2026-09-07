@@ -14,7 +14,7 @@ Legacy Downloader は **Legacy Offline PC** と曲パックをパソコンにダ
 
 とにかく手短に済ませたい方向けです。
 
-1. [Releases ページ](../../releases) から zip をダウンロードして展開します。
+1. [Releases ページ](https://github.com/VenB304/LegacyDownloader/releases) から zip をダウンロードして展開します。
 2. `LegacyDownloader.bat` をダブルクリックします。
 3. ようこそ画面の手順に沿って進み、曲を選び、**「ダウンロード / 更新を確認」**を
    クリックします。
@@ -28,7 +28,7 @@ Legacy Downloader は **Legacy Offline PC** と曲パックをパソコンにダ
 
 ## 1. ダウンロードして展開する
 
-1. [Releases ページ](../../releases) から最新の `LegacyDownloaderVX.zip` を
+1. [Releases ページ](https://github.com/VenB304/LegacyDownloader/releases) から最新の `LegacyDownloaderVX.zip` を
    入手します。
 2. 展開します — zip を右クリック → **すべて展開...** → 通常のフォルダを選びます
    (デスクトップで構いません)。zip ウィンドウの中から直接実行しないでください。

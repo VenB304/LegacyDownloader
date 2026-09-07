@@ -13,7 +13,7 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
 
 如果您只想看簡短版本：
 
-1. 從 [Releases 頁面](../../releases) 下載 zip 並解壓縮。
+1. 從 [Releases 頁面](https://github.com/VenB304/LegacyDownloader/releases) 下載 zip 並解壓縮。
 2. 雙擊 `LegacyDownloader.bat`。
 3. 按照歡迎畫面的步驟操作，選擇您想要的歌曲，然後點擊
    **「下載 / 檢查更新」**。
@@ -26,7 +26,7 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
 
 ## 1. 下載並解壓縮
 
-1. 從 [Releases 頁面](../../releases) 取得最新的 `LegacyDownloaderVX.zip`。
+1. 從 [Releases 頁面](https://github.com/VenB304/LegacyDownloader/releases) 取得最新的 `LegacyDownloaderVX.zip`。
 2. 解壓縮它——在 zip 檔上按右鍵 → **全部解壓縮...** → 選擇一個普通資料夾
    （桌面即可）。請不要直接在 zip 視窗內執行它。
 3. 開啟解壓縮後的資料夾，雙擊 **`LegacyDownloader.bat`**。

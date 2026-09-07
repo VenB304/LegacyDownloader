@@ -15,7 +15,7 @@ Otros idiomas: [English](en.md) · [Français](fr.md) · [Deutsch](de.md) ·
 
 Para quien solo quiera la versión corta:
 
-1. Descarga el zip desde la [página de Releases](../../releases) y
+1. Descarga el zip desde la [página de Releases](https://github.com/VenB304/LegacyDownloader/releases) y
    extráelo.
 2. Haz doble clic en `LegacyDownloader.bat`.
 3. Sigue los pasos de la pantalla de bienvenida, elige tus canciones y haz
@@ -30,7 +30,7 @@ de abajo tiene una imagen para cada pantalla.
 
 ## 1. Descargar y extraer
 
-1. Consigue el último `LegacyDownloaderVX.zip` desde la [página de Releases](../../releases).
+1. Consigue el último `LegacyDownloaderVX.zip` desde la [página de Releases](https://github.com/VenB304/LegacyDownloader/releases).
 2. Extráelo — clic derecho en el zip → **Extraer todo...** → elige una
    carpeta normal (el Escritorio sirve). No lo ejecutes desde dentro de la
    ventana del zip.

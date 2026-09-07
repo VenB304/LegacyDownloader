@@ -14,7 +14,7 @@ Outros idiomas: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
 
 Para quem só quer a versão curta:
 
-1. Baixe o zip da [página de Releases](../../releases) e extraia-o.
+1. Baixe o zip da [página de Releases](https://github.com/VenB304/LegacyDownloader/releases) e extraia-o.
 2. Dê duplo clique em `LegacyDownloader.bat`.
 3. Siga os passos da tela de boas-vindas, escolha suas músicas e clique em
    **"Baixar / Verificar atualizações"**.
@@ -28,7 +28,7 @@ abaixo tem uma imagem para cada tela.
 
 ## 1. Baixar e extrair
 
-1. Pegue o `LegacyDownloaderVX.zip` mais recente na [página de Releases](../../releases).
+1. Pegue o `LegacyDownloaderVX.zip` mais recente na [página de Releases](https://github.com/VenB304/LegacyDownloader/releases).
 2. Extraia-o — clique com o botão direito no zip → **Extrair tudo...** →
    escolha uma pasta normal (a Área de Trabalho serve). Não execute de
    dentro da janela do zip.

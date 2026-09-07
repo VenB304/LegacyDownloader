@@ -14,7 +14,7 @@ Legacy Downloader загружает **Legacy Offline PC** и наборы пе�
 
 Для тех, кому нужна только краткая версия:
 
-1. Скачайте zip со [страницы Releases](../../releases) и распакуйте его.
+1. Скачайте zip со [страницы Releases](https://github.com/VenB304/LegacyDownloader/releases) и распакуйте его.
 2. Дважды кликните по `LegacyDownloader.bat`.
 3. Пройдите шаги приветственного окна, выберите песни и нажмите
    **«Скачать / Проверить обновления»**.
@@ -28,7 +28,7 @@ Legacy Downloader загружает **Legacy Offline PC** и наборы пе�
 
 ## 1. Скачивание и распаковка
 
-1. Возьмите последний `LegacyDownloaderVX.zip` со [страницы Releases](../../releases).
+1. Возьмите последний `LegacyDownloaderVX.zip` со [страницы Releases](https://github.com/VenB304/LegacyDownloader/releases).
 2. Распакуйте его — правый клик по zip → **Извлечь всё...** → выберите
    обычную папку (подойдёт и Рабочий стол). Не запускайте его прямо из
    окна zip-архива.

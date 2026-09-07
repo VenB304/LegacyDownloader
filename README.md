@@ -11,6 +11,23 @@ fixes the update check flagging a fresh install's `Legacy.exe` / Kinect DLLs as
 "modified". Size-only comparison, folder-level detection, dry-run preview and
 protected files all carry over from V3.
 
+## Getting started
+
+**Just want to use it?** Grab the latest zip from the
+[Releases page](https://github.com/VenB304/LegacyDownloader/releases), extract it, and double-click
+`LegacyDownloader.bat`. A full step-by-step tutorial with screenshots is
+available in 12 languages:
+
+[English](docs/tutorial/en.md) · [Français](docs/tutorial/fr.md) ·
+[Español](docs/tutorial/es.md) · [Deutsch](docs/tutorial/de.md) ·
+[Italiano](docs/tutorial/it.md) · [Português](docs/tutorial/pt.md) ·
+[Nederlands](docs/tutorial/nl.md) · [日本語](docs/tutorial/ja.md) ·
+[한국어](docs/tutorial/ko.md) · [简体中文](docs/tutorial/zh-Hans.md) ·
+[繁體中文](docs/tutorial/zh-Hant.md) · [Русский](docs/tutorial/ru.md)
+
+The app itself also has a "Need help? Open the tutorial" link on the
+first-run welcome screen, which opens the tutorial in your current language.
+
 ## Usage
 
 **GUI (default):** double-click `LegacyDownloader.bat`. It hands off to
@@ -52,8 +69,10 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 - `LegacyDownloader.Console.ps1` — text/menu front-end
 - `LegacyDownloader.Gui.ps1` — WinForms GUI front-end
 - `lang/*.json` — string tables for all 12 languages
+- `docs/tutorial/*.md` — end-user tutorials with screenshots, in all 12 languages
 - `rclone.exe` *(gitignored — see below)*
 - `README.txt` — end-user instructions (ships inside the distributable bundle)
+- `LICENSE` — MIT license for this tool's own code (not the game content it downloads)
 
 ## Running from a clone
 

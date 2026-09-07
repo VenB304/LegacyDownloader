@@ -4,6 +4,11 @@ Legacy Downloader
 Everything you need is in this folder already - no separate downloads,
 no accounts, nothing else to install.
 
+A step-by-step tutorial with screenshots (in 12 languages) is available at:
+https://github.com/VenB304/LegacyDownloader/tree/main/docs/tutorial
+The app itself also has a "Need help? Open the tutorial" link on the
+first-run welcome screen.
+
 
 USAGE
 -----
@@ -121,9 +126,10 @@ TROUBLESHOOTING
   sure the folder is right (e.g. before the game has been downloaded
   yet).
 
-- A blue "Windows protected your PC" popup on first run - that's
-  SmartScreen. Click "More info" then "Run anyway." It appears because
-  the program isn't code-signed, not because it's harmful.
+- A security warning when you first run LegacyDownloader.bat - this can
+  happen with any downloaded script. Click through it ("More info" then
+  "Run anyway," or similar wording) - it appears because the program
+  isn't code-signed, not because it's harmful.
 
 - Songs show as boxes in the console - your console font doesn't cover
   that script. Switch to the GUI (LegacyDownloader.bat) instead.
