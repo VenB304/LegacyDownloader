@@ -5,7 +5,9 @@ en tu ordenador, y los mantiene actualizados. No necesitas ningún
 conocimiento técnico para usarlo — solo sigue las imágenes de abajo, en
 orden.
 
-Otros idiomas: [English](en.md) · [Français](fr.md)
+Otros idiomas: [English](en.md) · [Français](fr.md) · [Deutsch](de.md) ·
+[Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) · [日本語](ja.md) ·
+[한국어](ko.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 
 ---
 

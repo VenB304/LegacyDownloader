@@ -4,7 +4,9 @@ Legacy Downloader installe **Legacy Offline PC** et ses packs de chansons sur
 votre ordinateur, et les maintient à jour. Aucune connaissance technique
 n'est nécessaire — suivez simplement les images ci-dessous, dans l'ordre.
 
-Autres langues : [English](en.md) · [Español](es.md)
+Autres langues : [English](en.md) · [Español](es.md) · [Deutsch](de.md) ·
+[Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) · [日本語](ja.md) ·
+[한국어](ko.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 
 ---
 

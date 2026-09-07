@@ -175,7 +175,7 @@ function Get-LanguageCode { return $script:LangCode }
 
 # Languages with a docs/tutorial/<code>.md file. Update this list whenever a
 # new translation is added; anything not listed falls back to English.
-$script:TutorialLangs = @('en', 'fr', 'es')
+$script:TutorialLangs = @('en', 'fr', 'es', 'de', 'it', 'pt', 'nl', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ru')
 
 function Get-TutorialUrl {
     param([string]$Code)
