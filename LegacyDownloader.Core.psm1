@@ -14,6 +14,13 @@ $script:Rclone           = $null
 $script:ConfigPath       = $null
 $script:RcloneConfigPath = $null
 $script:Conn             = $null
+$script:ShareUrl         = $null
+
+# The file share the tool downloads from, as an rclone WebDAV endpoint.
+# This is the built-in default; a user can override it with a SHAREURL= line
+# in config.txt (see Get-ShareConn / Save-Config) so the tool keeps working
+# if the share ever moves and this repo is no longer maintained.
+$script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/TqaYM8TnT2RPNr2/"
 $script:RcloneConfigArgs = @()
 $script:SizeOnlyArgs     = @('--size-only')
 $script:CommonArgs       = @()
@@ -25,6 +32,24 @@ $script:LangCode         = 'en'
 $script:Strings          = @{}   # active language
 $script:StringsFallback  = @{}   # English, always loaded as the fallback layer
 
+function Get-ShareConn {
+    # Build the rclone :webdav: connection string for a Nextcloud public
+    # share link. For a Nextcloud public share the WebDAV username IS the
+    # share token - the last path segment of the share's .../dav/files/<token>/
+    # URL - so it's derived from the URL rather than configured separately.
+    # An empty / blank / unusable URL falls back to the built-in default.
+    param([string]$ShareUrl)
+
+    $url = if ([string]::IsNullOrWhiteSpace($ShareUrl)) { $script:DefaultShareUrl } else { $ShareUrl.Trim() }
+    if ($url -notmatch '/$') { $url += '/' }
+
+    $token = ''
+    $m = [regex]::Match($url, '/([^/]+)/\s*$')
+    if ($m.Success) { $token = $m.Groups[1].Value }
+
+    return ":webdav,url='$url',vendor='nextcloud',user='$token':"
+}
+
 function Initialize-LegacyCore {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$ScriptDir)
@@ -34,13 +59,14 @@ function Initialize-LegacyCore {
     $script:LangDir    = Join-Path $ScriptDir 'lang'
 
     $script:RcloneConfigPath = Join-Path $ScriptDir 'rclone.conf'
-    if (-not (Test-Path $script:RcloneConfigPath)) {
+    if (-not (Test-Path -LiteralPath $script:RcloneConfigPath)) {
         New-Item -ItemType File -Path $script:RcloneConfigPath -Force | Out-Null
     }
 
-    $webdavUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/TqaYM8TnT2RPNr2/"
-    $webdavUser = "TqaYM8TnT2RPNr2"
-    $script:Conn = ":webdav,url='$webdavUrl',vendor='nextcloud',user='$webdavUser':"
+    # Read the share URL straight from config.txt here (Load-Config, which
+    # normally exposes it, runs later - and creates the file on first run).
+    $script:ShareUrl = Read-ConfigValue 'SHAREURL'
+    $script:Conn     = Get-ShareConn $script:ShareUrl
 
     $script:RcloneConfigArgs = @('--config', $script:RcloneConfigPath)
 
@@ -80,6 +106,7 @@ function Initialize-LegacyCore {
         RcloneConfigPath = $script:RcloneConfigPath
         LangDir          = $script:LangDir
         Conn             = $script:Conn
+        ShareUrl         = $script:ShareUrl
         RcloneConfigArgs = $script:RcloneConfigArgs
         SizeOnlyArgs     = $script:SizeOnlyArgs
         CommonArgs       = $script:CommonArgs
@@ -98,7 +125,7 @@ function Import-LangFile([string]$Code) {
     $h = @{}
     if ([string]::IsNullOrWhiteSpace($script:LangDir)) { return $h }
     $path = Join-Path $script:LangDir ($Code + '.json')
-    if (-not (Test-Path $path)) { return $h }
+    if (-not (Test-Path -LiteralPath $path)) { return $h }
     try {
         $raw  = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
         $json = $raw | ConvertFrom-Json
@@ -112,8 +139,8 @@ function Import-LangFile([string]$Code) {
 function Get-AvailableLanguages {
     # One entry per lang\*.json: Code / NativeName / Name (English name).
     $out = @()
-    if ([string]::IsNullOrWhiteSpace($script:LangDir) -or -not (Test-Path $script:LangDir)) { return $out }
-    $files = Get-ChildItem -Path $script:LangDir -Filter '*.json' -File -ErrorAction SilentlyContinue | Sort-Object Name
+    if ([string]::IsNullOrWhiteSpace($script:LangDir) -or -not (Test-Path -LiteralPath $script:LangDir)) { return $out }
+    $files = Get-ChildItem -LiteralPath $script:LangDir -Filter '*.json' -File -ErrorAction SilentlyContinue | Sort-Object Name
     foreach ($f in $files) {
         try {
             $json = ([System.IO.File]::ReadAllText($f.FullName, [System.Text.Encoding]::UTF8)) | ConvertFrom-Json
@@ -212,17 +239,30 @@ function T {
 
 function Test-GameFolder([string]$Path) {
     if ([string]::IsNullOrWhiteSpace($Path)) { return $false }
-    return (Test-Path (Join-Path $Path 'Legacy.exe'))
+    # -LiteralPath: a folder path containing [ ] would otherwise be read as a
+    # wildcard character class and Test-Path would report the exe as missing.
+    return (Test-Path -LiteralPath (Join-Path $Path 'Legacy.exe'))
+}
+
+function Read-ConfigValue([string]$Key) {
+    # First uncommented "<Key>=<value>" line from config.txt, trimmed; '' if none.
+    if ([string]::IsNullOrWhiteSpace($script:ConfigPath) -or -not (Test-Path -LiteralPath $script:ConfigPath)) { return '' }
+    $found = ''
+    foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
+        if ($line.Trim() -match ('^(?i:' + [regex]::Escape($Key) + ')\s*=\s*(.+)$')) { $found = $matches[1].Trim() }
+    }
+    return $found
 }
 
 function Load-Config {
-    if (-not (Test-Path $script:ConfigPath)) {
+    if (-not (Test-Path -LiteralPath $script:ConfigPath)) {
         Save-Config -GamePath '' -Editions 'AUTO' -Lang (Resolve-DefaultLanguage)
     }
     $gamePath = ''
     $editions = 'AUTO'
     $lang     = ''
-    foreach ($line in Get-Content $script:ConfigPath) {
+    $shareUrl = ''
+    foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
         $parts = $trimmed.Split('=', 2)
@@ -232,10 +272,11 @@ function Load-Config {
         if ($key -eq 'GAMEPATH') { $gamePath = $value }
         if ($key -eq 'EDITIONS') { $editions = $value }
         if ($key -eq 'LANG')     { $lang = $value }
+        if ($key -eq 'SHAREURL') { $shareUrl = $value }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
-    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang }
+    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl }
 }
 
 function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
@@ -243,12 +284,11 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
     # existing two-argument callers don't wipe the LANG line); default 'en'.
     if ([string]::IsNullOrWhiteSpace($Lang)) {
         $Lang = 'en'
-        if (Test-Path $script:ConfigPath) {
-            foreach ($line in Get-Content $script:ConfigPath) {
-                if ($line.Trim() -match '^(?i:LANG)\s*=\s*(.+)$') { $Lang = $matches[1].Trim() }
-            }
-        }
+        $existingLang = Read-ConfigValue 'LANG'
+        if ($existingLang) { $Lang = $existingLang }
     }
+    # SHAREURL is hand-edited only - never wipe an override the user added.
+    $ShareUrl = Read-ConfigValue 'SHAREURL'
     @(
         "# Legacy Downloader - configuration"
         "# You normally don't need to edit this by hand - use the program's"
@@ -265,7 +305,14 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
         "# the lang folder, e.g. en, ja, fr, de, es, zh-Hans. Change it from"
         "# the Language menu."
         "LANG=$Lang"
-    ) | Set-Content -Path $script:ConfigPath -Encoding UTF8
+        ""
+        "# SHAREURL (advanced) - the rclone WebDAV link the tool downloads"
+        "# from. Leave it commented out to use the built-in default. If the"
+        "# share ever moves and no new build is available, paste the new"
+        "# public WebDAV link here, e.g.:"
+        "#   SHAREURL=https://cloud.example.com/public.php/dav/files/TOKEN/"
+        $(if ($ShareUrl) { "SHAREURL=$ShareUrl" } else { "#SHAREURL=" })
+    ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
 function Sort-EditionNames {
@@ -312,22 +359,35 @@ function Format-EditionDisplay([string]$Edition) {
     return "$Edition (check in-game songlist)"
 }
 
+# rclone writes NOTICE lines to stderr, and under the module's
+# $ErrorActionPreference='Stop' a native command that touches stderr is
+# promoted to a terminating error even with a 2>$null redirect (Windows
+# PowerShell 5.1). These two helpers drop to SilentlyContinue for the call
+# and swallow anything that still slips through - every caller already
+# treats an empty result as "couldn't reach the share". (They can't route
+# through Invoke-RcloneCapture: its Start-Process -Wait deadlocks when
+# called straight from the GUI thread, which is why the plan scan runs in
+# a child job.)
 function Get-RemoteEditions {
     $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
-    $out = & $rc lsf "$conn`maps" --dirs-only @cfgArgs 2>$null
+    $ErrorActionPreference = 'SilentlyContinue'
+    try { $out = & $rc lsf "$conn`maps" --dirs-only @cfgArgs 2>$null } catch { return @() }
+    if ($LASTEXITCODE -ne 0) { return @() }
     return @($out | ForEach-Object { $_.TrimEnd('/') } | Where-Object { $_ -ne '' } | Sort-EditionNames)
 }
 
 function Get-RemoteSongs([string]$Edition) {
     $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
-    $out = & $rc lsf "$conn`maps/$Edition" --files-only @cfgArgs 2>$null
+    $ErrorActionPreference = 'SilentlyContinue'
+    try { $out = & $rc lsf "$conn`maps/$Edition" --files-only @cfgArgs 2>$null } catch { return @() }
+    if ($LASTEXITCODE -ne 0) { return @() }
     return @($out | ForEach-Object { $_ -replace '_pc\.ipk$', '' } | Sort-Object)
 }
 
 function Get-LocalEditions([string]$GamePath) {
     $mapsDir = Join-Path $GamePath 'maps'
-    if (-not (Test-Path $mapsDir)) { return @() }
-    return @(Get-ChildItem -Path $mapsDir -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.Name } | Sort-EditionNames)
+    if (-not (Test-Path -LiteralPath $mapsDir)) { return @() }
+    return @(Get-ChildItem -LiteralPath $mapsDir -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.Name } | Sort-EditionNames)
 }
 
 function ConvertTo-QuotedArg([string]$Value) {
@@ -426,8 +486,8 @@ function Resolve-GameFolder([string]$Path) {
 
 function Get-LocalSongCount([string]$GamePath) {
     $mapsDir = [System.IO.Path]::Combine($GamePath, 'maps')
-    if (-not (Test-Path $mapsDir)) { return 0 }
-    return @(Get-ChildItem -Path $mapsDir -Recurse -Filter '*.ipk' -File -ErrorAction SilentlyContinue).Count
+    if (-not (Test-Path -LiteralPath $mapsDir)) { return 0 }
+    return @(Get-ChildItem -LiteralPath $mapsDir -Recurse -Filter '*.ipk' -File -ErrorAction SilentlyContinue).Count
 }
 
 # ----------------------------------------------------------------------------
@@ -451,7 +511,7 @@ function Get-UpdatePlan {
 
     $mapsDir     = [System.IO.Path]::Combine($GamePath, 'maps')
     $gamePresent = Test-GameFolder $GamePath
-    $mapsMissing = -not (Test-Path $mapsDir)
+    $mapsMissing = -not (Test-Path -LiteralPath $mapsDir)
     $betterPath  = Resolve-GameFolder $GamePath
     $wrongLevel  = [bool]($betterPath -and ($betterPath -ne $GamePath.TrimEnd('\')))
 
@@ -494,7 +554,14 @@ function Get-UpdatePlan {
         $songBytes = $m.Bytes
         $byEd = [ordered]@{}
         foreach ($f in $m.Files) {
+            # Every song lives at "<edition>/<file>". A path with no separator
+            # is a stray file at maps/ root or a mis-parsed log line - it must
+            # not become a phantom edition (the whole maps tree still syncs in
+            # the AUTO download job regardless). $ed is also skipped if it
+            # doesn't look like an edition folder name.
+            if ($f -notmatch '[\\/]') { continue }
             $ed = ($f -split '[\\/]', 2)[0]
+            if ([string]::IsNullOrWhiteSpace($ed) -or $ed -notmatch '^[\w.\- ]+$') { continue }
             if (-not $byEd.Contains($ed)) { $byEd[$ed] = @() }
             $byEd[$ed] += $f
             $songFilesFlat += $f
@@ -524,8 +591,9 @@ function Get-UpdatePlan {
     #   ask    - files a player might have modded (confirm before overwriting)
     #   normal - plain content (update silently)
     #   config.xml - local settings: keep whatever's on disk unless missing
-    $askNames     = @('legacy.exe', 'kinect10.dll', 'kinect20.dll')
-    $haveSettings = Test-Path ([System.IO.Path]::Combine($GamePath, 'config.xml'))
+    # "Moddable" = Legacy.exe or any Kinect*.dll (a patched exe or a swapped
+    # Kinect shim - the exact name of which varies - must survive an update).
+    $haveSettings = Test-Path -LiteralPath ([System.IO.Path]::Combine($GamePath, 'config.xml'))
     $baseAsk = @(); $baseNormal = @()
     foreach ($f in $base.Files) {
         $leaf = (Split-Path -Leaf $f).ToLower()
@@ -537,7 +605,7 @@ function Get-UpdatePlan {
         # the user actually has a local copy. On a first install / empty folder
         # every base file "would copy", including legacy.exe and the Kinect DLLs -
         # those are just the initial download, not a modified copy to protect.
-        if ($askNames -contains $leaf) {
+        if (($leaf -eq 'legacy.exe') -or ($leaf -like 'kinect*.dll')) {
             $localCopy = [System.IO.Path]::Combine($GamePath, ($f -replace '/', '\'))
             if (Test-Path -LiteralPath $localCopy) { $baseAsk += $f } else { $baseNormal += $f }
         } else {
@@ -670,7 +738,7 @@ function Get-BaseSyncExcludes {
     # plus any moddable files the user chose to keep.
     param([Parameter(Mandatory = $true)][string]$GamePath, [string[]]$KeepFiles = @())
     $ex = @('maps/**')
-    if (Test-Path ([System.IO.Path]::Combine($GamePath, 'config.xml'))) { $ex += '/config.xml' }
+    if (Test-Path -LiteralPath ([System.IO.Path]::Combine($GamePath, 'config.xml'))) { $ex += '/config.xml' }
     foreach ($f in $KeepFiles) { if ($f) { $ex += $f } }
     return $ex
 }

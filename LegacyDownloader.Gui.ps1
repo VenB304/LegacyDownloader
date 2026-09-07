@@ -198,7 +198,7 @@ function Poll-Scan {
 
     $plan = $null
     if (-not $errMsg) {
-        try { if (Test-Path $script:ScanOut) { $plan = Import-Clixml -Path $script:ScanOut } } catch { $errMsg = $_.Exception.Message }
+        try { if (Test-Path -LiteralPath $script:ScanOut) { $plan = Import-Clixml -LiteralPath $script:ScanOut } } catch { $errMsg = $_.Exception.Message }
     }
     Remove-Item -LiteralPath $script:ScanOut -Force -ErrorAction SilentlyContinue
 
@@ -714,7 +714,7 @@ function Run-SetupDialog {
     $path = Pick-Folder $desc
     if (-not $path) { return }
     if ($mode -eq 'get') {
-        try { New-Item -ItemType Directory -Force -Path $path -ErrorAction Stop | Out-Null } catch {
+        try { New-Item -ItemType Directory -Force -LiteralPath $path -ErrorAction Stop | Out-Null } catch {
             Warn-Box (T 'error.cant_create_folder' @{ error = $_.Exception.Message }) (T 'gui.err_title'); return
         }
     }

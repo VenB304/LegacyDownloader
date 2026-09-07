@@ -30,6 +30,39 @@ or the main [README](../README.md) for that.
 
 ## V6-era changes (unreleased, on `main`)
 
+- **User-overridable share URL**: the WebDAV endpoint is no longer a hard-coded
+  constant. `Initialize-LegacyCore` reads an optional `SHAREURL=` line from
+  `config.txt` (via `Read-ConfigValue`) and builds `$script:Conn` with
+  `Get-ShareConn`, which derives the Nextcloud public-share WebDAV `user=` from
+  the URL's last path segment. Blank / missing / unusable falls back to
+  `$script:DefaultShareUrl`. `Save-Config` never rewrites or drops a `SHAREURL`
+  the user added, and emits a commented `#SHAREURL=` template otherwise. Point
+  of this: if the share moves and no new build ships, people can repoint the
+  tool themselves without editing `.psm1`.
+- **Bracket-safe path checks**: every `Test-Path` / `Get-ChildItem` /
+  `Get-Content` / `New-Item` touching a user-supplied folder now passes
+  `-LiteralPath`. Without it, a game folder whose name contains `[` or `]`
+  (e.g. `Just Dance [2024]`) was read as a wildcard character class, so
+  `Test-GameFolder` reported the exe missing, `config.xml` protection in
+  `Get-BaseSyncExcludes` silently switched off (an update then overwrote the
+  player's settings), and the whole library re-downloaded as if fresh.
+- **`Get-RemoteEditions` / `Get-RemoteSongs` stderr hardening**: rclone writes
+  NOTICE lines to stderr, and under the module's `$ErrorActionPreference='Stop'`
+  Windows PowerShell 5.1 promotes *any* native-command stderr write to a
+  terminating error - even with `2>$null`. Both helpers now set
+  `SilentlyContinue` for the call, wrap it in try/catch, and check
+  `$LASTEXITCODE`, so an unreachable share returns `@()` (which every caller
+  already handles) instead of crashing the console front-end mid-wizard. They
+  deliberately don't route through `Invoke-RcloneCapture` - its
+  `Start-Process -Wait` deadlocks when called straight from the GUI thread.
+- **Moddable-file match widened**: the base-file bucketer keyed off a literal
+  `@('legacy.exe','kinect10.dll','kinect20.dll')` list; it now matches
+  `legacy.exe` or `kinect*.dll` (glob), so a differently-named Kinect shim
+  (`KinectInteraction180_32.dll`, ...) still gets the per-file overwrite prompt.
+- **Phantom-edition guard**: `Get-UpdatePlan`'s AUTO branch buckets songs by the
+  first path segment of each `Parse-DryRun` line. It now skips lines with no
+  `/` or `\` (a stray file at `maps/` root, or an unstripped log prefix) so they
+  can't show up as a bogus edition in the preview.
 - **In-app tutorial link**: `Get-TutorialUrl -Code` in `LegacyDownloader.Core.psm1`
   maps a language code to its `docs/tutorial/<code>.md` GitHub URL, falling back
   to English for any code not in `$script:TutorialLangs`. Wired to a `LinkLabel`
