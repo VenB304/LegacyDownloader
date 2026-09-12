@@ -58,6 +58,17 @@ function Initialize-LegacyCore {
     $script:ConfigPath = Join-Path $ScriptDir 'config.txt'
     $script:LangDir    = Join-Path $ScriptDir 'lang'
 
+    # Upgrading from a pre-V7 install: config.txt used to sit next to the
+    # launcher, one level up from where bin\ (and this ScriptDir) now is.
+    # Migrate it in place so an upgrading user's saved game folder / editions
+    # / language aren't silently forgotten just because the file moved.
+    # Best-effort: a locked/permission-denied source is skipped silently and
+    # retried on the next launch (the source is only removed on success).
+    $legacyConfigPath = Join-Path (Split-Path -Parent $ScriptDir) 'config.txt'
+    if ((-not (Test-Path -LiteralPath $script:ConfigPath)) -and (Test-Path -LiteralPath $legacyConfigPath)) {
+        try { Move-Item -LiteralPath $legacyConfigPath -Destination $script:ConfigPath -Force } catch { }
+    }
+
     $script:RcloneConfigPath = Join-Path $ScriptDir 'rclone.conf'
     if (-not (Test-Path -LiteralPath $script:RcloneConfigPath)) {
         New-Item -ItemType File -Path $script:RcloneConfigPath -Force | Out-Null
@@ -79,8 +90,16 @@ function Initialize-LegacyCore {
     # this content and immune to however the drive was populated.
     $script:SizeOnlyArgs = @('--size-only')
 
+    # --local-no-sparse: exFAT (the usual "play drive" filesystem) can't
+    # honor rclone's Windows sparse-file pre-allocation for multi-thread
+    # downloads (FSCTL_SET_SPARSE fails with "Incorrect function"). rclone
+    # logs that as a scary-looking ERROR line but falls back and the file
+    # still completes - this just stops it from trying in the first place.
+    # Applied unconditionally (not just on exFAT): the cost on NTFS is at
+    # most a little extra disk zero-fill instead of sparse pre-allocation,
+    # which is far cheaper than detecting the filesystem type up front.
     $script:CommonArgs = @(
-        '-P', '--transfers=4', '--checkers=8', '--stats=1s'
+        '-P', '--transfers=4', '--checkers=8', '--stats=1s', '--local-no-sparse'
     ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
 
     # Args for the pre-download "what would change" scan: no progress meter,
@@ -96,7 +115,7 @@ function Initialize-LegacyCore {
     # (see Read-RcloneStats). No -P: the interactive meter and clean logging
     # don't mix.
     $script:GuiSyncArgs = @(
-        '-v', '--use-json-log', '--stats=1s', '--transfers=4', '--checkers=8'
+        '-v', '--use-json-log', '--stats=1s', '--transfers=4', '--checkers=8', '--local-no-sparse'
     ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
 
     return [PSCustomObject]@{

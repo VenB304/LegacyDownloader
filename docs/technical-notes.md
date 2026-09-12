@@ -28,7 +28,84 @@ or the main [README](../README.md) for that.
   `LegacyDownloader.ps1` — builds every form, dumps the control tree, and exits
   before `Application.Run`. Used in CI-style checks without a display.
 
-## V6-era changes (unreleased, on `main`)
+## V7 — friendly top-level layout
+
+Moved everything except the two launcher `.bat` files and `README.txt` into
+`bin\` (`LegacyDownloader.ps1`/`.Core.psm1`/`.Console.ps1`/`.Gui.ps1`,
+`rclone.exe`, `lang\`, and the runtime-generated `config.txt`/`rclone.conf`).
+Reported issue: with Windows' "hide extensions for known file types" default
+(most non-technical users have this on), `LegacyDownloader.ps1`,
+`LegacyDownloader.vbs` (since removed - see below), and `LegacyDownloader.bat`
+all displayed as the same bare "LegacyDownloader" name in Explorer,
+distinguishable only by icon - a new user had no reliable way to tell which
+one to double-click. Top level now ships exactly `LegacyDownloader-GUI.bat`,
+`LegacyDownloader-Console.bat`, and `README.txt`; `LegacyDownloader-GUI.bat`
+launches `bin\LegacyDownloader.ps1` (`$PSScriptRoot`-based path resolution
+needed no code changes, only relocating the files as a unit).
+`tools\build-release.ps1` and the other `tools\*.ps1` scripts were updated
+for the new `bin\` paths.
+
+**Dropped the `.vbs` hidden-launch trick (also V7):** `LegacyDownloader-GUI.bat`
+used to `start` a `LegacyDownloader.vbs` helper, which used `WScript.Shell.Run`
+to launch PowerShell fully hidden (window style 0) - avoiding even the
+sub-100ms flash of the `.bat`'s own console window. Removed after user
+reports of the release zip getting flagged as malicious: a `.vbs` silently
+spawning a hidden, `-ExecutionPolicy Bypass` PowerShell process is a
+well-documented dropper/loader pattern that antivirus and SmartScreen
+heuristics watch for specifically, independent of whether anything is
+digitally signed. `LegacyDownloader-GUI.bat` now calls
+`start "" powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden
+-File "%~dp0bin\LegacyDownloader.ps1"` directly. The `start` matters: without
+it, `cmd.exe` runs `powershell.exe` as a blocking foreground child and its own
+window stays open for the GUI's *entire* session instead of closing right
+away (caught in review, before release - an early draft of this fix omitted
+`start` and reintroduced a lingering console window, the exact problem the
+`.vbs` existed to avoid). With `start`, `cmd.exe` detaches and exits almost
+immediately, `bin\LegacyDownloader.ps1` still gets its own `-WindowStyle Hidden`
+window, and the net effect matches the old `.vbs` behavior closely enough
+(brief flash instead of zero flash) while dropping the WSH-spawns-hidden-
+PowerShell half of the heuristic signature. `bin\LegacyDownloader.vbs` was
+deleted; `tools\build-release.ps1`'s file list no longer references it.
+
+This is a **partial** mitigation, not a full fix for "the zip gets flagged as
+malicious": `-ExecutionPolicy Bypass` is still passed on every launch (both
+`.bat` files), which is its own independently-flaggable signal, separate from
+the WSH indirection this change removed - dropping *that* too would mean
+either shipping unsigned scripts that Windows' default policy simply refuses
+to run, or unblocking them first (`Unblock-File` after every extraction,
+itself another script step), so it was left in as the pragmatic tradeoff for
+a "download the zip and go" tool. Bundled `rclone.exe` also still gets
+flagged by some antivirus engines as a "hacktool" (see the Troubleshooting
+sections of the README/tutorials) - a separate, unrelated, and essentially
+permanent false positive tied to what rclone *can do*, not to anything in
+this repo's own scripts. Both of these are real, currently-unaddressed
+sources of the same user-visible symptom.
+
+**Upgrade path:** a returning user extracting V7 over a pre-V7 install would
+otherwise have their `config.txt` (saved game folder, editions, language,
+any `SHAREURL` override) orphaned at the old top-level location while
+`Initialize-LegacyCore` looks for it under the new `bin\`. `Initialize-LegacyCore`
+now migrates a legacy top-level `config.txt` into `bin\config.txt` in place
+(one `Move-Item`, best-effort) the first time it doesn't find one already
+there, before anything reads it.
+
+This only handles `config.txt` - it does **not** clean up the rest of a
+pre-V7 install. Zip extraction never deletes files that aren't in the
+archive, so extracting V7 directly over an old install leaves the old
+top-level `LegacyDownloader.ps1`/`.vbs`/`.bat`/`.Core.psm1`/`.Console.ps1`/
+`.Gui.ps1`, its own `lang\`, and its own ~85 MB `rclone.exe` sitting there
+unchanged, right alongside the new `bin\` tree and the two new launchers -
+recreating the exact "which file do I click" pile V7 exists to fix, and the
+old `LegacyDownloader.bat` chain still runs (pointed at the stale, now-
+orphaned copies) if someone clicks it. README.md/README.txt's upgrade note
+tells returning users to delete the old top-level files first (everything
+except `config.txt`, which the migration needs) before extracting V7 into
+the same folder - there is no automatic cleanup for this, by choice: the
+app deleting its own previously-shipped files based on a version guess is a
+worse failure mode (deleting the wrong thing on a mistaken assumption) than
+asking the user to do it once during a manual upgrade.
+
+## V6 changes
 
 - **User-overridable share URL**: the WebDAV endpoint is no longer a hard-coded
   constant. `Initialize-LegacyCore` reads an optional `SHAREURL=` line from
@@ -76,6 +153,17 @@ or the main [README](../README.md) for that.
   for button widths, plus `TextFormatFlags.WordBreak` for the hint label's wrapped
   height — instead of guessing a fixed size. Verified against all 12 languages'
   actual strings with no overlap.
+- **Sparse-file errors on exFAT**: rclone pre-allocates a sparse destination
+  file for multi-thread downloads on Windows, which needs `FSCTL_SET_SPARSE` -
+  a call exFAT (the usual "play drive" filesystem) doesn't support, so it
+  fails with `Incorrect function` and rclone logs a scary-looking `ERROR`
+  line (the transfer itself still completes via a fallback path). Both
+  `CommonArgs` (console) and `GuiSyncArgs` (GUI) now include
+  `--local-no-sparse` so rclone never attempts it. Applied unconditionally,
+  not just when the target turns out to be exFAT - detecting the filesystem
+  first isn't worth it for a flag whose only cost on NTFS is a bit of extra
+  zero-fill instead of sparse pre-allocation, which is what `--local-no-sparse`
+  actually trades away (see rclone's own docs for that flag).
 - **Screenshot automation**: `tools/capture-tutorial-screenshots.ps1` (gitignored,
   local-only) drives an isolated copy of the app against a throwaway fake game
   folder to capture the Welcome/Main/Preview screenshots used in the tutorials,

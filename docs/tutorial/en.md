@@ -15,7 +15,7 @@ Other languages: [Français](fr.md) · [Español](es.md) · [Deutsch](de.md) ·
 For anyone who just wants the short version:
 
 1. Download the zip from the [Releases page](https://github.com/VenB304/LegacyDownloader/releases) and extract it.
-2. Double-click `LegacyDownloader.bat`.
+2. Double-click `LegacyDownloader-GUI.bat`.
 3. Follow the on-screen welcome steps, pick your songs, and click
    **Download / Check for updates**.
 4. When it says "You're all set!", open `Legacy.exe` in your game folder to
@@ -31,13 +31,13 @@ walkthrough below has a picture for every screen.
 1. Grab the latest `LegacyDownloaderVX.zip` from the [Releases page](https://github.com/VenB304/LegacyDownloader/releases).
 2. Extract it — right-click the zip → **Extract All...** → pick a normal
    folder (Desktop is fine). Don't run it from inside the zip window itself.
-3. Open the extracted folder and double-click **`LegacyDownloader.bat`**.
+3. Open the extracted folder and double-click **`LegacyDownloader-GUI.bat`**.
 
 ![Extracted folder contents](images/01-extracted-folder.png)
 
-> If your antivirus flags `rclone.exe` (a file inside this folder), see the
-> [Troubleshooting](#troubleshooting) section below — that's a known false
-> positive, not an actual problem with the download.
+> If your antivirus flags `rclone.exe` (inside the `bin` folder here), see
+> the [Troubleshooting](#troubleshooting) section below — that's a known
+> false positive, not an actual problem with the download.
 
 ## 2. First run — Welcome screen
 
@@ -130,7 +130,7 @@ That's your confirmation it worked — go start the game.
 
 ## 6. Coming back later for new songs
 
-Just run `LegacyDownloader.bat` again any time. It remembers your folder and
+Just run `LegacyDownloader-GUI.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs
 anything new since your last visit.
 
@@ -169,8 +169,8 @@ navigated with number keys:
   attackers can also use it, but it's a legitimate, widely-used open-source
   tool, and it's the only thing this program uses to fetch files. Restore it
   from your antivirus's quarantine/history, allow it, then run
-  `LegacyDownloader.bat` again.
-- **A security warning pops up when you double-click `LegacyDownloader.bat`**
+  `LegacyDownloader-GUI.bat` again.
+- **A security warning pops up when you double-click `LegacyDownloader-GUI.bat`**
   — this can happen the first time you run any downloaded script. Click
   through it ("More info → Run anyway", or similar wording) — it's expected
   for a small independently-made tool, not a sign anything's wrong.

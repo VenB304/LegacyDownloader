@@ -13,13 +13,28 @@ first-run welcome screen.
 USAGE
 -----
 
-Double-click "LegacyDownloader.bat" to open the GUI. No console window
-is left sitting behind it. (It hands off to "LegacyDownloader.vbs" -
-you can double-click that one directly too.)
+Double-click "LegacyDownloader-GUI.bat" to open the GUI. No console
+window is left sitting behind it.
 
 Prefer a plain text/console menu instead? Double-click
-"LegacyDownloader-Console.bat", or run LegacyDownloader.ps1 -Console
-from a terminal.
+"LegacyDownloader-Console.bat".
+
+(Everything else in this folder lives inside "bin" - you never need to
+open it. It's just kept out of the way so you always have exactly two
+things to choose between.)
+
+
+UPGRADING FROM AN OLDER VERSION
+--------------------------------
+
+Delete everything from your old install folder EXCEPT "config.txt", then
+extract this new zip into that same folder - config.txt (your game
+folder, editions, and language) is picked up automatically, no re-setup
+needed.
+
+If you extract this zip on top of an old install WITHOUT deleting the
+old files first, the old launcher(s) will just sit there unused next to
+the new ones - unzipping never removes files on its own.
 
 
 FIRST RUN
@@ -126,10 +141,10 @@ TROUBLESHOOTING
   sure the folder is right (e.g. before the game has been downloaded
   yet).
 
-- A security warning when you first run LegacyDownloader.bat - this can
-  happen with any downloaded script. Click through it ("More info" then
-  "Run anyway," or similar wording) - it appears because the program
-  isn't code-signed, not because it's harmful.
+- A security warning when you first run "LegacyDownloader-GUI.bat" -
+  this can happen with any downloaded script. Click through it ("More
+  info" then "Run anyway," or similar wording) - it appears because the
+  program isn't code-signed, not because it's harmful.
 
 - Songs show as boxes in the console - your console font doesn't cover
-  that script. Switch to the GUI (LegacyDownloader.bat) instead.
+  that script. Switch to the GUI ("LegacyDownloader-GUI.bat") instead.

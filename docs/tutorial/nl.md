@@ -16,7 +16,7 @@ Voor wie gewoon de korte versie wil:
 
 1. Download de zip van de [Releases-pagina](https://github.com/VenB304/LegacyDownloader/releases) en pak hem
    uit.
-2. Dubbelklik op `LegacyDownloader.bat`.
+2. Dubbelklik op `LegacyDownloader-GUI.bat`.
 3. Volg de stappen van het welkomstscherm, kies je nummers en klik op
    **"Downloaden / Controleren op updates"**.
 4. Als er "Je bent klaar!" verschijnt, open dan `Legacy.exe` in je spelmap
@@ -34,11 +34,11 @@ uitgebreide handleiding hieronder een afbeelding voor elk scherm.
    normale map (het Bureaublad is prima). Voer het niet uit vanuit het
    zip-venster zelf.
 3. Open de uitgepakte map en dubbelklik op
-   **`LegacyDownloader.bat`**.
+   **`LegacyDownloader-GUI.bat`**.
 
 ![Inhoud van de uitgepakte map](images/01-extracted-folder.png)
 
-> Als je antivirus `rclone.exe` (een bestand in deze map) markeert, kijk
+> Als je antivirus `rclone.exe` (een bestand in de map `bin`) markeert, kijk
 > dan bij het gedeelte [Probleemoplossing](#probleemoplossing) hieronder —
 > dat is een bekend fout-positief, geen echt probleem met de download.
 
@@ -138,7 +138,7 @@ Dat is je bevestiging dat het gelukt is — ga het spel starten.
 
 ## 6. Later terugkomen voor nieuwe nummers
 
-Voer `LegacyDownloader.bat` gewoon op elk moment opnieuw uit. Het onthoudt
+Voer `LegacyDownloader-GUI.bat` gewoon op elk moment opnieuw uit. Het onthoudt
 je map en je nummerkeuzes, en klikken op **"Downloaden / Controleren op
 updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
 
@@ -182,9 +182,9 @@ cijfertoetsen:
   is een legitieme, veelgebruikte open-source tool, en het is het enige
   wat dit programma gebruikt om bestanden op te halen. Herstel het vanuit
   de quarantaine/geschiedenis van je antivirus, sta het toe, en voer
-  `LegacyDownloader.bat` opnieuw uit.
+  `LegacyDownloader-GUI.bat` opnieuw uit.
 - **Er verschijnt een beveiligingswaarschuwing als je dubbelklikt op
-  `LegacyDownloader.bat`** — dit kan gebeuren de eerste keer dat je een
+  `LegacyDownloader-GUI.bat`** — dit kan gebeuren de eerste keer dat je een
   gedownload script uitvoert. Klik erdoorheen ("Meer info → Toch
   uitvoeren", of iets vergelijkbaars) — dat is normaal voor een klein,
   onafhankelijk hulpmiddel, geen teken dat er iets mis is.
