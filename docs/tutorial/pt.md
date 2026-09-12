@@ -15,7 +15,7 @@ Outros idiomas: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
 Para quem só quer a versão curta:
 
 1. Baixe o zip da [página de Releases](https://github.com/VenB304/LegacyDownloader/releases) e extraia-o.
-2. Dê duplo clique em `LegacyDownloader.bat`.
+2. Dê duplo clique em `LegacyDownloader-GUI.bat`.
 3. Siga os passos da tela de boas-vindas, escolha suas músicas e clique em
    **"Baixar / Verificar atualizações"**.
 4. Quando aparecer "Você está atualizado!", abra `Legacy.exe` na sua pasta
@@ -33,12 +33,12 @@ abaixo tem uma imagem para cada tela.
    escolha uma pasta normal (a Área de Trabalho serve). Não execute de
    dentro da janela do zip.
 3. Abra a pasta extraída e dê duplo clique em
-   **`LegacyDownloader.bat`**.
+   **`LegacyDownloader-GUI.bat`**.
 
 ![Conteúdo da pasta extraída](images/01-extracted-folder.png)
 
-> Se o seu antivírus sinalizar `rclone.exe` (um arquivo dentro desta
-> pasta), veja a seção [Solução de problemas](#solução-de-problemas)
+> Se o seu antivírus sinalizar `rclone.exe` (um arquivo dentro da
+> pasta `bin`), veja a seção [Solução de problemas](#solução-de-problemas)
 > abaixo — é um falso positivo conhecido, não um problema real com o
 > download.
 
@@ -137,7 +137,7 @@ Essa é sua confirmação de que funcionou — vá iniciar o jogo.
 
 ## 6. Voltando depois por novas músicas
 
-Basta executar `LegacyDownloader.bat` novamente a qualquer momento. Ele
+Basta executar `LegacyDownloader-GUI.bat` novamente a qualquer momento. Ele
 lembra sua pasta e suas escolhas de músicas, e clicar em **"Baixar /
 Verificar atualizações"** pega tudo que é novo desde sua última visita.
 
@@ -181,9 +181,9 @@ navegando com as teclas numéricas:
   ferramenta de código aberto legítima e amplamente usada, e é a única
   coisa que este programa usa para buscar arquivos. Restaure-o da
   quarentena/histórico do seu antivírus, permita-o, depois execute
-  `LegacyDownloader.bat` novamente.
+  `LegacyDownloader-GUI.bat` novamente.
 - **Um aviso de segurança aparece ao dar duplo clique em
-  `LegacyDownloader.bat`** — isso pode acontecer na primeira vez que você
+  `LegacyDownloader-GUI.bat`** — isso pode acontecer na primeira vez que você
   executa qualquer script baixado. Clique para continuar ("Mais
   informações → Executar assim mesmo", ou algo parecido) — isso é normal
   para uma ferramenta pequena e independente, não um sinal de que algo

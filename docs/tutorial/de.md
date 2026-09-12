@@ -16,7 +16,7 @@ Für alle, die nur die Kurzversion wollen:
 
 1. Lade den Zip von der [Releases-Seite](https://github.com/VenB304/LegacyDownloader/releases) herunter und
    entpacke ihn.
-2. Doppelklicke auf `LegacyDownloader.bat`.
+2. Doppelklicke auf `LegacyDownloader-GUI.bat`.
 3. Folge den Schritten im Begrüßungsfenster, wähle deine Songs aus und
    klicke auf **„Herunterladen / Nach Updates suchen"**.
 4. Wenn „Du bist aktuell!" erscheint, öffne `Legacy.exe` in deinem
@@ -34,11 +34,11 @@ ausführliche Anleitung unten für jeden Bildschirm ein Bild.
    einen normalen Ordner (der Desktop geht auch). Führe es nicht direkt aus
    dem Zip-Fenster heraus aus.
 3. Öffne den entpackten Ordner und doppelklicke auf
-   **`LegacyDownloader.bat`**.
+   **`LegacyDownloader-GUI.bat`**.
 
 ![Inhalt des entpackten Ordners](images/01-extracted-folder.png)
 
-> Falls dein Antivirenprogramm `rclone.exe` (eine Datei in diesem Ordner)
+> Falls dein Antivirenprogramm `rclone.exe` (eine Datei im `bin`-Ordner hier)
 > meldet, sieh dir den Abschnitt [Problembehebung](#problembehebung) unten
 > an — das ist ein bekannter Fehlalarm, kein echtes Problem mit dem Download.
 
@@ -140,7 +140,7 @@ Spiel.
 
 ## 6. Später wiederkommen für neue Songs
 
-Starte `LegacyDownloader.bat` einfach jederzeit erneut. Es merkt sich
+Starte `LegacyDownloader-GUI.bat` einfach jederzeit erneut. Es merkt sich
 deinen Ordner und deine Song-Auswahl, und ein Klick auf **„Herunterladen /
 Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
 
@@ -184,9 +184,9 @@ Zifferntasten:
   legitimes, weit verbreitetes Open-Source-Tool und das Einzige, was
   dieses Programm zum Abrufen von Dateien verwendet. Stelle es aus der
   Quarantäne/dem Verlauf deines Antivirenprogramms wieder her, erlaube es,
-  und starte `LegacyDownloader.bat` erneut.
+  und starte `LegacyDownloader-GUI.bat` erneut.
 - **Eine Sicherheitswarnung erscheint beim Doppelklick auf
-  `LegacyDownloader.bat`** — das kann beim ersten Ausführen eines
+  `LegacyDownloader-GUI.bat`** — das kann beim ersten Ausführen eines
   heruntergeladenen Skripts passieren. Klick dich durch („Weitere
   Informationen → Trotzdem ausführen" oder ähnlich formuliert) — das ist
   bei einem kleinen, unabhängigen Tool normal, kein Zeichen für ein

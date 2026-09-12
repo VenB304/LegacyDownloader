@@ -15,7 +15,7 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 짧은 버전만 원하는 분들을 위해:
 
 1. [릴리스 페이지](https://github.com/VenB304/LegacyDownloader/releases)에서 zip을 다운로드하고 압축을 풉니다.
-2. `LegacyDownloader.bat`를 더블클릭합니다.
+2. `LegacyDownloader-GUI.bat`를 더블클릭합니다.
 3. 환영 화면의 안내를 따라가며 노래를 선택하고 **"다운로드 / 업데이트
    확인"**을 클릭합니다.
 4. "준비가 완료되었습니다!"라는 메시지가 뜨면 게임 폴더의 `Legacy.exe`를
@@ -33,11 +33,11 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 2. 압축을 풉니다 — zip 파일을 마우스 오른쪽 버튼으로 클릭 → **압축 풀기...**
    → 일반 폴더를 선택합니다(바탕화면도 괜찮습니다). zip 창 안에서 직접
    실행하지 마세요.
-3. 압축을 푼 폴더를 열고 **`LegacyDownloader.bat`**를 더블클릭합니다.
+3. 압축을 푼 폴더를 열고 **`LegacyDownloader-GUI.bat`**를 더블클릭합니다.
 
 ![압축을 푼 폴더 내용](images/01-extracted-folder.png)
 
-> 백신 프로그램이 `rclone.exe`(이 폴더 안의 파일)를 탐지한다면, 아래
+> 백신 프로그램이 `rclone.exe`(`bin` 폴더 안의 파일)를 탐지한다면, 아래
 > [문제 해결](#문제-해결) 섹션을 참고하세요 — 다운로드 자체의 문제가 아니라
 > 잘 알려진 오탐입니다.
 
@@ -129,7 +129,7 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 
 ## 6. 나중에 새 노래 확인하러 오기
 
-언제든지 `LegacyDownloader.bat`를 다시 실행하기만 하면 됩니다. 폴더와 노래
+언제든지 `LegacyDownloader-GUI.bat`를 다시 실행하기만 하면 됩니다. 폴더와 노래
 선택 내용을 기억하고 있으며, **"다운로드 / 업데이트 확인"**을 클릭하면
 마지막 방문 이후 새로 나온 것을 모두 받아옵니다.
 
@@ -168,8 +168,8 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
   `rclone`을 "해킹 도구"로 표시하지만, 이는 널리 사용되는 정당한
   오픈소스 도구이며, 이 프로그램이 파일을 받아오는 데 사용하는 유일한
   수단입니다. 백신의 격리/기록에서 복원하고 허용한 다음
-  `LegacyDownloader.bat`를 다시 실행하세요.
-- **`LegacyDownloader.bat`를 더블클릭하면 보안 경고가 나타남** — 다운로드한
+  `LegacyDownloader-GUI.bat`를 다시 실행하세요.
+- **`LegacyDownloader-GUI.bat`를 더블클릭하면 보안 경고가 나타남** — 다운로드한
   스크립트를 처음 실행할 때 발생할 수 있습니다. 그냥 진행하세요("추가 정보
   → 실행" 또는 비슷한 문구) — 작은 독립 도구에서는 정상적인 현상이며,
   문제가 있다는 신호가 아닙니다.

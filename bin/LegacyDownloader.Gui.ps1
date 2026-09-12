@@ -7,13 +7,13 @@
 
 $ErrorActionPreference = 'Stop'
 
-if (-not $Core) {
-    [System.Windows.Forms.MessageBox]::Show("Please run LegacyDownloader.bat, not this file directly.") | Out-Null
-    exit 1
-}
-
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+
+if (-not $Core) {
+    [System.Windows.Forms.MessageBox]::Show("Please run '..\LegacyDownloader-GUI.bat', not this file directly.") | Out-Null
+    exit 1
+}
 try { [System.Windows.Forms.Application]::EnableVisualStyles() } catch { }
 try { [System.Windows.Forms.Application]::SetCompatibleTextRenderingDefault($false) } catch { }
 

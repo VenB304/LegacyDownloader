@@ -15,7 +15,7 @@ Altre lingue: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
 Per chi vuole solo la versione breve:
 
 1. Scarica lo zip dalla [pagina Releases](https://github.com/VenB304/LegacyDownloader/releases) ed estrailo.
-2. Fai doppio clic su `LegacyDownloader.bat`.
+2. Fai doppio clic su `LegacyDownloader-GUI.bat`.
 3. Segui i passaggi della schermata di benvenuto, scegli le tue canzoni e
    fai clic su **"Scarica / Controlla aggiornamenti"**.
 4. Quando appare "Sei aggiornato!", apri `Legacy.exe` nella tua cartella di
@@ -33,12 +33,12 @@ guida dettagliata qui sotto ha un'immagine per ogni schermata.
    cartella normale (va bene il Desktop). Non eseguirlo dall'interno della
    finestra dello zip.
 3. Apri la cartella estratta e fai doppio clic su
-   **`LegacyDownloader.bat`**.
+   **`LegacyDownloader-GUI.bat`**.
 
 ![Contenuto della cartella estratta](images/01-extracted-folder.png)
 
-> Se il tuo antivirus segnala `rclone.exe` (un file dentro questa
-> cartella), guarda la sezione [Risoluzione dei problemi](#risoluzione-dei-problemi)
+> Se il tuo antivirus segnala `rclone.exe` (un file dentro la cartella
+> `bin`), guarda la sezione [Risoluzione dei problemi](#risoluzione-dei-problemi)
 > qui sotto — è un falso positivo noto, non un vero problema con il
 > download.
 
@@ -139,7 +139,7 @@ Questa è la tua conferma che ha funzionato — vai ad avviare il gioco.
 
 ## 6. Tornare più tardi per nuove canzoni
 
-Esegui semplicemente di nuovo `LegacyDownloader.bat` in qualsiasi momento.
+Esegui semplicemente di nuovo `LegacyDownloader-GUI.bat` in qualsiasi momento.
 Ricorda la tua cartella e le tue scelte di canzoni, e cliccare su
 **"Scarica / Controlla aggiornamenti"** prende tutto ciò che è nuovo dalla
 tua ultima visita.
@@ -184,9 +184,9 @@ con i tasti numerici:
   open-source legittimo e ampiamente usato, ed è l'unica cosa che questo
   programma usa per recuperare i file. Ripristinalo dalla
   quarantena/cronologia del tuo antivirus, consentilo, poi riavvia
-  `LegacyDownloader.bat`.
+  `LegacyDownloader-GUI.bat`.
 - **Compare un avviso di sicurezza quando fai doppio clic su
-  `LegacyDownloader.bat`** — può succedere la prima volta che esegui uno
+  `LegacyDownloader-GUI.bat`** — può succedere la prima volta che esegui uno
   script scaricato. Clicca per procedere ("Ulteriori informazioni →
   Esegui comunque", o una dicitura simile) — è normale per un piccolo
   strumento indipendente, non un segno che qualcosa non va.

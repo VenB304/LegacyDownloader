@@ -3,12 +3,11 @@
 # Dot-sourced by LegacyDownloader.ps1 once the shared core module is loaded,
 # Initialize-LegacyCore has run and Initialize-Language has set the interface
 # language. Do not launch this file on its own - it relies on $Core (and
-# $Rclone / $Conn / $CommonArgs / $ScanArgs / $RcloneConfigArgs) already being
-# set by the entry script.
+# $Rclone / $Conn / $CommonArgs) already being set by the entry script.
 $ErrorActionPreference = 'Stop'
 
 if (-not $Core) {
-    Write-Host "Please run LegacyDownloader.bat (or LegacyDownloader.ps1) - not this file directly." -ForegroundColor Yellow
+    Write-Host "Please run '..\LegacyDownloader-Console.bat' (or LegacyDownloader.ps1 -Console) - not this file directly." -ForegroundColor Yellow
     exit 1
 }
 

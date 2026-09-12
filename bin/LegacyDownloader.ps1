@@ -6,9 +6,10 @@
 #   * the text menu (LegacyDownloader.Console.ps1) - with -Console, or when
 #     the GUI script isn't there
 #
-# The GUI is normally launched with a hidden console (LegacyDownloader.vbs /
-# .bat), so anything fatal here has to surface as a message box, not a
-# Write-Host / Read-Host the user will never see.
+# The GUI is normally launched with a hidden console (see
+# LegacyDownloader-GUI.bat, one level up), so anything fatal here has to
+# surface as a message box, not a Write-Host / Read-Host the user will
+# never see.
 param([switch]$Console)
 
 $ErrorActionPreference = 'Stop'

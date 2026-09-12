@@ -14,7 +14,7 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
 如果您只想看簡短版本：
 
 1. 從 [Releases 頁面](https://github.com/VenB304/LegacyDownloader/releases) 下載 zip 並解壓縮。
-2. 雙擊 `LegacyDownloader.bat`。
+2. 雙擊 `LegacyDownloader-GUI.bat`。
 3. 按照歡迎畫面的步驟操作，選擇您想要的歌曲，然後點擊
    **「下載 / 檢查更新」**。
 4. 出現「一切就緒！」提示後，開啟遊戲資料夾中的 `Legacy.exe` 即可開始遊玩。
@@ -29,11 +29,11 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
 1. 從 [Releases 頁面](https://github.com/VenB304/LegacyDownloader/releases) 取得最新的 `LegacyDownloaderVX.zip`。
 2. 解壓縮它——在 zip 檔上按右鍵 → **全部解壓縮...** → 選擇一個普通資料夾
    （桌面即可）。請不要直接在 zip 視窗內執行它。
-3. 開啟解壓縮後的資料夾，雙擊 **`LegacyDownloader.bat`**。
+3. 開啟解壓縮後的資料夾，雙擊 **`LegacyDownloader-GUI.bat`**。
 
 ![解壓縮後的資料夾內容](images/01-extracted-folder.png)
 
-> 如果您的防毒軟體回報 `rclone.exe`（此資料夾中的一個檔案），請參閱下面的
+> 如果您的防毒軟體回報 `rclone.exe`（`bin` 資料夾中的一個檔案），請參閱下面的
 > [疑難排解](#疑難排解) 部分——這是已知的誤判，並不是下載本身出了問題。
 
 ## 2. 首次執行——歡迎畫面
@@ -118,7 +118,7 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
 
 ## 6. 之後回來取得新歌曲
 
-隨時重新執行 `LegacyDownloader.bat` 即可。它會記住您的資料夾和歌曲選擇，
+隨時重新執行 `LegacyDownloader-GUI.bat` 即可。它會記住您的資料夾和歌曲選擇，
 點擊**「下載 / 檢查更新」**就能取得自上次造訪以來的所有新內容。
 
 - **新增或移除歌曲**：再次使用**「選擇版本...」**。取消勾選一個已下載的
@@ -152,8 +152,8 @@ Legacy Downloader 會把 **Legacy Offline PC** 及其歌曲包下載到您的電
   會將 `rclone` 標記為「駭客工具」，因為攻擊者也可能使用它，但它實際上是
   一個合法且被廣泛使用的開放原始碼工具，也是本程式取得檔案所使用的唯一
   方式。請從防毒軟體的隔離區/歷史記錄中還原它並允許執行，然後重新執行
-  `LegacyDownloader.bat`。
-- **雙擊 `LegacyDownloader.bat` 時出現安全性警告** — 首次執行下載的指令碼
+  `LegacyDownloader-GUI.bat`。
+- **雙擊 `LegacyDownloader-GUI.bat` 時出現安全性警告** — 首次執行下載的指令碼
   時可能會發生這種情況。點擊繼續（「其他資訊 → 仍要執行」或類似的文字）——
   對於一個小型獨立工具來說這是正常現象，並不代表出了問題。
 - **「找不到 rclone.exe」提示** — 重新下載 zip 並再次解壓縮；請不要在 zip

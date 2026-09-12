@@ -16,7 +16,7 @@ Pour ceux qui veulent juste la version courte :
 
 1. Téléchargez le zip depuis la [page des Releases](https://github.com/VenB304/LegacyDownloader/releases) et
    extrayez-le.
-2. Double-cliquez sur `LegacyDownloader.bat`.
+2. Double-cliquez sur `LegacyDownloader-GUI.bat`.
 3. Suivez les étapes de l'écran de bienvenue, choisissez vos chansons, puis
    cliquez sur **« Télécharger / Vérifier les mises à jour »**.
 4. Quand le message **« Vous êtes à jour »** apparaît, ouvrez `Legacy.exe`
@@ -33,11 +33,11 @@ décrit, le guide détaillé ci-dessous contient une image pour chaque écran.
 2. Extrayez-le — clic droit sur le zip → **Extraire tout...** → choisissez
    un dossier normal (le Bureau convient). Ne l'exécutez pas depuis
    l'intérieur de la fenêtre du zip.
-3. Ouvrez le dossier extrait et double-cliquez sur **`LegacyDownloader.bat`**.
+3. Ouvrez le dossier extrait et double-cliquez sur **`LegacyDownloader-GUI.bat`**.
 
 ![Contenu du dossier extrait](images/01-extracted-folder.png)
 
-> Si votre antivirus signale `rclone.exe` (un fichier dans ce dossier),
+> Si votre antivirus signale `rclone.exe` (un fichier dans le dossier `bin`),
 > consultez la section [Dépannage](#dépannage) ci-dessous — c'est un faux
 > positif connu, pas un vrai problème avec le téléchargement.
 
@@ -139,7 +139,7 @@ C'est votre confirmation que tout a fonctionné — allez lancer le jeu.
 
 ## 6. Revenir plus tard pour de nouvelles chansons
 
-Relancez simplement `LegacyDownloader.bat` à tout moment. Il se souvient de
+Relancez simplement `LegacyDownloader-GUI.bat` à tout moment. Il se souvient de
 votre dossier et de vos choix de chansons, et cliquer sur **« Télécharger /
 Vérifier les mises à jour »** récupère tout ce qui est nouveau depuis votre
 dernière visite.
@@ -183,9 +183,9 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
   outil open-source légitime et largement utilisé, et c'est le seul moyen
   utilisé par ce programme pour récupérer les fichiers. Restaurez-le depuis
   la quarantaine/l'historique de votre antivirus, autorisez-le, puis
-  relancez `LegacyDownloader.bat`.
+  relancez `LegacyDownloader-GUI.bat`.
 - **Un avertissement de sécurité apparaît quand vous double-cliquez sur
-  `LegacyDownloader.bat`** — cela peut arriver la première fois que vous
+  `LegacyDownloader-GUI.bat`** — cela peut arriver la première fois que vous
   exécutez un script téléchargé. Cliquez pour continuer (« Informations
   complémentaires → Exécuter quand même », ou une formulation similaire) —
   c'est normal pour un petit outil indépendant, pas un signe de problème.
