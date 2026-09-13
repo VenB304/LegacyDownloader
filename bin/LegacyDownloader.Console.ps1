@@ -81,6 +81,12 @@ function Confirm-YesNo([string]$Prompt) {
 }
 
 function Show-FolderPicker([string]$Description) {
+    if ($IsLinux) {
+        Write-Host ""
+        $path = Read-Host "$Description (Enter full absolute path)"
+        return $path.TrimEnd('\').TrimEnd('/')
+    }
+
     Add-Type -AssemblyName System.Windows.Forms
     $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
     $dialog.Description = $Description

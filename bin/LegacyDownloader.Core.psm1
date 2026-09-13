@@ -54,7 +54,12 @@ function Initialize-LegacyCore {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$ScriptDir)
 
-    $script:Rclone     = Join-Path $ScriptDir 'rclone.exe'
+    if ($IsLinux) {
+        $cmd = Get-Command rclone -ErrorAction SilentlyContinue
+        $script:Rclone = if ($cmd) { $cmd.Source } else { 'rclone' }
+    } else {
+        $script:Rclone = Join-Path $ScriptDir 'rclone.exe'
+    }
     $script:ConfigPath = Join-Path $ScriptDir 'config.txt'
     $script:LangDir    = Join-Path $ScriptDir 'lang'
 
