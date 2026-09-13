@@ -359,6 +359,7 @@ function Get-EditionTitle([string]$Edition) {
             2027 { return "Just Dance: Decades of Hits" }
             123  { return "Just Dance Kids" }
             1928 { return "Just Dance: Disney Party" }
+            1929 { return "Just Dance: Disney Party 2" }
             2009 { return "Michael Jackson: The Experience" }
             3112 { return "Just Dance Wii 2" }
             4118 { return "Just Dance Wii U" }

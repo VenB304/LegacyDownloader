@@ -13,8 +13,9 @@ share URL. **V7** silences a harmless-but-scary rclone error on exFAT drives,
 moves everything except the two launchers into `bin\` so extension-hidden
 Explorer views aren't full of identically-named files, and drops a hidden-
 launcher script that was getting the release flagged by antivirus/SmartScreen.
-Size-only comparison, folder-level detection, dry-run preview and protected
-files all carry over from V3.
+**V7.1** adds the friendly name for the new "Just Dance: Disney Party 2"
+edition. Size-only comparison, folder-level detection, dry-run preview and
+protected files all carry over from V3.
 
 > **Upgrading from an older version?** Delete everything from your old
 > install folder *except* `config.txt`, then extract the new zip into that
