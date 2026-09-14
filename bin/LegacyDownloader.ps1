@@ -44,7 +44,7 @@ $null = Initialize-Language -Code $bootCfg.Lang
 # Decide the front-end up front - it changes how fatal errors are shown.
 $GuiScript     = Join-Path $ScriptDir 'LegacyDownloader.Gui.ps1'
 $ConsoleScript = Join-Path $ScriptDir 'LegacyDownloader.Console.ps1'
-$UseGui        = (-not $Console) -and (Test-Path -LiteralPath $GuiScript)
+$UseGui        = (-not $Console) -and (Test-Path -LiteralPath $GuiScript) -and (-not $IsLinux)
 
 function Show-FatalError([string]$Message) {
     if ($UseGui) {
