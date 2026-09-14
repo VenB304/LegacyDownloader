@@ -14,8 +14,15 @@ moves everything except the two launchers into `bin\` so extension-hidden
 Explorer views aren't full of identically-named files, and drops a hidden-
 launcher script that was getting the release flagged by antivirus/SmartScreen.
 **V7.1** adds the friendly name for the new "Just Dance: Disney Party 2"
-edition. Size-only comparison, folder-level detection, dry-run preview and
-protected files all carry over from V3.
+edition. **V8** adds **per-song selection** — both the GUI and console
+pickers now let you search, filter by Difficulty/Effort, and check
+individual songs within an edition instead of only whole editions, and
+surface songs that are on the live share but missing from the community
+sheet. V8 also adds **native Linux support** (community contribution,
+credit [@leleletus](https://github.com/leleletus)) via PowerShell Core -
+see [Running on Linux](#running-on-linux) below. Size-only comparison,
+folder-level detection, dry-run preview and protected files all carry over
+from V3.
 
 > **Upgrading from an older version?** Delete everything from your old
 > install folder *except* `config.txt`, then extract the new zip into that
@@ -60,6 +67,11 @@ immediately starts downloading the **base game** (no preview) — song packs are
 a deliberate second step you pick afterward. If the folder you choose already
 contains `Legacy.exe`, it falls back to a normal checked update with a preview.
 
+**Picking songs:** "Choose which songs to get" → "Specific maps / songs"
+opens a picker where you can check whole editions or individual songs
+within them, search by title/artist/codename, and filter by
+Difficulty/Effort — in both the GUI and the console menu.
+
 ## Language
 
 Pick a language from the dropdown in the top-right corner of the GUI, or via
@@ -97,6 +109,23 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 from <https://rclone.org/downloads/>, drop `rclone.exe` into `bin\`, then run
 `LegacyDownloader-GUI.bat` (or `bin\LegacyDownloader.ps1` directly from a
 terminal). `bin\config.txt` is created automatically on first run.
+
+## Running on Linux
+
+The GUI needs Windows Forms and isn't available on Linux — everything else
+(the console menu, and the full song-downloading engine underneath it)
+runs on [PowerShell Core](https://github.com/PowerShell/PowerShell) via
+community contribution [PR #1](https://github.com/VenB304/LegacyDownloader/pull/1).
+You'll need `rclone` installed and on your `PATH` (get it from your distro's
+package manager or <https://rclone.org/downloads/> — there's no bundled
+binary the way the Windows zip ships one), then run:
+
+```
+pwsh bin/LegacyDownloader.ps1 -Console
+```
+
+`config.txt`/`rclone.conf` are created next to the script on first run,
+same as on Windows.
 
 ## For contributors
 
