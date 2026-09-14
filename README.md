@@ -4,25 +4,18 @@ Self-contained PowerShell tool that downloads and updates **Legacy Offline PC**
 and its song "editions" from the public ovosimpatico Nextcloud share, using
 [rclone](https://rclone.org/).
 
-The V4 line added a WinForms GUI (default), a text-menu console front-end, and
-12-language support. **V5** refines the first run (picking a folder now starts
-the base-game download straight away), hides the launcher console window, and
-fixes the update check flagging a fresh install's `Legacy.exe` / Kinect DLLs as
-"modified". **V6** fixes a console-menu crash and adds a user-overridable
-share URL. **V7** silences a harmless-but-scary rclone error on exFAT drives,
-moves everything except the two launchers into `bin\` so extension-hidden
-Explorer views aren't full of identically-named files, and drops a hidden-
-launcher script that was getting the release flagged by antivirus/SmartScreen.
-**V7.1** adds the friendly name for the new "Just Dance: Disney Party 2"
-edition. **V8** adds **per-song selection** — both the GUI and console
-pickers now let you search, filter by Difficulty/Effort, and check
-individual songs within an edition instead of only whole editions, and
-surface songs that are on the live share but missing from the community
-sheet. V8 also adds **native Linux support** (community contribution,
-credit [@leleletus](https://github.com/leleletus)) via PowerShell Core -
-see [Running on Linux](#running-on-linux) below. Size-only comparison,
-folder-level detection, dry-run preview and protected files all carry over
-from V3.
+Ships with a WinForms GUI (default) and a text-menu console front-end,
+both available in 12 languages and both able to pick individual songs
+within an edition — not just whole editions — with search and
+Difficulty/Effort filters, and surface songs that are on the live share
+but missing from the community sheet. Runs natively on Linux via
+PowerShell Core too (community contribution, credit
+[@leleletus](https://github.com/leleletus)) — see
+[Running on Linux](#running-on-linux) below. Under the hood: size-only
+comparison (so an exFAT-mounted play drive doesn't get flagged as
+out of date on every run), folder-level detection, a dry-run preview
+before anything downloads, and protected files so a patched `Legacy.exe`
+or Kinect DLL is never silently overwritten.
 
 > **Upgrading from an older version?** Delete everything from your old
 > install folder *except* `config.txt`, then extract the new zip into that
