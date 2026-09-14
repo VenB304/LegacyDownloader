@@ -148,7 +148,16 @@ function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
 
 function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$SongCodes = $null) {
     Write-Host (T 'sync.edition' @{ edition = (Format-EditionDisplay $Edition) })
-    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path $GamePath "maps\$Edition") (Get-SongIncludeArgs $SongCodes)
+    # Join-Path twice, not "maps\$Edition" as one segment - Join-Path only
+    # inserts the correct separator BETWEEN its two arguments, it doesn't
+    # fix a separator embedded INSIDE a string handed to it. On Linux '\'
+    # isn't a path separator at all (just an ordinary filename character),
+    # so that used to build a literal "maps\<edition>" file/folder name
+    # instead of a maps/<edition> path - found reviewing PR #1 (native
+    # Linux support): AUTO-mode downloads were unaffected (Invoke-AllMapsSync
+    # only ever does Join-Path $GamePath 'maps', no embedded separator) but
+    # downloading a SPECIFIC edition would silently write to the wrong path.
+    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongIncludeArgs $SongCodes)
     Write-Host ""
 }
 
@@ -361,12 +370,23 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
     $cursor           = 0
     $viewStart        = 0
 
+    # Sort-Object's calculated-property scriptblocks (the -Property
+    # @{Expression=...} form below) are invoked with the current object
+    # bound to $_, the same convention as Where-Object/ForEach-Object -
+    # NOT called with it as a positional argument the way $applyEditionCheck-
+    # style scriptblocks elsewhere in this codebase are. A `param($r)`
+    # scriptblock here never receives the row at all ($r is always $null
+    # inside it), so every row's sort key silently evaluated to nothing and
+    # Sort-Object fell back to an arbitrary internal order - sorting (and
+    # therefore F5/F6, which only change $sortColumn/$sortAscending) was
+    # completely inert. Confirmed both the bug and the fix with an isolated
+    # Sort-Object test before touching this.
     $sortFields = @(
-        { param($r) if ([string]::IsNullOrWhiteSpace($r.Title)) { $r.Code } else { $r.Title } }
-        { param($r) [string]$r.Artist }
-        { param($r) Format-EditionDisplay $r.Edition }
-        { param($r) Format-DifficultyTier $r.Difficulty }
-        { param($r) Format-EffortTier $r.Effort }
+        { if ([string]::IsNullOrWhiteSpace($_.Title)) { $_.Code } else { $_.Title } }
+        { [string]$_.Artist }
+        { Format-EditionDisplay $_.Edition }
+        { Format-DifficultyTier $_.Difficulty }
+        { Format-EffortTier $_.Effort }
     )
 
     function Get-EditionTriMark([string]$Edition) {
@@ -378,7 +398,14 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
     }
 
     $savedBuffer = Enter-NoScrollBuffer
-    [Console]::CursorVisible = $false
+    # Same defensive try/catch every other console-mode call in this file
+    # already uses (Enter-NoScrollBuffer, Exit-NoScrollBuffer,
+    # Reset-ConsoleInputMode) - CursorVisible needs a real console screen
+    # buffer handle and throws "The handle is invalid" whenever one isn't
+    # available (stdout redirected/piped, some non-standard terminals),
+    # which would otherwise crash the whole picker with a raw exception
+    # instead of just leaving the cursor visible.
+    try { [Console]::CursorVisible = $false } catch { }
     try {
         while ($true) {
             $active = ($search -ne '') -or ($editionFilter -ne 'ALL') -or ($difficultyFilter -ne 'ALL') -or ($effortFilter -ne 'ALL')
@@ -387,23 +414,41 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             # 'Edition' (tri-state, toggling it selects/clears the whole
             # edition) or 'Song' (plain toggle) - Enter handling below is
             # identical either way, only rendering differs.
-            $visible = @()
+            #
+            # $visible/$filtered are [List[object]], not a plain array built
+            # with "+=" - PowerShell's array += allocates and copies a whole
+            # NEW array on every single append, making a loop that does it
+            # ~1000 times O(n^2). This redraws on every keystroke while
+            # typing a search (no debounce here the way the GUI's search
+            # box has - ReadKey already blocks between real keystrokes, so
+            # one is enough), and profiling against the real ~1000-row
+            # catalog measured this specific pattern as the majority of a
+            # single frame's cost (as much as ~150ms of it) - typing felt
+            # laggy because of it. List[object].Add() is O(1) amortized, and
+            # every other place $visible/$filtered are used (.Count, [i]
+            # indexing) works identically on a List as on an array, so this
+            # is a drop-in swap, not a behavior change. Where-Object also
+            # replaced with a plain foreach+continue for the same reason
+            # (real, if smaller, per-item pipeline overhead of its own).
+            $visible = [System.Collections.Generic.List[object]]::new()
             if ($active) {
                 $q = $search.Trim().ToLowerInvariant()
-                $filtered = @($rows | Where-Object {
-                    ($editionFilter -eq 'ALL' -or $_.Edition -eq $editionFilter) -and
-                    ($difficultyFilter -eq 'ALL' -or $_.Difficulty -eq $difficultyFilter) -and
-                    ($effortFilter -eq 'ALL' -or $_.Effort -eq $effortFilter) -and
-                    ($q -eq '' -or ([string]$_.Title).ToLowerInvariant().Contains($q) -or ([string]$_.Artist).ToLowerInvariant().Contains($q) -or $_.Code.Contains($q))
-                })
-                $filtered = @($filtered | Sort-Object -Property @{ Expression = $sortFields[$sortColumn] })
-                if (-not $sortAscending) { [array]::Reverse($filtered) }
-                foreach ($r in $filtered) { $visible += [PSCustomObject]@{ Kind = 'Song'; Edition = $r.Edition; Code = $r.Code; Indent = $false } }
+                $filtered = [System.Collections.Generic.List[object]]::new()
+                foreach ($r in $rows) {
+                    if ($editionFilter -ne 'ALL' -and $r.Edition -ne $editionFilter) { continue }
+                    if ($difficultyFilter -ne 'ALL' -and $r.Difficulty -ne $difficultyFilter) { continue }
+                    if ($effortFilter -ne 'ALL' -and $r.Effort -ne $effortFilter) { continue }
+                    if ($q -ne '' -and -not (([string]$r.Title).ToLowerInvariant().Contains($q) -or ([string]$r.Artist).ToLowerInvariant().Contains($q) -or $r.Code.ToLowerInvariant().Contains($q))) { continue }
+                    $filtered.Add($r)
+                }
+                $sorted = @($filtered | Sort-Object -Property @{ Expression = $sortFields[$sortColumn] })
+                if (-not $sortAscending) { [array]::Reverse($sorted) }
+                foreach ($r in $sorted) { $visible.Add([PSCustomObject]@{ Kind = 'Song'; Edition = $r.Edition; Code = $r.Code; Indent = $false }) }
             } else {
                 foreach ($ed in $catalogEditions) {
-                    $visible += [PSCustomObject]@{ Kind = 'Edition'; Edition = $ed; Code = $null; Indent = $false }
+                    $visible.Add([PSCustomObject]@{ Kind = 'Edition'; Edition = $ed; Code = $null; Indent = $false })
                     if ($expanded.Contains($ed)) {
-                        foreach ($code in $byEdition[$ed]) { $visible += [PSCustomObject]@{ Kind = 'Song'; Edition = $ed; Code = $code; Indent = $true } }
+                        foreach ($code in $byEdition[$ed]) { $visible.Add([PSCustomObject]@{ Kind = 'Song'; Edition = $ed; Code = $code; Indent = $true }) }
                     }
                 }
             }
@@ -416,7 +461,14 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             if ($cursor -lt 0) { $cursor = 0 }
 
             Clear-Host
-            Write-Host (if ($active) { T 'songbrowser.help' } else { T 'songbrowser.tree_help' })
+            # $(...), not plain (...) - a plain parenthesized `if` used as a
+            # call argument gets parsed as trying to run a COMMAND named
+            # "if" ("The term 'if' is not recognized..."), not as an
+            # expression - `if` is only special-cased as a value on the
+            # right-hand side of an assignment ($x = if (...) {...}), not
+            # inside a bare sub-expression. $(...) (the subexpression
+            # operator) does accept a full statement, if included.
+            Write-Host $(if ($active) { T 'songbrowser.help' } else { T 'songbrowser.tree_help' })
             $editionLabel = if ($editionFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EditionDisplay $editionFilter }
             $diffLabel    = if ($difficultyFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-DifficultyTier $difficultyFilter }
             $effortLabel  = if ($effortFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EffortTier $effortFilter }
@@ -441,7 +493,21 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
                     $indent = if ($row.Indent) { '    ' } else { '' }
                     if ($row.Kind -eq 'Edition') {
                         $mark = Get-EditionTriMark $row.Edition
-                        $arrow = if ($expanded.Contains($row.Edition)) { [char]0x25BC } else { [char]0x25B6 }
+                        # Plain ASCII, not Unicode triangles (was [char]0x25BC
+                        # / [char]0x25B6) - Ven found the right-pointing
+                        # triangle rendering as a broken glyph in their
+                        # terminal while the down-pointing one (only ever
+                        # shown once something is expanded) rendered fine, a
+                        # console-font glyph-coverage gap between two
+                        # codepoints in the same Unicode block, not
+                        # something fixable by picking a "better" pair of
+                        # Unicode arrows - no font coverage guarantee
+                        # extends across an entire block. +/- (not '>', which
+                        # the cursor $pointer to its left already uses) is
+                        # the classic tree-view collapsed/expanded
+                        # convention and is guaranteed to render in any
+                        # console font since it's plain ASCII.
+                        $arrow = if ($expanded.Contains($row.Edition)) { '-' } else { '+' }
                         $count = @($byEdition[$row.Edition]).Count
                         $checkedCount = @($byEdition[$row.Edition] | Where-Object { $selectedKeys.Contains("$($row.Edition)|$_") }).Count
                         $countText = if ($checkedCount -gt 0 -and $checkedCount -lt $count) { "$checkedCount/$count" } else { "$count" }
@@ -463,8 +529,12 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             Write-Host ""
             $doneIdx = $footerStart
             $cancelIdx = $footerStart + 1
-            Write-Host ((if ($cursor -eq $doneIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.done'))
-            Write-Host ((if ($cursor -eq $cancelIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.cancel'))
+            # Same $(...) fix as above - a plain parenthesized `if` as a
+            # call argument (or, here, as one operand of string
+            # concatenation) is parsed as an attempt to run a command
+            # named "if".
+            Write-Host ($(if ($cursor -eq $doneIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.done'))
+            Write-Host ($(if ($cursor -eq $cancelIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.cancel'))
 
             $key = [Console]::ReadKey($true)
             if ($key.Key -eq 'UpArrow') { $cursor--; if ($cursor -lt 0) { $cursor = $totalRows - 1 }; continue }
@@ -517,8 +587,12 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
                 $cursor = 0; $viewStart = 0; continue
             }
             if ($key.Key -eq 'Backspace') {
-                if ($search.Length -gt 0) { $search = $search.Substring(0, $search.Length - 1) }
-                $cursor = 0; $viewStart = 0; continue
+                # Only reset the cursor when Backspace actually changed
+                # something - pressing it in the tree view (search already
+                # empty, nothing to delete) used to jump the cursor back to
+                # the very top of the list for no reason.
+                if ($search.Length -gt 0) { $search = $search.Substring(0, $search.Length - 1); $cursor = 0; $viewStart = 0 }
+                continue
             }
             if ($key.Key -eq 'Enter') {
                 if ($cursor -eq $doneIdx) {
@@ -555,7 +629,11 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             }
         }
     } finally {
-        [Console]::CursorVisible = $true
+        # try/catch here isn't just consistency - an unhandled exception
+        # from this line would abort the REST of this finally block too,
+        # skipping Exit-NoScrollBuffer/Reset-ConsoleInputMode and leaving
+        # the console's buffer size/input mode unrestored.
+        try { [Console]::CursorVisible = $true } catch { }
         Exit-NoScrollBuffer $savedBuffer
         Reset-ConsoleInputMode
     }
@@ -640,7 +718,10 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         $newEditionList = @($browse.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         $removalPlan = Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog
         foreach ($item in $removalPlan) {
-            $localDir = Join-Path $GamePath "maps\$($item.Edition)"
+            # Same fix as Invoke-EditionSync above - Join-Path twice instead
+            # of a literal "\" embedded inside one path segment, which broke
+            # on Linux.
+            $localDir = Join-Path (Join-Path $GamePath 'maps') $item.Edition
             if (-not (Test-Path -LiteralPath $localDir)) { continue }
             if ($item.WholeEditionRemoved) {
                 if (Confirm-YesNo (T 'maps.delete_or_keep' @{ edition = $item.Edition })) {

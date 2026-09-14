@@ -998,6 +998,22 @@ function Get-UpdatePlan {
             $songs += [PSCustomObject]@{ Edition = [string]$k; Count = @($byEd[$k]).Count; Files = @($byEd[$k]) }
         }
     } else {
+        # Tried replacing this per-edition loop with one whole-tree scan
+        # (like the AUTO branch above), the same shape of fix that turned
+        # the share-only-song scan's ~24 spawns into 1 (see
+        # Get-RemoteSongMap, ~47s -> ~4s against the live share). Measured
+        # it directly against the live share first rather than assuming the
+        # same win applies here: for 1 tracked edition the whole-tree scan
+        # was ~4x SLOWER (~8.6s vs ~2s - scanning everything costs roughly
+        # the same regardless of how few editions are tracked, while a
+        # per-edition scan only ever pays for what's actually needed); for
+        # 4 (Ven's own actual tracked-edition count) it was roughly a wash;
+        # it only clearly won past ~10 tracked editions (~2.9x). Since
+        # tracking a HANDFUL of specific editions - not most/all of them,
+        # which is what AUTO mode is already for - is the realistic common
+        # case this branch exists for, the whole-tree version would have
+        # made the typical case worse, not better. Reverted; left as a
+        # per-edition scan.
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) {
             $includeArgs = Get-SongIncludeArgs (Get-EffectiveSongs $ed $SongFilters)
