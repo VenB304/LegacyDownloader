@@ -119,9 +119,3 @@ pwsh bin/LegacyDownloader.ps1 -Console
 
 `config.txt`/`rclone.conf` are created next to the script on first run,
 same as on Windows.
-
-## For contributors
-
-Implementation details (size-only comparison, folder-level detection, the
-GUI's progress plumbing, etc.) live in [docs/technical-notes.md](docs/technical-notes.md)
-rather than here, to keep this README focused on using the tool.

@@ -13,3 +13,9 @@ rclone.exe
 
 # Local dev/build scripts - not part of the shipped tool
 tools/
+
+# Internal working notes - kept locally for reference, not published (this
+# repo is public; raw session-by-session debugging narrative and internal
+# implementation notes don't belong on the public GitHub page)
+docs/notes/
+docs/technical-notes.md
