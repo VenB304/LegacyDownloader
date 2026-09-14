@@ -21,6 +21,15 @@ $script:ShareUrl         = $null
 # in config.txt (see Get-ShareConn / Save-Config) so the tool keeps working
 # if the share ever moves and this repo is no longer maintained.
 $script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/TqaYM8TnT2RPNr2/"
+
+# Community-maintained song-name spreadsheet (title/artist/difficulty/effort
+# per song, keyed by edition + internal codename). Fetched live every time
+# the song browser opens - deliberately NOT bundled, so a new song added to
+# the sheet shows up without a new release of this tool. See
+# $script:SongCatalogCachePath for the on-disk fallback when the fetch fails.
+$script:SongSheetUrl        = "https://docs.google.com/spreadsheets/d/1ufh7SAN0Q87UGFU2Yry8naX7hCjJ1q-XOjssqS3ULO4/export?format=csv&gid=28291419"
+$script:SongCatalogCachePath = $null
+
 $script:RcloneConfigArgs = @()
 $script:SizeOnlyArgs     = @('--size-only')
 $script:CommonArgs       = @()
@@ -68,6 +77,8 @@ function Initialize-LegacyCore {
     if ((-not (Test-Path -LiteralPath $script:ConfigPath)) -and (Test-Path -LiteralPath $legacyConfigPath)) {
         try { Move-Item -LiteralPath $legacyConfigPath -Destination $script:ConfigPath -Force } catch { }
     }
+
+    $script:SongCatalogCachePath = Join-Path $ScriptDir 'songcatalog.cache.json'
 
     $script:RcloneConfigPath = Join-Path $ScriptDir 'rclone.conf'
     if (-not (Test-Path -LiteralPath $script:RcloneConfigPath)) {
@@ -281,6 +292,7 @@ function Load-Config {
     $editions = 'AUTO'
     $lang     = ''
     $shareUrl = ''
+    $songFilters = ''
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -288,17 +300,18 @@ function Load-Config {
         if ($parts.Count -lt 2) { continue }
         $key = $parts[0].Trim().ToUpper()
         $value = $parts[1].Trim()
-        if ($key -eq 'GAMEPATH') { $gamePath = $value }
-        if ($key -eq 'EDITIONS') { $editions = $value }
-        if ($key -eq 'LANG')     { $lang = $value }
-        if ($key -eq 'SHAREURL') { $shareUrl = $value }
+        if ($key -eq 'GAMEPATH')    { $gamePath = $value }
+        if ($key -eq 'EDITIONS')    { $editions = $value }
+        if ($key -eq 'LANG')        { $lang = $value }
+        if ($key -eq 'SHAREURL')    { $shareUrl = $value }
+        if ($key -eq 'SONGFILTERS') { $songFilters = $value }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
-    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl }
+    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters }
 }
 
-function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
+function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [string]$SongFilters) {
     # When no language is passed, keep whatever the file already has (so the
     # existing two-argument callers don't wipe the LANG line); default 'en'.
     if ([string]::IsNullOrWhiteSpace($Lang)) {
@@ -308,6 +321,10 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
     }
     # SHAREURL is hand-edited only - never wipe an override the user added.
     $ShareUrl = Read-ConfigValue 'SHAREURL'
+    # SONGFILTERS, like LANG, is only rewritten when a caller explicitly
+    # passes it - an omitted argument preserves whatever's already saved
+    # instead of silently clearing a user's per-song picks.
+    $SongFiltersOut = if ($PSBoundParameters.ContainsKey('SongFilters')) { $SongFilters } else { Read-ConfigValue 'SONGFILTERS' }
     @(
         "# Legacy Downloader - configuration"
         "# You normally don't need to edit this by hand - use the program's"
@@ -331,6 +348,12 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang) {
         "# public WebDAV link here, e.g.:"
         "#   SHAREURL=https://cloud.example.com/public.php/dav/files/TOKEN/"
         $(if ($ShareUrl) { "SHAREURL=$ShareUrl" } else { "#SHAREURL=" })
+        ""
+        "# SONGFILTERS (set from the Search songs... screen) - only editions"
+        "# with fewer than all their songs selected appear here, as"
+        "# edition:code1|code2;edition2:code3. An edition with no entry here"
+        "# means 'every song in it'."
+        "SONGFILTERS=$SongFiltersOut"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
@@ -402,6 +425,35 @@ function Get-RemoteSongs([string]$Edition) {
     try { $out = & $rc lsf "$conn`maps/$Edition" --files-only @cfgArgs 2>$null } catch { return @() }
     if ($LASTEXITCODE -ne 0) { return @() }
     return @($out | ForEach-Object { $_ -replace '_pc\.ipk$', '' } | Sort-Object)
+}
+
+function Get-RemoteSongMap {
+    # Like calling Get-RemoteSongs once per edition and collecting the
+    # results into a map, but as ONE rclone.exe spawn + ONE recursive
+    # WebDAV listing instead of one of each PER EDITION (~24 of them,
+    # sequentially, from the song picker's share-only-song scan) - each
+    # spawn has real process-startup + fresh-connection overhead, and
+    # profiling that scan showed the per-edition version taking many
+    # seconds total. `lsf -R` walks the whole maps/ tree over one rclone
+    # connection and returns paths already relative to it (e.g.
+    # "2023/song_pc.ipk"), so grouping by the first path segment recovers
+    # the same edition -> codes map for free.
+    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
+    $ErrorActionPreference = 'SilentlyContinue'
+    try { $out = & $rc lsf "$conn`maps" --files-only -R @cfgArgs 2>$null } catch { return @{} }
+    if ($LASTEXITCODE -ne 0) { return @{} }
+    $buckets = @{}
+    foreach ($line in $out) {
+        $slash = $line.IndexOf('/')
+        if ($slash -lt 0) { continue }
+        $ed = $line.Substring(0, $slash)
+        $file = $line.Substring($slash + 1) -replace '_pc\.ipk$', ''
+        if (-not $buckets.ContainsKey($ed)) { $buckets[$ed] = [System.Collections.Generic.List[string]]::new() }
+        $buckets[$ed].Add($file)
+    }
+    $map = @{}
+    foreach ($ed in $buckets.Keys) { $map[$ed] = @($buckets[$ed] | Sort-Object) }
+    return $map
 }
 
 function Get-LocalEditions([string]$GamePath) {
@@ -511,6 +563,361 @@ function Get-LocalSongCount([string]$GamePath) {
 }
 
 # ----------------------------------------------------------------------------
+# Per-song selection: SONGFILTERS parsing, the live song-name catalog, and
+# the --include args that make a sync fetch only the chosen songs.
+# ----------------------------------------------------------------------------
+
+function Get-SongFilterMap([string]$Raw) {
+    # "edition:code1|code2;edition2:code3" -> ordered edition -> @(codes).
+    # An edition only appears here when fewer than all of its songs are
+    # wanted; Get-EffectiveSongs returning $null (no entry) means "every song".
+    $map = [ordered]@{}
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return $map }
+    foreach ($part in ($Raw -split ';')) {
+        $part = $part.Trim()
+        if ($part -eq '') { continue }
+        $idx = $part.IndexOf(':')
+        if ($idx -lt 0) { continue }
+        $ed = $part.Substring(0, $idx).Trim()
+        $codes = @(($part.Substring($idx + 1) -split '\|') | ForEach-Object { $_.Trim().ToLowerInvariant() } | Where-Object { $_ -ne '' })
+        if ($ed -ne '' -and $codes.Count -gt 0) { $map[$ed] = $codes }
+    }
+    return $map
+}
+
+function Format-SongFilters($Map) {
+    if ($null -eq $Map -or $Map.Count -eq 0) { return '' }
+    $parts = @()
+    foreach ($ed in $Map.Keys) {
+        $codes = @($Map[$ed])
+        if ($codes.Count -eq 0) { continue }
+        $parts += ("{0}:{1}" -f $ed, ($codes -join '|'))
+    }
+    return ($parts -join ';')
+}
+
+function Get-EffectiveSongs([string]$Edition, [string]$SongFiltersRaw) {
+    # $null = every song in the edition; an array = only these codenames
+    # (lowercase, no "_pc.ipk" suffix).
+    $map = Get-SongFilterMap $SongFiltersRaw
+    if ($map.Contains($Edition)) { return @($map[$Edition]) }
+    return $null
+}
+
+function Get-SongIncludeArgs([string[]]$Codes) {
+    # rclone --include args for a specific song subset ($null/empty = no
+    # filter, i.e. every song - caller just omits these args in that case).
+    # --ignore-case matters here: the sheet's codenames (and this tool's own
+    # lowercased catalog) don't always match the real file's casing on the
+    # share (e.g. the sheet's "firework" is actually "Firework_pc.ipk") -
+    # confirmed against the live share while testing this feature.
+    $out = @()
+    foreach ($c in $Codes) {
+        if ([string]::IsNullOrWhiteSpace($c)) { continue }
+        $out += @('--include', "$($c.Trim().ToLowerInvariant())_pc.ipk")
+    }
+    if ($out.Count -gt 0) { $out += '--ignore-case' }
+    return $out
+}
+
+function ConvertTo-RatingTier([string]$Raw) {
+    # e.g. "2 - <tier name, accented>" -> 2. Blank/unparseable -> $null ("not rated").
+    if ([string]::IsNullOrWhiteSpace($Raw)) { return $null }
+    $m = [regex]::Match($Raw, '^\s*(\d+)')
+    if (-not $m.Success) { return $null }
+    return [int]$m.Groups[1].Value
+}
+
+function Format-DifficultyTier($Tier) {
+    if ($null -eq $Tier -or [int]$Tier -lt 1 -or [int]$Tier -gt 4) { return (T 'songs.rating.unknown') }
+    return (T "songs.difficulty.$Tier")
+}
+
+function Format-EffortTier($Tier) {
+    if ($null -eq $Tier -or [int]$Tier -lt 0 -or [int]$Tier -gt 4) { return (T 'songs.rating.unknown') }
+    return (T "songs.effort.$Tier")
+}
+
+function Get-SongCatalog {
+    # Fetches the community song-name sheet fresh (title/artist/difficulty/
+    # effort per edition+codename). Never throws: a failed fetch falls back
+    # to the last successful fetch cached on disk, then to an empty list -
+    # callers already have to handle "no metadata" (same convention as
+    # Get-RemoteEditions/Get-RemoteSongs returning @() when unreachable).
+    [CmdletBinding()]
+    param()
+
+    $records = $null
+    $tmp = [System.IO.Path]::GetTempFileName()
+    try {
+        Invoke-WebRequest -Uri $script:SongSheetUrl -OutFile $tmp -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        # Explicit UTF-8 decode of the downloaded bytes - Invoke-WebRequest's
+        # own .Content string decoding guesses Latin-1 when the response (as
+        # here) has no charset in its Content-Type header, which mangles the
+        # sheet's accented song/tier text. Reading the saved file as UTF-8
+        # (the same pattern Import-LangFile uses for lang\*.json) sidesteps
+        # that guess entirely.
+        $text = [System.IO.File]::ReadAllText($tmp, [System.Text.Encoding]::UTF8)
+        # Explicit ASCII column names via -Header, skipping the sheet's own
+        # header row (Select-Object -Skip 1): the real header row has
+        # accented Portuguese column names ("Esforco", "Nome da musica", ...),
+        # and this .psm1 file - like the rest of this codebase - avoids
+        # embedding literal non-ASCII text in .ps1/.psm1 source (Windows
+        # PowerShell 5.1 reads a BOM-less script via the system ANSI
+        # codepage, which would silently mis-decode a literal accented
+        # property-name string so it no longer matches the correctly-UTF8-
+        # decoded runtime data).
+        $rows = $text | ConvertFrom-Csv -Header 'Edition', 'Code', 'Title', 'Artist', 'DifficultyRaw', 'EffortRaw', 'CoverPhone' | Select-Object -Skip 1
+        $parsed = foreach ($r in $rows) {
+            $ed   = [string]$r.Edition
+            $code = ([string]$r.Code).Trim().ToLowerInvariant()
+            if ([string]::IsNullOrWhiteSpace($ed) -or [string]::IsNullOrWhiteSpace($code)) { continue }
+            [PSCustomObject]@{
+                Edition    = $ed
+                Code       = $code
+                Title      = [string]$r.Title
+                Artist     = [string]$r.Artist
+                Difficulty = ConvertTo-RatingTier ([string]$r.DifficultyRaw)
+                Effort     = ConvertTo-RatingTier ([string]$r.EffortRaw)
+            }
+        }
+        $records = @($parsed)
+        if ($records.Count -gt 0 -and $script:SongCatalogCachePath) {
+            try { $records | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $script:SongCatalogCachePath -Encoding UTF8 } catch { }
+        }
+    } catch {
+        $records = $null
+    } finally {
+        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($null -eq $records -or $records.Count -eq 0) {
+        $records = @()
+        if ($script:SongCatalogCachePath -and (Test-Path -LiteralPath $script:SongCatalogCachePath)) {
+            try {
+                $cached = ([System.IO.File]::ReadAllText($script:SongCatalogCachePath, [System.Text.Encoding]::UTF8)) | ConvertFrom-Json
+                $records = @($cached)
+            } catch { $records = @() }
+        }
+    }
+    return @($records)
+}
+
+function Get-CachedSongCatalog {
+    # Display-only, no network: whatever Get-SongCatalog last wrote to disk,
+    # or @() if the browser has never been opened yet. For places that want
+    # to show friendly song names (the main window's tracking summary) but
+    # can't justify a live fetch just to render a label.
+    if (-not $script:SongCatalogCachePath -or -not (Test-Path -LiteralPath $script:SongCatalogCachePath)) { return @() }
+    try {
+        return @(([System.IO.File]::ReadAllText($script:SongCatalogCachePath, [System.Text.Encoding]::UTF8)) | ConvertFrom-Json)
+    } catch {
+        return @()
+    }
+}
+
+function Get-SongDisplay($Record) {
+    # Non-ASCII literals (the em dash here) are avoided in .ps1/.psm1 source
+    # on purpose - see the [char]0x2713-style glyphs in the GUI file. Windows
+    # PowerShell 5.1 reads a BOM-less script using the system ANSI codepage,
+    # which mangles literal multi-byte UTF-8 characters embedded in source.
+    if ($null -eq $Record) { return $null }
+    $title  = [string]$Record.Title
+    $artist = [string]$Record.Artist
+    if ([string]::IsNullOrWhiteSpace($title)) { return $Record.Code }
+    if ([string]::IsNullOrWhiteSpace($artist)) { return $title }
+    return "$title $([char]0x2014) $artist"
+}
+
+function Get-DuplicateTitleKeys {
+    # "edition|code" for every song whose Title collides (case-insensitive)
+    # with another song in the SAME edition - real cases exist, e.g. JD2015's
+    # "Bad Romance" (badromance) and its "badromancealt" variant show
+    # identically otherwise. Callers append the codename to disambiguate only
+    # these flagged rows, leaving every unambiguous title alone.
+    param([Parameter(Mandatory = $true)]$Rows)
+    # Only the COUNT per edition|title matters here (is it shared by more
+    # than one row), not the actual list of codes - a plain int counter
+    # avoids allocating a `New-Object System.Collections.Generic.List[string]`
+    # per unique title (up to ~1000 of them on a full catalog), which
+    # profiling found costing several hundred ms on its own (the same
+    # New-Object-with-a-generic-type overhead documented elsewhere in this
+    # file and in Gui.ps1's $refreshList).
+    $countByKey = @{}
+    foreach ($r in $Rows) {
+        $t = ([string]$r.Title).Trim().ToLowerInvariant()
+        if ($t -eq '') { continue }
+        $k = "$($r.Edition)|$t"
+        if ($countByKey.ContainsKey($k)) { $countByKey[$k]++ } else { $countByKey[$k] = 1 }
+    }
+    $dupes = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($r in $Rows) {
+        $t = ([string]$r.Title).Trim().ToLowerInvariant()
+        if ($t -eq '') { continue }
+        $k = "$($r.Edition)|$t"
+        if ($countByKey[$k] -gt 1) { [void]$dupes.Add("$($r.Edition)|$($r.Code)") }
+    }
+    return $dupes
+}
+
+function Get-SongTitleForDisplay($Record, $DuplicateKeys) {
+    # The record's Title, with " (code)" appended only when Get-
+    # DuplicateTitleKeys flagged it as ambiguous within its edition.
+    if ($null -eq $Record) { return $null }
+    $title = if ([string]::IsNullOrWhiteSpace($Record.Title)) { $Record.Code } else { $Record.Title }
+    if ($null -ne $DuplicateKeys -and $DuplicateKeys.Contains("$($Record.Edition)|$($Record.Code)")) {
+        return "$title ($($Record.Code))"
+    }
+    return $title
+}
+
+function Initialize-SongSelectionContext {
+    # Shared setup for both front-ends' song browser: builds the catalog
+    # lookup tables and seeds the checked-song set from current config. An
+    # edition with no SONGFILTERS entry means "every song in it"; AUTO means
+    # "every song of every edition the catalog covers" (an edition the
+    # catalog doesn't know about at all can't be represented here - see
+    # Resolve-SongSelection for how that's carried through untouched).
+    param(
+        [Parameter(Mandatory = $true)]$Catalog,
+        [Parameter(Mandatory = $true)][string]$CurrentEditions,
+        [string]$CurrentSongFilters = ''
+    )
+    $rows = @($Catalog | Sort-Object Edition, Title)
+    $duplicateKeys = Get-DuplicateTitleKeys -Rows $rows
+    $byEdition = @{}
+    foreach ($r in $rows) {
+        if (-not $byEdition.ContainsKey($r.Edition)) { $byEdition[$r.Edition] = New-Object System.Collections.Generic.List[string] }
+        $byEdition[$r.Edition].Add($r.Code)
+    }
+    $catalogEditions = @($byEdition.Keys | Sort-EditionNames)
+    $wasAuto = ($CurrentEditions.ToUpper() -eq 'AUTO')
+    $trackedList = if ($wasAuto) { @() } else { @($CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
+    $filterMap = Get-SongFilterMap $CurrentSongFilters
+    $selectedKeys = New-Object System.Collections.Generic.HashSet[string]
+    foreach ($ed in $catalogEditions) {
+        $isTracked = $wasAuto -or ($trackedList -contains $ed)
+        if (-not $isTracked) { continue }
+        if ($filterMap.Contains($ed)) {
+            foreach ($code in $filterMap[$ed]) { [void]$selectedKeys.Add("$ed|$code") }
+        } else {
+            foreach ($code in $byEdition[$ed]) { [void]$selectedKeys.Add("$ed|$code") }
+        }
+    }
+    return [PSCustomObject]@{
+        Rows            = $rows
+        ByEdition       = $byEdition
+        CatalogEditions = $catalogEditions
+        TrackedList     = $trackedList
+        FilterMap       = $filterMap
+        SelectedKeys    = $selectedKeys
+        DuplicateKeys   = $duplicateKeys
+    }
+}
+
+function Resolve-SongSelection {
+    # Turns a (possibly edited) checked-keys set back into @{ Editions;
+    # SongFilters }, or $null if nothing ended up selected. "edition|code"
+    # keys are used throughout so one HashSet covers every edition at once.
+    param(
+        [Parameter(Mandatory = $true)]$Context,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.HashSet[string]]$SelectedKeys
+    )
+    $resultMap = [ordered]@{}
+    foreach ($ed in $Context.TrackedList) {
+        if (-not ($Context.CatalogEditions -contains $ed)) {
+            $resultMap[$ed] = if ($Context.FilterMap.Contains($ed)) { @($Context.FilterMap[$ed]) } else { 'ALL' }
+        }
+    }
+    foreach ($ed in $Context.CatalogEditions) {
+        $allCodes = @($Context.ByEdition[$ed])
+        $checkedCodes = @($allCodes | Where-Object { $SelectedKeys.Contains("$ed|$_") })
+        if ($checkedCodes.Count -eq 0) { continue }
+        $resultMap[$ed] = if ($checkedCodes.Count -eq $allCodes.Count) { 'ALL' } else { $checkedCodes }
+    }
+    if ($resultMap.Count -eq 0) { return $null }
+    $finalEditions = @($resultMap.Keys | Sort-EditionNames)
+    $finalFilterMap = [ordered]@{}
+    foreach ($ed in $finalEditions) { if ($resultMap[$ed] -ne 'ALL') { $finalFilterMap[$ed] = $resultMap[$ed] } }
+    return @{ Editions = ($finalEditions -join ','); SongFilters = (Format-SongFilters $finalFilterMap) }
+}
+
+function Get-SongRemovalPlan {
+    # Compares old vs new tracking state and returns one entry per edition
+    # that lost something a user might have local files for: dropped
+    # entirely (WholeEditionRemoved, RemovedCodes = $null - delete the whole
+    # maps\<edition> folder, matching the tool's older "unchecked an edition"
+    # behavior) or narrowed to fewer songs (RemovedCodes = the codes that
+    # fell out, for a per-file delete). An edition the catalog doesn't cover
+    # can only ever be dropped entirely, never narrowed - Resolve-SongSelection
+    # never assigns such an edition a filter, so there is nothing to compute
+    # per-song for it.
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$OldEditions,
+        [string]$OldSongFilters = '',
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$NewEditions,
+        [string]$NewSongFilters = '',
+        [Parameter(Mandatory = $true)]$Catalog
+    )
+    $byEdition = @{}
+    foreach ($r in $Catalog) {
+        if (-not $byEdition.ContainsKey($r.Edition)) { $byEdition[$r.Edition] = New-Object System.Collections.Generic.List[string] }
+        $byEdition[$r.Edition].Add($r.Code)
+    }
+    $oldFilterMap = Get-SongFilterMap $OldSongFilters
+    $newFilterMap = Get-SongFilterMap $NewSongFilters
+
+    $plan = @()
+    foreach ($ed in @($OldEditions | Select-Object -Unique)) {
+        $stillTracked = $NewEditions -contains $ed
+        if ($stillTracked -and -not $oldFilterMap.Contains($ed) -and -not $newFilterMap.Contains($ed)) { continue }
+
+        if (-not $byEdition.ContainsKey($ed)) {
+            if (-not $stillTracked) { $plan += [PSCustomObject]@{ Edition = $ed; RemovedCodes = $null; WholeEditionRemoved = $true } }
+            continue
+        }
+
+        $oldCodes = if ($oldFilterMap.Contains($ed)) { @($oldFilterMap[$ed]) } else { @($byEdition[$ed]) }
+        $newCodes = if (-not $stillTracked) { @() } elseif ($newFilterMap.Contains($ed)) { @($newFilterMap[$ed]) } else { @($byEdition[$ed]) }
+        $removedCodes = @($oldCodes | Where-Object { $newCodes -notcontains $_ })
+        if ($removedCodes.Count -gt 0) {
+            $plan += [PSCustomObject]@{ Edition = $ed; RemovedCodes = $removedCodes; WholeEditionRemoved = (-not $stillTracked) }
+        }
+    }
+    return $plan
+}
+
+function Get-SongDisplayMap {
+    # code -> display label for one edition's songs, built from whatever the
+    # catalog knows (falls back to the raw code for anything the sheet
+    # doesn't have). Duplicate labels within the set (real cases exist - e.g.
+    # JD2014's justdance/justdanceosc/justdanceswtdlc all show as "Just Dance
+    # - Lady Gaga...") get the codename appended so every entry stays unique.
+    param(
+        [Parameter(Mandatory = $true)][string]$Edition,
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Codes,
+        [Parameter(Mandatory = $true)]$Catalog
+    )
+    $byCode = @{}
+    foreach ($rec in $Catalog) {
+        if ($rec.Edition -eq $Edition) { $byCode[$rec.Code] = $rec }
+    }
+    $labels = [ordered]@{}
+    foreach ($code in $Codes) {
+        $lc = $code.ToLowerInvariant()
+        $labels[$code] = if ($byCode.ContainsKey($lc)) { Get-SongDisplay $byCode[$lc] } else { $code }
+    }
+    $counts = @{}
+    foreach ($v in $labels.Values) { $counts[$v] = 1 + ($(if ($counts.ContainsKey($v)) { $counts[$v] } else { 0 })) }
+    $out = [ordered]@{}
+    foreach ($code in $labels.Keys) {
+        $v = $labels[$code]
+        $out[$code] = if ($counts[$v] -gt 1) { "$v [$code]" } else { $v }
+    }
+    return $out
+}
+
+# ----------------------------------------------------------------------------
 # Update plan  (shared by the console preview and the GUI preview dialog)
 # ----------------------------------------------------------------------------
 
@@ -526,6 +933,7 @@ function Get-UpdatePlan {
     param(
         [Parameter(Mandatory = $true)][string]$GamePath,
         [Parameter(Mandatory = $true)][string]$Editions,
+        [string]$SongFilters = '',
         [switch]$IgnoreWrongLevel
     )
 
@@ -592,7 +1000,8 @@ function Get-UpdatePlan {
     } else {
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) {
-            $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $script:ScanArgs)
+            $includeArgs = Get-SongIncludeArgs (Get-EffectiveSongs $ed $SongFilters)
+            $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs)
             if ($r.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
             $p = Parse-DryRun $r.Lines
             $songBytes += $p.Bytes
@@ -766,8 +1175,12 @@ function Get-BaseSyncExcludes {
 Export-ModuleMember -Function `
     Initialize-LegacyCore, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
-    Get-RemoteEditions, Get-RemoteSongs, Get-LocalEditions, Get-LocalSongCount, `
+    Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Get-LocalEditions, Get-LocalSongCount, `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
     Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `
-    Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl
+    Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl, `
+    Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, `
+    Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
+    Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
+    Get-DuplicateTitleKeys, Get-SongTitleForDisplay

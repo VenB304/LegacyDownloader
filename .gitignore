@@ -3,6 +3,7 @@ config.txt
 config.txt.bak
 config.txt.orig
 rclone.conf
+bin/songcatalog.cache.json
 
 # Third-party binary - download from https://rclone.org/downloads/ (Windows amd64)
 rclone.exe

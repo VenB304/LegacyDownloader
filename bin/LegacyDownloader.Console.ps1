@@ -146,9 +146,9 @@ function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
     Write-Host ""
 }
 
-function Invoke-EditionSync([string]$GamePath, [string]$Edition) {
+function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$SongCodes = $null) {
     Write-Host (T 'sync.edition' @{ edition = (Format-EditionDisplay $Edition) })
-    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path $GamePath "maps\$Edition")
+    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path $GamePath "maps\$Edition") (Get-SongIncludeArgs $SongCodes)
     Write-Host ""
 }
 
@@ -169,13 +169,13 @@ function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
     Write-Host ""
 }
 
-function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcludes = @(), [switch]$Confirmed) {
+function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcludes = @(), [string]$SongFilters = '', [switch]$Confirmed) {
     Invoke-BaseSync $GamePath $BaseExcludes
     if ($Editions.ToUpper() -eq 'AUTO') {
         Invoke-AllMapsSync $GamePath -Confirmed:$Confirmed
     } else {
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
-        foreach ($ed in $list) { Invoke-EditionSync $GamePath $ed }
+        foreach ($ed in $list) { Invoke-EditionSync $GamePath $ed (Get-EffectiveSongs $ed $SongFilters) }
     }
     Write-Host (HR)
     Write-Host ("  " + (T 'common.done'))
@@ -183,7 +183,7 @@ function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcl
 }
 
 function Show-UpdatePreview {
-    param([string]$GamePath, [string]$Editions)
+    param([string]$GamePath, [string]$Editions, [string]$SongFilters = '')
 
     # Returns @{ Proceed; Dismissed; BaseExcludes }.
     #   Proceed   - caller should run the real sync now
@@ -196,7 +196,7 @@ function Show-UpdatePreview {
 
     Write-Host (T 'preview.checking')
 
-    $plan = Get-UpdatePlan -GamePath $GamePath -Editions $Editions
+    $plan = Get-UpdatePlan -GamePath $GamePath -Editions $Editions -SongFilters $SongFilters
 
     # A wrong game-folder level means every check would come back "missing"
     # and re-download the whole library into the wrong place. Say so up front
@@ -215,7 +215,7 @@ function Show-UpdatePreview {
             $result.Dismissed = $true
             return $result
         }
-        $plan = Get-UpdatePlan -GamePath $GamePath -Editions $Editions -IgnoreWrongLevel
+        $plan = Get-UpdatePlan -GamePath $GamePath -Editions $Editions -SongFilters $SongFilters -IgnoreWrongLevel
     }
 
     if (-not $plan.Ok) {
@@ -326,65 +326,232 @@ function Show-UpdatePreview {
     }
 }
 
-function Show-Checklist([string[]]$Items, [string[]]$PreChecked) {
-    $checked = New-Object System.Collections.Generic.HashSet[string]
-    foreach ($p in $PreChecked) { [void]$checked.Add($p) }
+function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters) {
+    # Maps/songs picker. Default view is a tree - one row per edition with a
+    # tri-state mark (x / [ ] / [square]-partial) and Right/Left to expand
+    # it into its songs, each with their own checkbox. Typing a search, or
+    # setting the Difficulty/Effort filter, flips the same screen to a flat,
+    # sortable list of matching songs across every edition instead. Returns:
+    #   @{ Action = 'Cancel' }
+    #   @{ Action = 'Confirm'; Editions = <csv>; SongFilters = <raw SONGFILTERS string> }
+    Write-Host ""
+    Write-Host (T 'songbrowser.loading')
+    $catalog = @(Get-SongCatalog)
+    if ($catalog.Count -eq 0) {
+        Write-Host (T 'songbrowser.load_failed') -ForegroundColor Yellow
+        Pause-Continue
+        return @{ Action = 'Cancel' }
+    }
 
-    # Internal sentinel rows - kept out of the item namespace so a translated
-    # label can never collide with a real edition name or a comparison.
-    $rows = @()
-    $rows += $Items
-    $rows += '__SEP__'
-    $rows += '__BACK__'
-    $rows += '__CANCEL__'
-    $rows += '__CONTINUE__'
+    $ctx = Initialize-SongSelectionContext -Catalog $catalog -CurrentEditions $CurrentEditions -CurrentSongFilters $CurrentSongFilters
+    $rows            = $ctx.Rows
+    $byEdition       = $ctx.ByEdition
+    $catalogEditions = $ctx.CatalogEditions
+    $selectedKeys    = $ctx.SelectedKeys
+    $rowByKey = @{}
+    foreach ($r in $rows) { $rowByKey["$($r.Edition)|$($r.Code)"] = $r }
 
-    $cursor = 0
-    while ($rows[$cursor] -eq '__SEP__') { $cursor++ }
+    $expanded         = New-Object System.Collections.Generic.HashSet[string]
+    $search           = ''
+    $editionFilter    = 'ALL'
+    $difficultyFilter = 'ALL'
+    $effortFilter     = 'ALL'
+    $sortColumn       = 0
+    $sortAscending    = $true
+    $cursor           = 0
+    $viewStart        = 0
+
+    $sortFields = @(
+        { param($r) if ([string]::IsNullOrWhiteSpace($r.Title)) { $r.Code } else { $r.Title } }
+        { param($r) [string]$r.Artist }
+        { param($r) Format-EditionDisplay $r.Edition }
+        { param($r) Format-DifficultyTier $r.Difficulty }
+        { param($r) Format-EffortTier $r.Effort }
+    )
+
+    function Get-EditionTriMark([string]$Edition) {
+        $codes = @($byEdition[$Edition])
+        $checked = @($codes | Where-Object { $selectedKeys.Contains("$Edition|$_") }).Count
+        if ($checked -eq 0) { return ' ' }
+        if ($checked -eq $codes.Count) { return 'x' }
+        return [char]0x25A0   # filled square - the "partial" glyph
+    }
 
     $savedBuffer = Enter-NoScrollBuffer
     [Console]::CursorVisible = $false
-
     try {
         while ($true) {
-            Clear-Host
-            Write-Host (T 'checklist.help')
-            Write-Host ""
-            for ($i = 0; $i -lt $rows.Count; $i++) {
-                $row = $rows[$i]
-                $pointer = if ($i -eq $cursor) { '>' } else { ' ' }
-                if ($row -eq '__SEP__') {
-                    $line = ''
-                } elseif ($row -eq '__BACK__') {
-                    $line = "$pointer  " + (T 'checklist.back')
-                } elseif ($row -eq '__CANCEL__') {
-                    $line = "$pointer  " + (T 'checklist.cancel')
-                } elseif ($row -eq '__CONTINUE__') {
-                    $line = "$pointer  " + (T 'checklist.continue')
-                } else {
-                    $mark = if ($checked.Contains($row)) { 'x' } else { ' ' }
-                    $disp = Format-EditionDisplay $row
-                    $line = "$pointer  [$mark] $disp"
+            $active = ($search -ne '') -or ($editionFilter -ne 'ALL') -or ($difficultyFilter -ne 'ALL') -or ($effortFilter -ne 'ALL')
+
+            # Build this frame's visible rows. Every row is tagged Kind
+            # 'Edition' (tri-state, toggling it selects/clears the whole
+            # edition) or 'Song' (plain toggle) - Enter handling below is
+            # identical either way, only rendering differs.
+            $visible = @()
+            if ($active) {
+                $q = $search.Trim().ToLowerInvariant()
+                $filtered = @($rows | Where-Object {
+                    ($editionFilter -eq 'ALL' -or $_.Edition -eq $editionFilter) -and
+                    ($difficultyFilter -eq 'ALL' -or $_.Difficulty -eq $difficultyFilter) -and
+                    ($effortFilter -eq 'ALL' -or $_.Effort -eq $effortFilter) -and
+                    ($q -eq '' -or ([string]$_.Title).ToLowerInvariant().Contains($q) -or ([string]$_.Artist).ToLowerInvariant().Contains($q) -or $_.Code.Contains($q))
+                })
+                $filtered = @($filtered | Sort-Object -Property @{ Expression = $sortFields[$sortColumn] })
+                if (-not $sortAscending) { [array]::Reverse($filtered) }
+                foreach ($r in $filtered) { $visible += [PSCustomObject]@{ Kind = 'Song'; Edition = $r.Edition; Code = $r.Code; Indent = $false } }
+            } else {
+                foreach ($ed in $catalogEditions) {
+                    $visible += [PSCustomObject]@{ Kind = 'Edition'; Edition = $ed; Code = $null; Indent = $false }
+                    if ($expanded.Contains($ed)) {
+                        foreach ($code in $byEdition[$ed]) { $visible += [PSCustomObject]@{ Kind = 'Song'; Edition = $ed; Code = $code; Indent = $true } }
+                    }
                 }
-                Write-Host $line
             }
 
+            # Two virtual footer rows the cursor can land on, same pattern as
+            # the edition-only checklist this replaced.
+            $footerStart = $visible.Count
+            $totalRows = $visible.Count + 2
+            if ($cursor -ge $totalRows) { $cursor = $totalRows - 1 }
+            if ($cursor -lt 0) { $cursor = 0 }
+
+            Clear-Host
+            Write-Host (if ($active) { T 'songbrowser.help' } else { T 'songbrowser.tree_help' })
+            $editionLabel = if ($editionFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EditionDisplay $editionFilter }
+            $diffLabel    = if ($difficultyFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-DifficultyTier $difficultyFilter }
+            $effortLabel  = if ($effortFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EffortTier $effortFilter }
+            Write-Host (T 'songbrowser.search_label' @{ text = $search })
+            Write-Host ("  " + (T 'songbrowser.filter_edition' @{ value = $editionLabel }) + "    " + (T 'songbrowser.filter_difficulty' @{ value = $diffLabel }) + "    " + (T 'songbrowser.filter_effort' @{ value = $effortLabel }))
+            Write-Host (T 'songbrowser.status_line' @{ shown = $visible.Count; total = $rows.Count; selected = $selectedKeys.Count })
+            Write-Host ""
+
+            $consoleHeight = try { [Console]::WindowHeight } catch { 30 }
+            $viewportRows = [Math]::Max(5, $consoleHeight - 10)
+            if ($cursor -lt $viewStart) { $viewStart = $cursor }
+            if ($cursor -ge $viewStart + $viewportRows) { $viewStart = $cursor - $viewportRows + 1 }
+            if ($viewStart -lt 0) { $viewStart = 0 }
+
+            if ($visible.Count -eq 0) {
+                Write-Host (T 'songbrowser.empty_results')
+            } else {
+                $viewEnd = [Math]::Min($visible.Count, $viewStart + $viewportRows) - 1
+                for ($i = $viewStart; $i -le $viewEnd; $i++) {
+                    $row = $visible[$i]
+                    $pointer = if ($i -eq $cursor) { '>' } else { ' ' }
+                    $indent = if ($row.Indent) { '    ' } else { '' }
+                    if ($row.Kind -eq 'Edition') {
+                        $mark = Get-EditionTriMark $row.Edition
+                        $arrow = if ($expanded.Contains($row.Edition)) { [char]0x25BC } else { [char]0x25B6 }
+                        $count = @($byEdition[$row.Edition]).Count
+                        $checkedCount = @($byEdition[$row.Edition] | Where-Object { $selectedKeys.Contains("$($row.Edition)|$_") }).Count
+                        $countText = if ($checkedCount -gt 0 -and $checkedCount -lt $count) { "$checkedCount/$count" } else { "$count" }
+                        Write-Host ("{0}  [{1}] {2} {3} ({4} songs)" -f $pointer, $mark, $arrow, (Format-EditionDisplay $row.Edition), $countText)
+                    } else {
+                        $r = $rowByKey["$($row.Edition)|$($row.Code)"]
+                        $mark = if ($selectedKeys.Contains("$($row.Edition)|$($row.Code)")) { 'x' } else { ' ' }
+                        $title = if ($r) { Get-SongTitleForDisplay $r $ctx.DuplicateKeys } else { $row.Code }
+                        if ($active) {
+                            $line = "{0}{1}  [{2}] {3,-40} {4,-22} {5,-14}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(40, $title.Length))), (([string]$r.Artist).Substring(0, [Math]::Min(22, ([string]$r.Artist).Length))), (Format-EditionDisplay $row.Edition)
+                        } else {
+                            $artist = if ($r) { [string]$r.Artist } else { '' }
+                            $line = "{0}{1}  [{2}] {3,-42} {4}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(42, $title.Length))), $artist
+                        }
+                        Write-Host $line
+                    }
+                }
+            }
+            Write-Host ""
+            $doneIdx = $footerStart
+            $cancelIdx = $footerStart + 1
+            Write-Host ((if ($cursor -eq $doneIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.done'))
+            Write-Host ((if ($cursor -eq $cancelIdx) { '>' } else { ' ' }) + "  " + (T 'songbrowser.cancel'))
+
             $key = [Console]::ReadKey($true)
-            switch ($key.Key) {
-                'UpArrow' {
-                    do { $cursor--; if ($cursor -lt 0) { $cursor = $rows.Count - 1 } } while ($rows[$cursor] -eq '__SEP__')
+            if ($key.Key -eq 'UpArrow') { $cursor--; if ($cursor -lt 0) { $cursor = $totalRows - 1 }; continue }
+            if ($key.Key -eq 'DownArrow') { $cursor++; if ($cursor -ge $totalRows) { $cursor = 0 }; continue }
+            if ($key.Key -eq 'PageUp') { $cursor = [Math]::Max(0, $cursor - $viewportRows); continue }
+            if ($key.Key -eq 'PageDown') { $cursor = [Math]::Min($totalRows - 1, $cursor + $viewportRows); continue }
+            if ($key.Key -eq 'Home') { $cursor = 0; continue }
+            if ($key.Key -eq 'End') { $cursor = $totalRows - 1; continue }
+            if ($key.Key -eq 'Escape') { return @{ Action = 'Cancel' } }
+            if ((-not $active) -and $key.Key -eq 'RightArrow' -and $cursor -lt $visible.Count) {
+                $row = $visible[$cursor]
+                if ($row.Kind -eq 'Edition') { [void]$expanded.Add($row.Edition) }
+                continue
+            }
+            if ((-not $active) -and $key.Key -eq 'LeftArrow' -and $cursor -lt $visible.Count) {
+                $row = $visible[$cursor]
+                if ($row.Kind -eq 'Edition') {
+                    [void]$expanded.Remove($row.Edition)
+                } else {
+                    [void]$expanded.Remove($row.Edition)
+                    # Snap the cursor back to the parent edition's own row,
+                    # since the child row it was on just disappeared.
+                    for ($i = 0; $i -lt $visible.Count; $i++) {
+                        if ($visible[$i].Kind -eq 'Edition' -and $visible[$i].Edition -eq $row.Edition) { $cursor = $i; break }
+                    }
                 }
-                'DownArrow' {
-                    do { $cursor++; if ($cursor -ge $rows.Count) { $cursor = 0 } } while ($rows[$cursor] -eq '__SEP__')
+                continue
+            }
+            if ($active -and $key.Key -eq 'F5') {
+                $sortColumn = ($sortColumn + 1) % $sortFields.Count
+                $cursor = 0; $viewStart = 0; continue
+            }
+            if ($active -and $key.Key -eq 'F6') { $sortAscending = -not $sortAscending; continue }
+            if ($key.Key -eq 'F2') {
+                $opts = @('ALL') + $catalogEditions
+                $idx = [Array]::IndexOf($opts, $editionFilter)
+                $editionFilter = $opts[($idx + 1) % $opts.Count]
+                $cursor = 0; $viewStart = 0; continue
+            }
+            if ($key.Key -eq 'F3') {
+                $opts = @('ALL', 1, 2, 3, 4)
+                $idx = [Array]::IndexOf($opts, $difficultyFilter)
+                $difficultyFilter = $opts[($idx + 1) % $opts.Count]
+                $cursor = 0; $viewStart = 0; continue
+            }
+            if ($key.Key -eq 'F4') {
+                $opts = @('ALL', 0, 1, 2, 3, 4)
+                $idx = [Array]::IndexOf($opts, $effortFilter)
+                $effortFilter = $opts[($idx + 1) % $opts.Count]
+                $cursor = 0; $viewStart = 0; continue
+            }
+            if ($key.Key -eq 'Backspace') {
+                if ($search.Length -gt 0) { $search = $search.Substring(0, $search.Length - 1) }
+                $cursor = 0; $viewStart = 0; continue
+            }
+            if ($key.Key -eq 'Enter') {
+                if ($cursor -eq $doneIdx) {
+                    $resolved = Resolve-SongSelection -Context $ctx -SelectedKeys $selectedKeys
+                    if ($null -eq $resolved) {
+                        Write-Host ""
+                        Write-Host (T 'songbrowser.none_selected_warn') -ForegroundColor Yellow
+                        if (-not (Confirm-YesNo (T 'maps.go_back_list'))) { return @{ Action = 'Cancel' } }
+                        continue
+                    }
+                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; Catalog = $catalog }
                 }
-                'Enter' {
-                    $row = $rows[$cursor]
-                    if ($row -eq '__BACK__')     { return @{ Action = 'Back' } }
-                    if ($row -eq '__CANCEL__')   { return @{ Action = 'Cancel' } }
-                    if ($row -eq '__CONTINUE__') { return @{ Action = 'Continue'; Selected = @($checked) } }
-                    if ($checked.Contains($row)) { [void]$checked.Remove($row) } else { [void]$checked.Add($row) }
+                if ($cursor -eq $cancelIdx) { return @{ Action = 'Cancel' } }
+                if ($cursor -lt $visible.Count) {
+                    $row = $visible[$cursor]
+                    if ($row.Kind -eq 'Edition') {
+                        $goFull = (Get-EditionTriMark $row.Edition) -ne 'x'
+                        foreach ($code in $byEdition[$row.Edition]) {
+                            $k = "$($row.Edition)|$code"
+                            if ($goFull) { [void]$selectedKeys.Add($k) } else { [void]$selectedKeys.Remove($k) }
+                        }
+                    } else {
+                        $k = "$($row.Edition)|$($row.Code)"
+                        if ($selectedKeys.Contains($k)) { [void]$selectedKeys.Remove($k) } else { [void]$selectedKeys.Add($k) }
+                    }
                 }
-                'Escape' { return @{ Action = 'Cancel' } }
+                continue
+            }
+            # Any other printable character -> append to the search text
+            # (flips the view to the flat sortable table, see $active above).
+            if ($key.KeyChar -and -not [char]::IsControl($key.KeyChar)) {
+                $search += $key.KeyChar
+                $cursor = 0; $viewStart = 0
             }
         }
     } finally {
@@ -429,7 +596,8 @@ function Choose-Language([string]$CurrentCode) {
     }
 }
 
-function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions) {
+function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$CurrentSongFilters = '') {
+    # Returns $null (no change) or @{ Editions = <csv|'AUTO'>; SongFilters = <raw SONGFILTERS string> }.
     while ($true) {
         Write-Host (HR)
         Write-Host ("  " + (T 'maps.header'))
@@ -449,7 +617,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions) {
                 Write-Host ""
                 Invoke-Update -GamePath $GamePath -Editions 'AUTO' -BaseExcludes $prev.BaseExcludes -Confirmed
             }
-            return 'AUTO'
+            return @{ Editions = 'AUTO'; SongFilters = '' }
         }
 
         if ($choice -ne '2') {
@@ -457,100 +625,54 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions) {
             continue
         }
 
+        $browse = Show-SongBrowser -CurrentEditions $CurrentEditions -CurrentSongFilters $CurrentSongFilters
         Write-Host ""
-        Write-Host (T 'maps.checking_available')
-        $remote = Get-RemoteEditions
-        if (-not $remote -or $remote.Count -eq 0) {
-            Write-Host (T 'maps.net_fail')
-            Pause-Continue
-            continue
-        }
+        if ($browse.Action -ne 'Confirm') { continue }
 
-        $preChecked = if ($CurrentEditions.ToUpper() -eq 'AUTO') {
-            Get-LocalEditions $GamePath
-        } else {
-            $CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
-        }
+        $prev = Show-UpdatePreview -GamePath $GamePath -Editions $browse.Editions -SongFilters $browse.SongFilters
+        if ($prev.Dismissed) { continue }
 
-        $backToTop = $false
-        while ($true) {
-            Write-Host ""
-            $result = Show-Checklist -Items $remote -PreChecked $preChecked
-            Write-Host ""
-
-            if ($result.Action -eq 'Cancel') { return $null }
-            if ($result.Action -eq 'Back')   { $backToTop = $true; break }
-
-            $selected = @($result.Selected | Sort-EditionNames)
-
-            Write-Host (HR)
-            Write-Host ("  " + (T 'maps.summary_header'))
-            Write-Host (HR)
-            if ($selected.Count -eq 0) {
-                Write-Host (T 'maps.no_editions_selected')
-            } else {
-                $label = if ($selected.Count -eq 1) { T 'maps.selected_edition' } else { T 'maps.selected_editions' }
-                Write-Host $label
-                foreach ($ed in $selected) {
-                    $disp = Format-EditionDisplay $ed
-                    Write-Host "  $disp"
-                    foreach ($song in (Get-RemoteSongs $ed)) { Write-Host "    - $song" }
-                }
-            }
-
-            $previouslyTracked = if ($CurrentEditions.ToUpper() -eq 'AUTO') {
-                Get-LocalEditions $GamePath
-            } else {
-                $CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
-            }
-            $removed = @($previouslyTracked | Where-Object { $selected -notcontains $_ })
-            if ($removed.Count -gt 0) {
-                Write-Host ""
-                Write-Host (T 'maps.stop_getting' @{ list = ($removed -join ', ') })
-            }
-            Write-Host ""
-
-            if ($selected.Count -eq 0) {
-                Write-Host (T 'maps.nothing_checked') -ForegroundColor Yellow
-                if (-not (Confirm-YesNo (T 'maps.go_back_list'))) { return $null }
-                $preChecked = $selected
-                continue
-            }
-
-            $prev = Show-UpdatePreview -GamePath $GamePath -Editions ($selected -join ',')
-            if ($prev.Dismissed) {
-                $preChecked = $selected
-                continue
-            }
-
-            # Removed-edition cleanup runs whether or not there's anything new
-            # to fetch (the user unchecked these on purpose).
-            foreach ($ed in $removed) {
-                $localDir = Join-Path $GamePath "maps\$ed"
-                if (Test-Path -LiteralPath $localDir) {
-                    if (Confirm-YesNo (T 'maps.delete_or_keep' @{ edition = $ed })) {
-                        try {
-                            Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop
-                            Write-Host (T 'maps.deleted' @{ edition = $ed })
-                        } catch {
-                            Write-Host (T 'maps.cant_delete' @{ edition = $ed }) -ForegroundColor Yellow
-                        }
-                    } else {
-                        Write-Host (T 'maps.keeping_untracked' @{ edition = $ed })
+        # Whole editions dropped, or editions narrowed to fewer songs, may
+        # have local files the player no longer wants - ask once per
+        # affected edition, same spirit as the tool's older "unchecked an
+        # edition" cleanup prompt.
+        $oldEditionList = if ($CurrentEditions.ToUpper() -eq 'AUTO') { Get-LocalEditions $GamePath } else { @($CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
+        $newEditionList = @($browse.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
+        $removalPlan = Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog
+        foreach ($item in $removalPlan) {
+            $localDir = Join-Path $GamePath "maps\$($item.Edition)"
+            if (-not (Test-Path -LiteralPath $localDir)) { continue }
+            if ($item.WholeEditionRemoved) {
+                if (Confirm-YesNo (T 'maps.delete_or_keep' @{ edition = $item.Edition })) {
+                    try {
+                        Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop
+                        Write-Host (T 'maps.deleted' @{ edition = $item.Edition })
+                    } catch {
+                        Write-Host (T 'maps.cant_delete' @{ edition = $item.Edition }) -ForegroundColor Yellow
                     }
+                } else {
+                    Write-Host (T 'maps.keeping_untracked' @{ edition = $item.Edition })
+                }
+            } else {
+                if (Confirm-YesNo (T 'maps.delete_songs_or_keep' @{ count = $item.RemovedCodes.Count; edition = $item.Edition })) {
+                    $failed = 0
+                    foreach ($code in $item.RemovedCodes) {
+                        $target = Join-Path $localDir "${code}_pc.ipk"
+                        if (Test-Path -LiteralPath $target) {
+                            try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop } catch { $failed++ }
+                        }
+                    }
+                    if ($failed -gt 0) { Write-Host (T 'maps.cant_delete_songs' @{ edition = $item.Edition }) -ForegroundColor Yellow }
+                    else { Write-Host (T 'maps.songs_deleted' @{ count = $item.RemovedCodes.Count; edition = $item.Edition }) }
                 }
             }
-
-            if ($prev.Proceed) {
-                Write-Host ""
-                foreach ($ed in $selected) { Invoke-EditionSync $GamePath $ed }
-                Invoke-BaseSync $GamePath $prev.BaseExcludes
-            }
-
-            if ($selected.Count -eq $remote.Count) { return 'AUTO' } else { return ($selected -join ',') }
         }
 
-        if ($backToTop) { continue }
+        if ($prev.Proceed) {
+            Write-Host ""
+            Invoke-Update -GamePath $GamePath -Editions $browse.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $browse.SongFilters -Confirmed
+        }
+        return @{ Editions = $browse.Editions; SongFilters = $browse.SongFilters }
     }
 }
 
@@ -624,9 +746,9 @@ if ([string]::IsNullOrWhiteSpace($cfg.GamePath)) {
     $cfg = Load-Config
 
     Write-Host ""
-    $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions
+    $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions -CurrentSongFilters $cfg.SongFilters
     if ($null -ne $mapsResult) {
-        Save-Config -GamePath $cfg.GamePath -Editions $mapsResult
+        Save-Config -GamePath $cfg.GamePath -Editions $mapsResult.Editions -SongFilters $mapsResult.SongFilters
         $cfg = Load-Config
     }
 
@@ -674,11 +796,14 @@ while ($true) {
     $langEntry = $AvailableLangs | Where-Object { $_.Code -eq $cfg.Lang } | Select-Object -First 1
     $langLabel = if ($langEntry) { $langEntry.NativeName } else { $cfg.Lang }
 
+    $songFilterMap = Get-SongFilterMap $cfg.SongFilters
     $edDisplay = if ($cfg.Editions.ToUpper() -eq 'AUTO') {
         'AUTO'
     } else {
         ($cfg.Editions -split ',' | ForEach-Object {
-            Format-EditionDisplay $_.Trim()
+            $ed = $_.Trim()
+            $disp = Format-EditionDisplay $ed
+            if ($songFilterMap.Contains($ed)) { $disp + (T 'songbrowser.count_suffix' @{ count = $songFilterMap[$ed].Count }) } else { $disp }
         }) -join ', '
     }
 
@@ -701,10 +826,10 @@ while ($true) {
     switch ($choice) {
         '1' {
             Write-Host ""
-            $prev = Show-UpdatePreview -GamePath $cfg.GamePath -Editions $cfg.Editions
+            $prev = Show-UpdatePreview -GamePath $cfg.GamePath -Editions $cfg.Editions -SongFilters $cfg.SongFilters
             if ($prev.Proceed) {
                 Write-Host ""
-                Invoke-Update -GamePath $cfg.GamePath -Editions $cfg.Editions -BaseExcludes $prev.BaseExcludes -Confirmed
+                Invoke-Update -GamePath $cfg.GamePath -Editions $cfg.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $cfg.SongFilters -Confirmed
                 Write-Host ""
                 Write-Host (T 'menu.up_to_date_play')
             }
@@ -712,9 +837,9 @@ while ($true) {
         }
         '2' {
             Write-Host ""
-            $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions
+            $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions -CurrentSongFilters $cfg.SongFilters
             if ($null -ne $mapsResult) {
-                Save-Config -GamePath $cfg.GamePath -Editions $mapsResult
+                Save-Config -GamePath $cfg.GamePath -Editions $mapsResult.Editions -SongFilters $mapsResult.SongFilters
                 $cfg = Load-Config
                 Write-Host ""
                 Write-Host (T 'menu.songs_ready')
