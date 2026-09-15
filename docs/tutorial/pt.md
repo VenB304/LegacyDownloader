@@ -86,14 +86,46 @@ Assim que o jogo base estiver pronto, você chega aqui:
   - **Tudo** — todas as edições de Just Dance disponíveis, e pegará as
     novas automaticamente conforme forem lançadas. Esta é a opção mais
     simples se você não tem certeza — escolha esta.
-  - **Apenas edições específicas** — clique em **"Escolher edições..."**
-    para marcar apenas os jogos que você realmente quer (por exemplo,
-    apenas *Just Dance 2019*), se preferir não baixar tudo.
+  - **Específicas** — escolha exatamente o que você quer, em vez disso.
+    Clique em **"Selecionar mapas / músicas"** para abrir o seletor — veja
+    o próximo passo.
 - **"Baixar / Verificar atualizações"** — o botão grande. Clique para
   obter o que você escolheu, e clique novamente mais tarde para verificar
   novas músicas ou atualizações.
 
-## 4. Verificando atualizações
+## 4. Escolhendo músicas individuais
+
+Clique em **"Selecionar mapas / músicas"** (a partir da janela principal, a
+qualquer momento) para abrir o seletor:
+
+![Seletor de músicas e edições](images/06-songbrowser-pt.png)
+
+- **Edições**, à esquerda — marque a caixa de uma edição inteira para
+  pegar tudo dela. Uma caixa que parece meio preenchida significa que só
+  algumas músicas daquela edição estão marcadas.
+- **Músicas**, à direita — cada música individual, com sua edição,
+  dificuldade e esforço (intensidade do exercício) quando conhecidos.
+  Marque ou desmarque qualquer música sozinha — não precisa pegar uma
+  edição inteira de uma vez.
+- **Pesquisar** — digite um título, artista ou nome de código para filtrar
+  a lista instantaneamente.
+- **Filtros** — restrinja ainda mais a lista por Dificuldade ou Esforço
+  usando os menus suspensos no canto superior direito.
+- **Marcar todas as exibidas / Desmarcar todas as exibidas** — selecione
+  em massa o que sua pesquisa ou filtro atual estiver mostrando, em vez de
+  clicar música por música.
+- **Colunas...** — mostre ou oculte as colunas Artista, Dificuldade ou
+  Esforço se preferir uma visão mais simples.
+
+Clique em **OK** para salvar suas escolhas, ou em **Cancelar** para voltar
+sem mudar nada.
+
+> Músicas que a lista da comunidade ainda não tem um nome aparecem mesmo
+> assim (só com o nome do arquivo em vez de um título) — elas serão
+> baixadas e funcionarão normalmente, só sem um nome amigável até alguém
+> adicionar um.
+
+## 5. Verificando atualizações
 
 Clicar no botão grande não baixa nada imediatamente — primeiro ele
 **verifica** o que está faltando ou mudou. Enquanto verifica, a barra de
@@ -123,7 +155,7 @@ Suas configurações no jogo (resolução, janela/tela cheia) nunca são
 tocadas por uma atualização, modificada ou não.
 </details>
 
-## 5. Durante o download
+## 6. Durante o download
 
 A barra de progresso e a caixa de registro abaixo dela se atualizam ao
 vivo — você verá o jogo e cada pacote de músicas listados conforme
@@ -135,16 +167,17 @@ rodando.** Quando tudo estiver pronto, você verá:
 
 Essa é sua confirmação de que funcionou — vá iniciar o jogo.
 
-## 6. Voltando depois por novas músicas
+## 7. Voltando depois por novas músicas
 
 Basta executar `LegacyDownloader-GUI.bat` novamente a qualquer momento. Ele
 lembra sua pasta e suas escolhas de músicas, e clicar em **"Baixar /
 Verificar atualizações"** pega tudo que é novo desde sua última visita.
 
-- **Adicionar ou remover músicas**: use **"Escolher edições..."**
-  novamente. Desmarcar um jogo já baixado vai perguntar se quer também
-  excluir esses arquivos, ou apenas parar de receber atualizações para
-  ele mantendo o que você tem.
+- **Adicionar ou remover músicas**: clique em **"Selecionar mapas /
+  músicas"** novamente, marque ou desmarque o que quiser, e clique em OK.
+  Desmarcar algo já baixado — uma edição inteira ou só algumas músicas —
+  vai perguntar se quer também excluir esses arquivos, ou apenas parar de
+  receber atualizações para eles mantendo o que você já tem.
 - **Mudar idioma**: o menu suspenso da bandeira, no canto superior
   direito, a qualquer momento.
 
@@ -194,9 +227,9 @@ navegando com as teclas numéricas:
 - **Nada acontece quando clico em um botão de pasta** — a janela de
   seleção pode ter aberto *atrás* da janela principal; verifique sua
   barra de tarefas.
-- **Diz "atualizado" mas estou sem músicas** — abra **"Escolher
-  edições..."** e verifique se você realmente selecionou as que quer (ou
-  escolha **"Tudo"**).
+- **Diz "atualizado" mas estou sem músicas** — abra **"Selecionar mapas /
+  músicas"** e verifique se você realmente marcou as que quer (ou escolha
+  **"Tudo"**).
 - **Ainda travado?** Poste no tópico do Legacy Downloader no Discord com
   uma captura de tela do que você está vendo e em qual passo você está —
   alguém vai ajudar.

@@ -87,14 +87,45 @@ Zodra het basisspel op zijn plek staat, kom je hier terecht:
   - **Alles** — elke beschikbare Just Dance-editie, en nieuwe worden later
     automatisch opgehaald. Dit is de eenvoudigste optie als je het niet
     zeker weet — kies deze.
-  - **Alleen specifieke edities** — klik op **"Edities kiezen..."** om
-    alleen de spellen aan te vinken die je echt wilt (bijvoorbeeld alleen
-    *Just Dance 2019*), als je liever niet alles downloadt.
+  - **Specifiek** — kies in plaats daarvan precies wat je wilt. Klik op
+    **"Kaarten / nummers selecteren"** om de kiezer te openen — meer
+    daarover in de volgende stap.
 - **"Downloaden / Controleren op updates"** — de grote knop. Klik erop om
   op te halen wat je hebt gekozen, en klik er later opnieuw op om te
   controleren op nieuwe nummers of updates.
 
-## 4. Controleren op updates
+## 4. Losse nummers kiezen
+
+Klik op **"Kaarten / nummers selecteren"** (op elk moment, vanuit het
+hoofdvenster) om de kiezer te openen:
+
+![Nummer- en editiekiezer](images/06-songbrowser-nl.png)
+
+- **Edities**, links — vink het vakje van een hele editie aan om alles
+  daaruit te downloaden. Een half gevuld vakje betekent dat er maar een
+  paar nummers van die editie zijn aangevinkt.
+- **Nummers**, rechts — elk los nummer, met editie, moeilijkheidsgraad en
+  inspanning (trainingsintensiteit) waar bekend. Vink elk nummer los aan
+  of uit — je hoeft niet meteen een hele editie te nemen.
+- **Zoeken** — typ een titel, artiest of codenaam om de lijst meteen te
+  filteren.
+- **Filters** — beperk de lijst verder op Moeilijkheidsgraad of Inspanning
+  met de dropdowns rechtsboven.
+- **Alle getoonde aanvinken / Alle getoonde uitvinken** — selecteer in één
+  keer alles wat je huidige zoekopdracht of filter laat zien, in plaats
+  van nummer voor nummer te klikken.
+- **Kolommen...** — toon of verberg de kolommen Artiest, Moeilijkheidsgraad
+  of Inspanning voor een eenvoudigere weergave.
+
+Klik op **OK** om je keuzes op te slaan, of op **Annuleren** om terug te
+gaan zonder iets te wijzigen.
+
+> Nummers waar de communitylijst nog geen naam voor heeft, verschijnen
+> gewoon toch (alleen met hun bestandsnaam in plaats van een titel) — ze
+> worden gewoon gedownload en werken prima, alleen zonder leuke naam
+> totdat iemand er een toevoegt.
+
+## 5. Controleren op updates
 
 Op de grote knop klikken downloadt niet meteen iets — het **controleert**
 eerst wat er ontbreekt of veranderd is. Tijdens het controleren kan de
@@ -125,7 +156,7 @@ Je spelinstellingen (resolutie, venster-/volledig scherm) worden nooit
 aangeraakt door een update, gemod of niet.
 </details>
 
-## 5. Tijdens het downloaden
+## 6. Tijdens het downloaden
 
 De voortgangsbalk en het logvak eronder werken live bij — je ziet het
 spel en elk songpakket vermeld zodra ze klaar zijn, één voor één.
@@ -136,16 +167,18 @@ je:
 
 Dat is je bevestiging dat het gelukt is — ga het spel starten.
 
-## 6. Later terugkomen voor nieuwe nummers
+## 7. Later terugkomen voor nieuwe nummers
 
 Voer `LegacyDownloader-GUI.bat` gewoon op elk moment opnieuw uit. Het onthoudt
 je map en je nummerkeuzes, en klikken op **"Downloaden / Controleren op
 updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
 
-- **Nummers toevoegen of verwijderen**: gebruik opnieuw **"Edities
-  kiezen..."**. Het uitvinken van een al gedownload spel vraagt of je ook
-  die bestanden wilt verwijderen, of gewoon wilt stoppen met updates
-  ervoor terwijl je behoudt wat je hebt.
+- **Nummers toevoegen of verwijderen**: klik opnieuw op **"Kaarten /
+  nummers selecteren"**, vink aan of uit wat je wilt, en klik op OK. Het
+  uitvinken van iets dat je al hebt gedownload — een hele editie of maar
+  een paar nummers — vraagt of je ook die bestanden wilt verwijderen, of
+  gewoon wilt stoppen met updates ervoor terwijl je behoudt wat je al
+  hebt.
 - **Taal wijzigen**: de vlag-vervolgkeuzelijst, rechtsboven, op elk
   moment.
 
@@ -192,9 +225,9 @@ cijfertoetsen:
   opnieuw uit; voer het hulpmiddel niet uit vanuit de zip-viewer.
 - **Er gebeurt niets als ik op een mapknop klik** — het keuzevenster is
   misschien *achter* het hoofdvenster geopend; controleer je taakbalk.
-- **Er staat "up-to-date", maar ik mis nummers** — open **"Edities
-  kiezen..."** en controleer of je echt de gewenste hebt geselecteerd (of
-  kies **"Alles"**).
+- **Er staat "up-to-date", maar ik mis nummers** — open **"Kaarten /
+  nummers selecteren"** en controleer of je echt de gewenste hebt
+  aangevinkt (of kies **"Alles"**).
 - **Nog steeds vastzitten?** Plaats een bericht in de Legacy Downloader-
   topic op Discord met een screenshot van wat je ziet en bij welke stap je
   bent — iemand helpt je.

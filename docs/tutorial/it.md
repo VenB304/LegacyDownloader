@@ -87,14 +87,46 @@ Una volta che il gioco base è a posto, arrivi qui:
   - **Tutto** — ogni edizione Just Dance disponibile, e prenderà
     automaticamente quelle nuove più avanti. Questa è l'opzione più
     semplice se non sei sicuro — scegli questa.
-  - **Solo edizioni specifiche** — fai clic su **"Scegli edizioni..."**
-    per selezionare solo i giochi che vuoi davvero (per esempio, solo
-    *Just Dance 2019*), se preferisci non scaricare tutto.
+  - **Specifiche** — scegli esattamente quello che vuoi invece. Fai clic
+    su **"Seleziona mappe / canzoni"** per aprire il selettore — lo vediamo
+    nel prossimo passaggio.
 - **"Scarica / Controlla aggiornamenti"** — il pulsante grande. Fai clic
   per ottenere quello che hai scelto, e clicca di nuovo più avanti per
   controllare nuove canzoni o aggiornamenti.
 
-## 4. Controllo aggiornamenti
+## 4. Scegliere singole canzoni
+
+Fai clic su **"Seleziona mappe / canzoni"** (dalla finestra principale, in
+qualsiasi momento) per aprire il selettore:
+
+![Selettore di canzoni ed edizioni](images/06-songbrowser-it.png)
+
+- **Edizioni**, a sinistra — seleziona la casella di un'intera edizione per
+  prendere tutto quello che contiene. Una casella che appare mezza piena
+  significa che sono selezionate solo alcune canzoni di quell'edizione.
+- **Canzoni**, a destra — ogni singola canzone, con la sua edizione,
+  difficoltà ed impegno (intensità dell'esercizio) quando noti. Seleziona
+  o deseleziona qualsiasi canzone singolarmente — non serve prendere
+  un'intera edizione in una volta.
+- **Cerca** — digita un titolo, artista o nome in codice per filtrare
+  l'elenco all'istante.
+- **Filtri** — restringi ulteriormente l'elenco per Difficoltà o Impegno
+  con i menu a tendina in alto a destra.
+- **Seleziona tutte quelle mostrate / Deseleziona tutte quelle mostrate** —
+  seleziona in blocco quello che la tua ricerca o i tuoi filtri attuali
+  stanno mostrando, invece di cliccare canzone per canzone.
+- **Colonne...** — mostra o nascondi le colonne Artista, Difficoltà o
+  Impegno se preferisci una vista più semplice.
+
+Fai clic su **OK** per salvare le tue scelte, o su **Annulla** per uscire
+senza cambiare nulla.
+
+> Le canzoni per cui l'elenco della community non ha ancora un nome
+> compaiono comunque (solo con il loro nome file al posto di un titolo) —
+> si scaricheranno e funzioneranno bene, solo senza un nome amichevole
+> finché qualcuno non ne aggiunge uno.
+
+## 5. Controllo aggiornamenti
 
 Cliccare il pulsante grande non scarica subito nulla — prima **controlla**
 cosa manca o è cambiato. Durante il controllo, la barra di avanzamento può
@@ -125,7 +157,7 @@ Le tue impostazioni di gioco (risoluzione, finestra/schermo intero) non
 vengono mai toccate da un aggiornamento, modificato o no.
 </details>
 
-## 5. Durante il download
+## 6. Durante il download
 
 La barra di avanzamento e il registro sottostante si aggiornano in tempo
 reale — vedrai il gioco e ogni pacchetto di canzoni elencati man mano che
@@ -137,17 +169,18 @@ corso.** Quando tutto è finito, vedrai:
 
 Questa è la tua conferma che ha funzionato — vai ad avviare il gioco.
 
-## 6. Tornare più tardi per nuove canzoni
+## 7. Tornare più tardi per nuove canzoni
 
 Esegui semplicemente di nuovo `LegacyDownloader-GUI.bat` in qualsiasi momento.
 Ricorda la tua cartella e le tue scelte di canzoni, e cliccare su
 **"Scarica / Controlla aggiornamenti"** prende tutto ciò che è nuovo dalla
 tua ultima visita.
 
-- **Aggiungere o rimuovere canzoni**: usa di nuovo **"Scegli edizioni..."**.
-  Deselezionare un gioco già scaricato chiederà se eliminare anche quei
-  file, o solo smettere di riceverne gli aggiornamenti tenendo ciò che
-  hai.
+- **Aggiungere o rimuovere canzoni**: fai di nuovo clic su **"Seleziona
+  mappe / canzoni"**, seleziona o deseleziona quello che vuoi, e fai clic
+  su OK. Deselezionare qualcosa già scaricato — un'intera edizione o solo
+  alcune canzoni — chiederà se eliminare anche quei file, o solo smettere
+  di riceverne gli aggiornamenti tenendo ciò che hai già.
 - **Cambiare lingua**: il menu a tendina della bandiera, in alto a destra,
   in qualsiasi momento.
 
@@ -195,9 +228,9 @@ con i tasti numerici:
 - **Non succede nulla quando clicco un pulsante di cartella** — la
   finestra di selezione potrebbe essersi aperta *dietro* quella
   principale; controlla la barra delle applicazioni.
-- **Dice "aggiornato" ma mi mancano canzoni** — apri **"Scegli
-  edizioni..."** e controlla di aver davvero selezionato quelle che vuoi
-  (o scegli **"Tutto"**).
+- **Dice "aggiornato" ma mi mancano canzoni** — apri **"Seleziona mappe /
+  canzoni"** e controlla di aver davvero selezionato quelle che vuoi (o
+  scegli **"Tutto"**).
 - **Ancora bloccato?** Scrivi nel thread di Legacy Downloader su Discord
   con uno screenshot di cosa vedi e a che punto sei arrivato — qualcuno
   ti aiuterà.

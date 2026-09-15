@@ -88,14 +88,45 @@ Sobald das Basisspiel vorhanden ist, landest du hier:
   - **Alles** — jede verfügbare Just-Dance-Edition, und neue werden später
     automatisch dazugeholt. Das ist die einfachste Option, wenn du dir
     nicht sicher bist — wähle diese.
-  - **Nur bestimmte Editionen** — klicke auf **„Editionen auswählen..."**,
-    um nur die Spiele anzuhaken, die du wirklich willst (zum Beispiel nur
-    *Just Dance 2019*), falls du nicht alles herunterladen willst.
+  - **Bestimmte Editionen** — wähle stattdessen genau das, was du willst.
+    Klicke auf **„Karten / Songs auswählen"**, um den Picker zu öffnen —
+    dazu mehr im nächsten Schritt.
 - **„Herunterladen / Nach Updates suchen"** — der große Button. Klicke ihn,
   um zu holen, was du ausgewählt hast, und klicke ihn später erneut, um
   nach neuen Songs oder Updates zu suchen.
 
-## 4. Nach Updates suchen
+## 4. Einzelne Songs auswählen
+
+Klicke jederzeit im Hauptfenster auf **„Karten / Songs auswählen"**, um den
+Picker zu öffnen:
+
+![Song- und Editionen-Picker](images/06-songbrowser-de.png)
+
+- **Editionen**, links — hake eine ganze Edition an, um alles daraus zu
+  holen. Ein halb ausgefülltes Kästchen bedeutet, dass nur einige Songs
+  dieser Edition ausgewählt sind.
+- **Songs**, rechts — jeder einzelne Song, mit Edition, Schwierigkeit und
+  Anstrengung (Trainingsintensität), soweit bekannt. Hake einzelne Songs
+  an oder ab — du musst nicht immer eine ganze Edition auf einmal nehmen.
+- **Suche** — tippe einen Titel, Künstler oder Codenamen ein, um die Liste
+  sofort zu filtern.
+- **Filter** — grenze die Liste über die Dropdowns oben rechts weiter nach
+  Schwierigkeit oder Anstrengung ein.
+- **Alle angezeigten auswählen / Alle angezeigten abwählen** — wähle alles,
+  was deine aktuelle Suche oder dein Filter gerade anzeigt, statt Song für
+  Song zu klicken.
+- **Spalten...** — blende die Spalten Künstler, Schwierigkeit oder
+  Anstrengung ein oder aus, wenn du eine einfachere Ansicht willst.
+
+Klicke auf **OK**, um deine Auswahl zu speichern, oder auf **Abbrechen**,
+um ohne Änderungen zurückzugehen.
+
+> Songs, für die die Community-Liste noch keinen Namen hat, tauchen trotzdem
+> auf (nur mit ihrem Dateinamen statt einem Titel) — sie werden trotzdem
+> heruntergeladen und funktionieren, nur eben ohne netten Namen, bis
+> jemand einen hinzufügt.
+
+## 5. Nach Updates suchen
 
 Ein Klick auf den großen Button lädt nicht sofort etwas herunter — er
 **prüft** zuerst, was fehlt oder sich geändert hat. Während der Prüfung
@@ -125,7 +156,7 @@ Deine Spieleinstellungen (Auflösung, Fenster-/Vollbildmodus) werden bei
 einem Update nie angerührt, ob modifiziert oder nicht.
 </details>
 
-## 5. Während des Downloads
+## 6. Während des Downloads
 
 Der Fortschrittsbalken und das Protokollfeld darunter aktualisieren sich
 live — du siehst das Spiel und jedes Song-Paket aufgelistet, sobald sie
@@ -138,17 +169,18 @@ das läuft.** Wenn alles fertig ist, siehst du:
 Das ist deine Bestätigung, dass alles geklappt hat — geh und starte das
 Spiel.
 
-## 6. Später wiederkommen für neue Songs
+## 7. Später wiederkommen für neue Songs
 
 Starte `LegacyDownloader-GUI.bat` einfach jederzeit erneut. Es merkt sich
 deinen Ordner und deine Song-Auswahl, und ein Klick auf **„Herunterladen /
 Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
 
-- **Songs hinzufügen oder entfernen**: nutze wieder **„Editionen
-  auswählen..."**. Wenn du ein bereits heruntergeladenes Spiel abwählst,
-  wirst du gefragt, ob auch die Dateien gelöscht werden sollen oder ob nur
-  die Updates dafür gestoppt werden sollen, während du behältst, was du
-  hast.
+- **Songs hinzufügen oder entfernen**: klicke wieder auf **„Karten / Songs
+  auswählen"**, hake an oder ab, was du willst, und klicke auf OK. Wenn du
+  etwas bereits Heruntergeladenes abwählst — eine ganze Edition oder nur
+  ein paar Songs —, wirst du gefragt, ob auch die Dateien gelöscht werden
+  sollen oder ob nur die Updates dafür gestoppt werden sollen, während du
+  behältst, was du schon hast.
 - **Sprache ändern**: das Flaggen-Dropdown oben rechts, jederzeit.
 
 ---
@@ -196,9 +228,9 @@ Zifferntasten:
 - **Nichts passiert, wenn ich auf einen Ordner-Button klicke** — das
   Auswahlfenster hat sich vielleicht *hinter* dem Hauptfenster geöffnet;
   prüfe deine Taskleiste.
-- **Es sagt „aktuell", aber mir fehlen Songs** — öffne **„Editionen
-  auswählen..."** und prüfe, ob du wirklich die gewünschten ausgewählt
-  hast (oder wähle **„Alles"**).
+- **Es sagt „aktuell", aber mir fehlen Songs** — öffne **„Karten / Songs
+  auswählen"** und prüfe, ob du wirklich die gewünschten angehakt hast
+  (oder wähle **„Alles"**).
 - **Immer noch festgefahren?** Poste im Legacy-Downloader-Thread auf
   Discord einen Screenshot von dem, was du siehst, und bei welchem
   Schritt du bist — jemand hilft dir.

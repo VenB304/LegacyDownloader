@@ -87,15 +87,46 @@ Une fois le jeu de base en place, vous arrivez ici :
   - **Tout** — toutes les éditions Just Dance disponibles, avec récupération
     automatique des nouvelles au fur et à mesure de leur sortie. C'est
     l'option la plus simple si vous n'êtes pas sûr — choisissez celle-ci.
-  - **Seulement certaines éditions** — cliquez sur **« Choisir les
-    éditions... »** pour cocher uniquement les jeux que vous voulez
-    vraiment (par exemple, seulement *Just Dance 2019*), si vous préférez
-    ne pas tout télécharger.
+  - **Seulement certaines éditions** — choisissez exactement ce que vous
+    voulez à la place. Cliquez sur **« Sélectionner des cartes / chansons »**
+    pour ouvrir le sélecteur — voir l'étape suivante.
 - **« Télécharger / Vérifier les mises à jour »** — le gros bouton.
   Cliquez dessus pour récupérer ce que vous avez choisi, et cliquez à
   nouveau plus tard pour vérifier les nouvelles chansons ou mises à jour.
 
-## 4. Vérification des mises à jour
+## 4. Choisir des chansons individuelles
+
+Cliquez sur **« Sélectionner des cartes / chansons »** (depuis la fenêtre
+principale, à tout moment) pour ouvrir le sélecteur :
+
+![Sélecteur de chansons et d'éditions](images/06-songbrowser-fr.png)
+
+- **Éditions**, à gauche — cochez la case d'une édition entière pour tout
+  récupérer. Une case à moitié remplie signifie que seules certaines
+  chansons de cette édition sont sélectionnées.
+- **Chansons**, à droite — chaque chanson individuelle, avec son édition,
+  sa difficulté et son effort (intensité de l'exercice) quand ils sont
+  connus. Cochez ou décochez n'importe quelle chanson seule — pas besoin de
+  prendre toute une édition d'un coup.
+- **Recherche** — tapez un titre, un artiste ou un nom de code pour filtrer
+  la liste instantanément.
+- **Filtres** — affinez encore la liste par Difficulté ou Effort avec les
+  menus déroulants en haut à droite.
+- **Tout cocher (affichées) / Tout décocher (affichées)** — sélectionnez en
+  bloc tout ce que votre recherche ou vos filtres actuels affichent, au
+  lieu de cliquer chanson par chanson.
+- **Colonnes...** — affichez ou masquez les colonnes Artiste, Difficulté ou
+  Effort si vous préférez une vue plus simple.
+
+Cliquez sur **OK** pour enregistrer vos choix, ou **Annuler** pour revenir
+en arrière sans rien changer.
+
+> Les chansons pour lesquelles la liste communautaire n'a pas encore de nom
+> apparaissent quand même (juste avec leur nom de fichier au lieu d'un
+> titre) — elles se téléchargeront et fonctionneront normalement, juste
+> sans nom convivial tant que quelqu'un ne l'aura pas ajouté.
+
+## 5. Vérification des mises à jour
 
 Cliquer sur le gros bouton ne télécharge rien immédiatement — il
 **vérifie** d'abord ce qui manque ou a changé. Pendant la vérification, la
@@ -125,7 +156,7 @@ Vos réglages en jeu (résolution, plein écran/fenêtré) ne sont jamais
 touchés par une mise à jour, moddée ou non.
 </details>
 
-## 5. Pendant le téléchargement
+## 6. Pendant le téléchargement
 
 La barre de progression et le journal en dessous se mettent à jour en
 direct — vous verrez le jeu et chaque pack de chansons listés au fur et à
@@ -137,17 +168,19 @@ que cela s'exécute.** Une fois tout terminé, vous verrez :
 
 C'est votre confirmation que tout a fonctionné — allez lancer le jeu.
 
-## 6. Revenir plus tard pour de nouvelles chansons
+## 7. Revenir plus tard pour de nouvelles chansons
 
 Relancez simplement `LegacyDownloader-GUI.bat` à tout moment. Il se souvient de
 votre dossier et de vos choix de chansons, et cliquer sur **« Télécharger /
 Vérifier les mises à jour »** récupère tout ce qui est nouveau depuis votre
 dernière visite.
 
-- **Ajouter ou retirer des chansons** : utilisez à nouveau **« Choisir les
-  éditions... »**. Décocher un jeu déjà téléchargé demande si vous voulez
-  aussi supprimer ces fichiers, ou juste arrêter de recevoir ses mises à
-  jour tout en gardant ce que vous avez.
+- **Ajouter ou retirer des chansons** : cliquez à nouveau sur
+  **« Sélectionner des cartes / chansons »**, cochez ou décochez ce que vous
+  voulez, puis cliquez sur OK. Décocher quelque chose déjà téléchargé — une
+  édition entière ou seulement quelques chansons — demande si vous voulez
+  aussi supprimer ces fichiers, ou juste arrêter de recevoir leurs mises à
+  jour tout en gardant ce que vous avez déjà.
 - **Changer de langue** : le menu déroulant du drapeau, en haut à droite, à
   tout moment.
 
@@ -195,9 +228,9 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 - **Rien ne se passe quand je clique sur un bouton de dossier** — la
   fenêtre de sélection s'est peut-être ouverte *derrière* la fenêtre
   principale ; vérifiez votre barre des tâches.
-- **Il dit « à jour » mais il me manque des chansons** — ouvrez **« Choisir
-  les éditions... »** et vérifiez que vous avez bien sélectionné celles que
-  vous voulez (ou choisissez **« Tout »**).
+- **Il dit « à jour » mais il me manque des chansons** — ouvrez
+  **« Sélectionner des cartes / chansons »** et vérifiez que vous avez bien
+  coché celles que vous voulez (ou choisissez **« Tout »**).
 - **Toujours bloqué ?** Postez dans le fil Legacy Downloader sur Discord
   avec une capture d'écran de ce que vous voyez et à quelle étape vous
   êtes — quelqu'un vous aidera.

@@ -82,14 +82,42 @@ Once the base game is in place, you land here:
   - **Everything** — every Just Dance edition available, and it'll grab new
     ones automatically as they get added later. This is the simplest option
     if you're not sure — pick this one.
-  - **Only specific editions** — click **Choose editions...** to tick just
-    the games you actually want (for example, only *Just Dance 2019*), if
-    you'd rather not download everything.
+  - **Specific** — pick exactly what you want instead. Click **Select
+    maps / songs** to open the picker — covered in the next step.
 - **Download / Check for updates** — the big button. Click it to fetch
   whatever you picked, and click it again any time later to check for new
   songs or updates.
 
-## 4. Checking for updates
+## 4. Picking individual songs
+
+Click **Select maps / songs** (from the main window, any time) to open the
+picker:
+
+![Song and edition picker](images/06-songbrowser-en.png)
+
+- **Editions**, on the left — tick a whole edition's checkbox to grab
+  everything in it. A checkbox that looks half-filled means only some of
+  that edition's songs are picked.
+- **Songs**, on the right — every individual song, with its edition,
+  difficulty, and effort (workout intensity) rating where known. Tick or
+  untick any song on its own — no need to grab a whole edition at once.
+- **Search** — type a title, artist, or codename to filter the list
+  instantly.
+- **Filters** — narrow the list further by Difficulty or Effort using the
+  dropdowns in the top-right corner.
+- **Check all shown / Uncheck all shown** — bulk-select whatever your
+  current search or filter is showing, instead of clicking song by song.
+- **Columns...** — show or hide the Artist, Difficulty, or Effort columns
+  if you want a simpler view.
+
+Click **OK** to save your picks, or **Cancel** to back out without changing
+anything.
+
+> Songs the community list doesn't have a name for yet still show up (just
+> with their filename instead of a title) — they'll download and work
+> fine, just without a friendly name until someone adds one.
+
+## 5. Checking for updates
 
 Clicking the big button doesn't download anything right away — it first
 **checks** what you're missing. While it's checking, the progress bar may
@@ -118,7 +146,7 @@ Your in-game settings (screen resolution, windowed/fullscreen) are never
 touched by an update, modded or not.
 </details>
 
-## 5. While it downloads
+## 6. While it downloads
 
 The progress bar and the log box below it update live — you'll see the game
 and each song pack listed as they finish, one by one. **Don't close the
@@ -128,15 +156,17 @@ window while this is running.** When everything's done, you'll see:
 
 That's your confirmation it worked — go start the game.
 
-## 6. Coming back later for new songs
+## 7. Coming back later for new songs
 
 Just run `LegacyDownloader-GUI.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs
 anything new since your last visit.
 
-- **Add or remove songs**: use **Choose editions...** again. Unticking a
-  game you already downloaded will ask whether to delete those files too, or
-  just stop getting updates for it while keeping what you have.
+- **Add or remove songs**: click **Select maps / songs** again, tick or
+  untick whatever you want, and click OK. Unticking something you already
+  downloaded — a whole edition or just a few songs — asks whether to
+  delete those files too, or just stop getting updates for them while
+  keeping what you already have.
 - **Change language**: the flag dropdown, top-right, any time.
 
 ---
@@ -178,9 +208,9 @@ navigated with number keys:
   again; don't run the tool from inside the zip viewer.
 - **Nothing seems to happen when I click a folder button** — the picker
   window may have opened *behind* the main one; check your taskbar.
-- **It says "up to date" but I'm missing songs** — open **Choose
-  editions...** and check you've actually selected the ones you want (or
-  pick **Everything**).
+- **It says "up to date" but I'm missing songs** — open **Select maps /
+  songs** and check you've actually ticked the ones you want (or pick
+  **Everything**).
 - **Still stuck?** Post in the Legacy Downloader thread on Discord with a
   screenshot of what you're seeing and which step you were on — someone
   will help.

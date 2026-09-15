@@ -88,14 +88,46 @@ Una vez que el juego base está en su sitio, llegas aquí:
   - **Todo** — todas las ediciones de Just Dance disponibles, y recogerá
     las nuevas automáticamente a medida que se publiquen. Esta es la
     opción más sencilla si no estás seguro — elige esta.
-  - **Solo ediciones concretas** — haz clic en **«Elegir ediciones...»**
-    para marcar solo los juegos que realmente quieres (por ejemplo, solo
-    *Just Dance 2019*), si prefieres no descargarlo todo.
+  - **Solo ediciones concretas** — elige exactamente lo que quieres en su
+    lugar. Haz clic en **«Elegir mapas / canciones»** para abrir el
+    selector — lo vemos en el siguiente paso.
 - **«Descargar / Buscar actualizaciones»** — el botón grande. Haz clic para
   obtener lo que elegiste, y vuelve a hacer clic más adelante para buscar
   canciones nuevas o actualizaciones.
 
-## 4. Comprobación de actualizaciones
+## 4. Elegir canciones individuales
+
+Haz clic en **«Elegir mapas / canciones»** (desde la ventana principal, en
+cualquier momento) para abrir el selector:
+
+![Selector de canciones y ediciones](images/06-songbrowser-es.png)
+
+- **Ediciones**, a la izquierda — marca la casilla de una edición completa
+  para llevártelo todo. Una casilla que se ve medio rellena significa que
+  solo algunas canciones de esa edición están marcadas.
+- **Canciones**, a la derecha — cada canción individual, con su edición,
+  dificultad y esfuerzo (intensidad del ejercicio) cuando se conocen. Marca
+  o desmarca cualquier canción por su cuenta — no hace falta llevarte una
+  edición entera de golpe.
+- **Buscar** — escribe un título, artista o nombre en código para filtrar
+  la lista al instante.
+- **Filtros** — reduce más la lista por Dificultad o Esfuerzo con los menús
+  desplegables de la esquina superior derecha.
+- **Marcar todas las mostradas / Desmarcar todas las mostradas** — marca en
+  bloque lo que muestre tu búsqueda o filtro actual, en vez de hacer clic
+  canción por canción.
+- **Columnas...** — muestra u oculta las columnas Artista, Dificultad o
+  Esfuerzo si prefieres una vista más simple.
+
+Haz clic en **OK** para guardar tu selección, o en **Cancelar** para salir
+sin cambiar nada.
+
+> Las canciones que la lista comunitaria todavía no tiene nombradas
+> igualmente aparecen (solo con su nombre de archivo en vez de un título) —
+> se descargarán y funcionarán bien, solo que sin un nombre amigable hasta
+> que alguien lo añada.
+
+## 5. Comprobación de actualizaciones
 
 Hacer clic en el botón grande no descarga nada de inmediato — primero
 **comprueba** qué te falta o ha cambiado. Mientras comprueba, la barra de
@@ -125,7 +157,7 @@ Tus ajustes dentro del juego (resolución, pantalla completa/ventana) nunca
 se tocan con una actualización, esté modificado o no.
 </details>
 
-## 5. Durante la descarga
+## 6. Durante la descarga
 
 La barra de progreso y el registro de abajo se actualizan en vivo — verás
 el juego y cada paquete de canciones listados a medida que terminan, uno
@@ -136,16 +168,17 @@ Cuando todo termine, verás:
 
 Esa es tu confirmación de que todo funcionó — ve a iniciar el juego.
 
-## 6. Volver más tarde por canciones nuevas
+## 7. Volver más tarde por canciones nuevas
 
 Simplemente ejecuta `LegacyDownloader-GUI.bat` de nuevo cuando quieras. Recuerda
 tu carpeta y tus canciones elegidas, y hacer clic en **«Descargar / Buscar
 actualizaciones»** obtiene todo lo nuevo desde tu última visita.
 
-- **Añadir o quitar canciones**: usa de nuevo **«Elegir ediciones...»**.
-  Desmarcar un juego que ya descargaste preguntará si también quieres
-  borrar esos archivos, o simplemente dejar de recibir sus actualizaciones
-  conservando lo que ya tienes.
+- **Añadir o quitar canciones**: haz clic de nuevo en **«Elegir mapas /
+  canciones»**, marca o desmarca lo que quieras, y pulsa OK. Desmarcar algo
+  que ya descargaste — una edición entera o solo unas pocas canciones —
+  preguntará si también quieres borrar esos archivos, o simplemente dejar
+  de recibir sus actualizaciones conservando lo que ya tienes.
 - **Cambiar de idioma**: el menú desplegable de la bandera, arriba a la
   derecha, en cualquier momento.
 
@@ -192,8 +225,8 @@ lugar. Mismas funciones, navegando con teclas numéricas:
 - **No pasa nada al hacer clic en un botón de carpeta** — la ventana de
   selección puede haberse abierto *detrás* de la ventana principal;
   revisa tu barra de tareas.
-- **Dice «al día» pero me faltan canciones** — abre **«Elegir
-  ediciones...»** y comprueba que realmente has seleccionado las que
-  quieres (o elige **«Todo»**).
+- **Dice «al día» pero me faltan canciones** — abre **«Elegir mapas /
+  canciones»** y comprueba que realmente has marcado las que quieres (o
+  elige **«Todo»**).
 - **¿Sigues atascado?** Publica en el hilo de Legacy Downloader en Discord
   con una captura de lo que ves y en qué paso estás — alguien te ayudará.
