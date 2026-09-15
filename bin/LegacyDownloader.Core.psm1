@@ -27,7 +27,19 @@ $script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/
 # the song browser opens - deliberately NOT bundled, so a new song added to
 # the sheet shows up without a new release of this tool. See
 # $script:SongCatalogCachePath for the on-disk fallback when the fetch fails.
-$script:SongSheetUrl        = "https://docs.google.com/spreadsheets/d/1ufh7SAN0Q87UGFU2Yry8naX7hCjJ1q-XOjssqS3ULO4/export?format=csv&gid=28291419"
+#
+# Uses the gviz query endpoint, not the more obvious .../export?format=csv
+# link: the export endpoint is meant for occasional interactive/manual
+# export and Google's anti-abuse system started returning it as an HTML
+# bot-challenge page (HTTP 400) for this tool's traffic pattern (confirmed
+# 2026-09-15 - reachable, redirects fine, then blocked specifically at the
+# export step; two independent HTTP clients hit the identical response).
+# gviz is meant for exactly this kind of live programmatic embedding
+# (charts/dashboards querying a sheet) and was NOT blocked from the same
+# network at the same time. We don't have edit access to the sheet to also
+# set up a "Publish to web" CDN link (the more bulletproof option, per
+# Google) - only the community sheet's own maintainer does.
+$script:SongSheetUrl        = "https://docs.google.com/spreadsheets/d/1ufh7SAN0Q87UGFU2Yry8naX7hCjJ1q-XOjssqS3ULO4/gviz/tq?tqx=out:json&gid=28291419"
 $script:SongCatalogCachePath = $null
 
 $script:RcloneConfigArgs = @()
@@ -643,6 +655,20 @@ function Format-EffortTier($Tier) {
     return (T "songs.effort.$Tier")
 }
 
+function ConvertFrom-GvizCell($Cells, [int]$Index) {
+    # A gviz row's cell array can be shorter than expected if trailing
+    # columns are blank for that row - bounds-check rather than assume 7.
+    # A present cell is either JSON null (blank) or {v: <raw value>,
+    # f: <formatted display string>}. Prefer .f when present - for the
+    # Edition column (a gviz "number" column) it's the clean sheet display
+    # text ("2014", "1928") rather than .v's double ("2014.0", "1928.0").
+    if ($Index -ge $Cells.Count) { return '' }
+    $Cell = $Cells[$Index]
+    if ($null -eq $Cell -or $null -eq $Cell.v) { return '' }
+    if ($Cell.PSObject.Properties.Match('f').Count -gt 0 -and $null -ne $Cell.f) { return [string]$Cell.f }
+    return [string]$Cell.v
+}
+
 function Get-SongCatalog {
     # Fetches the community song-name sheet fresh (title/artist/difficulty/
     # effort per edition+codename). Never throws: a failed fetch falls back
@@ -663,27 +689,27 @@ function Get-SongCatalog {
         # (the same pattern Import-LangFile uses for lang\*.json) sidesteps
         # that guess entirely.
         $text = [System.IO.File]::ReadAllText($tmp, [System.Text.Encoding]::UTF8)
-        # Explicit ASCII column names via -Header, skipping the sheet's own
-        # header row (Select-Object -Skip 1): the real header row has
-        # accented Portuguese column names ("Esforco", "Nome da musica", ...),
-        # and this .psm1 file - like the rest of this codebase - avoids
-        # embedding literal non-ASCII text in .ps1/.psm1 source (Windows
-        # PowerShell 5.1 reads a BOM-less script via the system ANSI
-        # codepage, which would silently mis-decode a literal accented
-        # property-name string so it no longer matches the correctly-UTF8-
-        # decoded runtime data).
-        $rows = $text | ConvertFrom-Csv -Header 'Edition', 'Code', 'Title', 'Artist', 'DifficultyRaw', 'EffortRaw', 'CoverPhone' | Select-Object -Skip 1
-        $parsed = foreach ($r in $rows) {
-            $ed   = [string]$r.Edition
-            $code = ([string]$r.Code).Trim().ToLowerInvariant()
+        # gviz wraps its JSON in a JS call: /*O_o*/\ngoogle.visualization.
+        # Query.setResponse({...});  - unwrap by anchoring on that known
+        # wrapper (not by searching for the outermost { }, which could be
+        # fooled by braces inside a song title).
+        $m = [regex]::Match($text, '(?s)setResponse\((.*)\);\s*$')
+        if (-not $m.Success) { throw "Unexpected gviz response format" }
+        $data = $m.Groups[1].Value | ConvertFrom-Json
+        # gviz already excludes the sheet's own header row from .rows (it
+        # goes into .cols[].label instead), unlike the raw CSV export.
+        $parsed = foreach ($row in $data.table.rows) {
+            $cells = @($row.c)
+            $ed   = ConvertFrom-GvizCell $cells 0
+            $code = (ConvertFrom-GvizCell $cells 1).Trim().ToLowerInvariant()
             if ([string]::IsNullOrWhiteSpace($ed) -or [string]::IsNullOrWhiteSpace($code)) { continue }
             [PSCustomObject]@{
                 Edition    = $ed
                 Code       = $code
-                Title      = [string]$r.Title
-                Artist     = [string]$r.Artist
-                Difficulty = ConvertTo-RatingTier ([string]$r.DifficultyRaw)
-                Effort     = ConvertTo-RatingTier ([string]$r.EffortRaw)
+                Title      = ConvertFrom-GvizCell $cells 2
+                Artist     = ConvertFrom-GvizCell $cells 3
+                Difficulty = ConvertTo-RatingTier (ConvertFrom-GvizCell $cells 4)
+                Effort     = ConvertTo-RatingTier (ConvertFrom-GvizCell $cells 5)
             }
         }
         $records = @($parsed)
