@@ -946,6 +946,22 @@ function Show-SongBrowserDialog {
     $btnUncheckShown = New-Btn (T 'gui.songbrowser_btn_uncheck_shown') 836 42 150 22 $false
     $btnUncheckShown.Anchor = 'Top,Right'
 
+    # The fixed widths above were sized for the English text and clip
+    # longer translations (e.g. Korean's "표시된 항목 모두 선택"). Their text
+    # never changes after construction (unlike Difficulty/Effort, which
+    # re-run $resizeFilterButtons on every filter change), so a one-time
+    # resize-to-fit here is enough - same MeasureText/pad/right-margin
+    # pattern as $resizeFilterButtons above, right-aligned together at the
+    # same right edge (986) that row already uses.
+    $pad = 20
+    $rightEdge = 986
+    $btnUncheckShown.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnUncheckShown.Text, $btnUncheckShown.Font).Width + $pad
+    $btnUncheckShown.Left = $rightEdge - $btnUncheckShown.Width
+    $btnCheckShown.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnCheckShown.Text, $btnCheckShown.Font).Width + $pad
+    $btnCheckShown.Left = $btnUncheckShown.Left - 8 - $btnCheckShown.Width
+    $btnColumns.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnColumns.Text, $btnColumns.Font).Width + $pad
+    $btnColumns.Left = $btnCheckShown.Left - 8 - $btnColumns.Width
+
     $lv = New-Object System.Windows.Forms.ListView
     $lv.SetBounds(268, 66, 718, 500)
     $lv.Anchor = 'Top,Left,Right,Bottom'
