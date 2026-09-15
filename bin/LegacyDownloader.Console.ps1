@@ -720,7 +720,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         # have local files the player no longer wants - ask once per
         # affected edition, same spirit as the tool's older "unchecked an
         # edition" cleanup prompt.
-        $oldEditionList = if ($CurrentEditions.ToUpper() -eq 'AUTO') { Get-LocalEditions $GamePath } else { @($CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
+        $oldEditionList = @(if ($CurrentEditions.ToUpper() -eq 'AUTO') { Get-LocalEditions $GamePath } else { $CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
         $newEditionList = @($browse.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         $removalPlan = Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog
         foreach ($item in $removalPlan) {

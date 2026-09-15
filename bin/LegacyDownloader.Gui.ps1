@@ -2341,7 +2341,7 @@ function On-SongModeChanged {
             $script:RbEverything.Checked = $true
             return
         }
-        Invoke-SongRemovalCleanup -OldEditionList (Get-LocalEditions $script:Cfg.GamePath) -OldSongFilters '' -Res $res
+        Invoke-SongRemovalCleanup -OldEditionList @(Get-LocalEditions $script:Cfg.GamePath) -OldSongFilters '' -Res $res
         Save-Config -GamePath $script:Cfg.GamePath -Editions $res.Editions -SongFilters $res.SongFilters
         $script:Cfg = Load-Config
     }
@@ -2352,7 +2352,7 @@ function On-SelectMapsSongs {
     if (-not $script:Ready -or $script:Busy) { return }
     $res = Show-SongBrowserDialog
     if ($null -eq $res) { return }
-    $oldEditionList = if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') { Get-LocalEditions $script:Cfg.GamePath } else { @($script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }) }
+    $oldEditionList = @(if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') { Get-LocalEditions $script:Cfg.GamePath } else { $script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
     Invoke-SongRemovalCleanup -OldEditionList $oldEditionList -OldSongFilters $script:Cfg.SongFilters -Res $res
     Save-Config -GamePath $script:Cfg.GamePath -Editions $res.Editions -SongFilters $res.SongFilters
     $script:Cfg = Load-Config
