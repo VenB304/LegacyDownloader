@@ -60,10 +60,12 @@ immediately starts downloading the **base game** (no preview) — song packs are
 a deliberate second step you pick afterward. If the folder you choose already
 contains `Legacy.exe`, it falls back to a normal checked update with a preview.
 
-**Picking songs:** "Choose which songs to get" → "Specific maps / songs"
-opens a picker where you can check whole editions or individual songs
-within them, search by title/artist/codename, and filter by
-Difficulty/Effort — in both the GUI and the console menu.
+**Picking songs:** in the GUI, click **Select maps / songs** (works
+regardless of which radio, "Everything" or "Specific", is selected). In
+the console menu it's **[2] Choose which songs to get** → **[2] Specific
+maps / songs**. Either way it opens a picker where you can check whole
+editions or individual songs within them, search by title/artist/codename,
+and filter by Difficulty/Effort.
 
 ## Language
 

@@ -57,10 +57,10 @@ From the main window's "Songs" section you then choose what you want
   - Everything - downloads every edition, and automatically includes
     new ones the maker adds later. No further action needed, ever.
 
-  - Only specific editions - opens a picker where you can check whole
-    editions or individual songs within them, search by title/artist/
-    codename, and filter by Difficulty/Effort. Available in both the
-    GUI and the console menu.
+  - Specific - click "Select maps / songs" to open a picker where you
+    can check whole editions or individual songs within them, search
+    by title/artist/codename, and filter by Difficulty/Effort.
+    Available in both the GUI and the console menu.
 
 
 AFTER SETUP
