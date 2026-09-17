@@ -2086,7 +2086,7 @@ function Run-SetupDialog {
     $path = Pick-Folder $desc
     if (-not $path) { return }
     if ($mode -eq 'get') {
-        try { New-Item -ItemType Directory -Force -LiteralPath $path -ErrorAction Stop | Out-Null } catch {
+        try { [System.IO.Directory]::CreateDirectory($path) | Out-Null } catch {
             Warn-Box (T 'error.cant_create_folder' @{ error = $_.Exception.Message }) (T 'gui.err_title'); return
         }
     }

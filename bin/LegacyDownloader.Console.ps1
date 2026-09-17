@@ -112,7 +112,7 @@ function Show-FolderPicker([string]$Description) {
 
 function Ensure-Directory([string]$Path) {
     try {
-        New-Item -ItemType Directory -Force -LiteralPath $Path -ErrorAction Stop | Out-Null
+        [System.IO.Directory]::CreateDirectory($Path) | Out-Null
         return $true
     } catch {
         Write-Host (T 'error.cant_create_folder' @{ error = $_.Exception.Message }) -ForegroundColor Red
