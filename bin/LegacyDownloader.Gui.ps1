@@ -2851,6 +2851,17 @@ function Show-RequirementsDialog {
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
         [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  grid row count: $($grid.Rows.Count) (expect 6)"
+        if ($grid.Rows.Count -ne 6) { Write-Host "  SELFTEST FAILURE: expected 6 rows" -ForegroundColor Red }
+        Write-Host "  name column styled as a link: ForeColor=$($grid.Columns[1].DefaultCellStyle.ForeColor), Font.Underline=$($grid.Columns[1].DefaultCellStyle.Font.Underline)"
+        # Exercises the actual Refresh button click end-to-end (not just
+        # dialog construction) - real regression coverage for the
+        # reentrancy-guard fix (btnRefresh.Enabled) and for $refresh
+        # itself continuing to repopulate the grid correctly.
+        $btnRefresh.PerformClick()
+        [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  after Refresh click: grid row count: $($grid.Rows.Count) (expect 6), btnRefresh.Enabled: $($btnRefresh.Enabled) (expect True)"
+        if ($grid.Rows.Count -ne 6 -or -not $btnRefresh.Enabled) { Write-Host "  SELFTEST FAILURE: Refresh click left the dialog in a bad state" -ForegroundColor Red }
         Start-Sleep -Milliseconds 200
         $f.Dispose()
         return
