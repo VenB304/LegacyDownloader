@@ -2875,12 +2875,14 @@ function Refresh-Tracking {
         $script:RbEverything.Checked = $true
         $script:LblTracking.Text = T 'gui.tracking_auto'
         if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $false }
+        $script:LblTracking.Width = 464
     } else {
         $script:RbSpecific.Checked = $true
         $list = @($script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         if ($list.Count -eq 0) {
             $script:LblTracking.Text = T 'gui.tracking_none'
             if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $false }
+            $script:LblTracking.Width = 464
         } else {
             $songFilterMap = Get-SongFilterMap $script:Cfg.SongFilters
             # Whole-edition song counts come from whatever catalog was last
@@ -2902,7 +2904,10 @@ function Refresh-Tracking {
             # per-song breakdown, with download status, is one click away
             # via "View tracked".
             $script:LblTracking.Text = T 'gui.tracking_summary' @{ songs = "$totalSongCount"; editions = "$($list.Count)" }
-            if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $true }
+            if ($null -ne $script:BtnViewTracked) {
+                $script:BtnViewTracked.Visible = $true
+                $script:LblTracking.Width = [Math]::Max(0, $script:BtnViewTracked.Left - $script:LblTracking.Left - 8)
+            }
         }
     }
     # Only meaningful in Specific mode - Everything already means "every
@@ -3395,6 +3400,11 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "  Left=$($script:BtnRequirements.Left) Width=$($script:BtnRequirements.Width) (expect same width as BtnExit=$($script:BtnExit.Width), positioned to its left)"
     if ($script:BtnRequirements.Width -ne $script:BtnExit.Width) { Write-Host "  SELFTEST FAILURE: width mismatch" -ForegroundColor Red }
     if ($script:BtnRequirements.Right + 10 -ne $script:BtnExit.Left) { Write-Host "  SELFTEST FAILURE: not positioned 10px left of BtnExit" -ForegroundColor Red }
+    Write-Host "`n=== BtnViewTracked / LblTracking geometry ==="
+    Write-Host "  LblTracking: Right=$($script:LblTracking.Right)  BtnViewTracked: Left=$($script:BtnViewTracked.Left)"
+    if ($script:RbSpecific.Checked -and ($script:LblTracking.Right -gt $script:BtnViewTracked.Left)) {
+        Write-Host "  SELFTEST FAILURE: LblTracking overlaps BtnViewTracked" -ForegroundColor Red
+    }
     Write-Host "`n=== Show-SongBrowserDialog (waits for the real async catalog load) ==="
     $null = Show-SongBrowserDialog
     $script:Form.Dispose()
