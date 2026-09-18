@@ -83,6 +83,8 @@ Legacy Downloader 会把 **Legacy Offline PC** 及其歌曲包下载到您的电
 
 - **系统需求** — 检查 Legacy 所需的额外软件（Kinect SDK、Visual C++ 运行库）是否已安装，并可以安装缺失的项目。
 
+![软件需求对话框](images/07-requirements-zh-Hans.png)
+
 ## 4. 选择单独的歌曲
 
 随时点击主窗口中的**"选择地图 / 歌曲"**即可打开选择器：

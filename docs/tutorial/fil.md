@@ -98,6 +98,8 @@ Kapag nasa lugar na ang base na laro, dito ka makakarating:
 
 - **Requirements** — sinusuri kung naka-install na ang mga karagdagang software na kailangan ng Legacy (Kinect SDKs, Visual C++ runtimes), at pinapayagan kang i-install ang kulang.
 
+![Dialog ng mga kinakailangang software](images/07-requirements-fil.png)
+
 ## 4. Pagpili ng indibidwal na kanta
 
 I-click ang **Pumili ng mapa / kanta** (mula sa main window, anumang oras)

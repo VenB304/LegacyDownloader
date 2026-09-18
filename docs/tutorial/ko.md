@@ -91,6 +91,8 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 
 - **필수 요소** — Legacy에 필요한 추가 소프트웨어(Kinect SDK, Visual C++ 런타임)가 설치되어 있는지 확인하고, 없는 항목을 설치할 수 있습니다.
 
+![소프트웨어 요구 사항 대화 상자](images/07-requirements-ko.png)
+
 ## 4. 개별 노래 선택하기
 
 메인 창에서 언제든지 **"맵 / 노래 선택"**을 클릭하면 선택 창이 열립니다.

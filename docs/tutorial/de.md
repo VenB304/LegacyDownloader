@@ -97,6 +97,8 @@ Sobald das Basisspiel vorhanden ist, landest du hier:
 
 - **Anforderungen** — prüft, ob die zusätzliche Software, die Legacy braucht (Kinect SDKs, Visual C++ Runtimes), installiert ist, und lässt dich Fehlendes installieren.
 
+![Softwarevoraussetzungen-Dialog](images/07-requirements-de.png)
+
 ## 4. Einzelne Songs auswählen
 
 Klicke jederzeit im Hauptfenster auf **„Karten / Songs auswählen"**, um den

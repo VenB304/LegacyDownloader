@@ -96,6 +96,8 @@ Une fois le jeu de base en place, vous arrivez ici :
 
 - **Prérequis** — vérifie si les logiciels supplémentaires dont Legacy a besoin (Kinect SDK, runtimes Visual C++) sont installés, et permet d'installer ce qui manque.
 
+![Boîte de dialogue des prérequis logiciels](images/07-requirements-fr.png)
+
 ## 4. Choisir des chansons individuelles
 
 Cliquez sur **« Sélectionner des cartes / chansons »** (depuis la fenêtre

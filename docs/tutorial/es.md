@@ -98,6 +98,8 @@ Una vez que el juego base está en su sitio, llegas aquí:
 
 - **Requisitos** — comprueba si el software adicional que Legacy necesita (Kinect SDKs, tiempos de ejecución de Visual C++) está instalado, y te permite instalar lo que falte.
 
+![Diálogo de requisitos de software](images/07-requirements-es.png)
+
 ## 4. Elegir canciones individuales
 
 Haz clic en **«Elegir mapas / canciones»** (desde la ventana principal, en

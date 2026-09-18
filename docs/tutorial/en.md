@@ -90,6 +90,8 @@ Once the base game is in place, you land here:
 
 - **Requirements** — checks whether the extra software Legacy needs (Kinect SDKs, Visual C++ runtimes) is installed, and lets you install anything missing.
 
+![Software requirements dialog](images/07-requirements-en.png)
+
 ## 4. Picking individual songs
 
 Click **Select maps / songs** (from the main window, any time) to open the

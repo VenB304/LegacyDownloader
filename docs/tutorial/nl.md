@@ -96,6 +96,8 @@ Zodra het basisspel op zijn plek staat, kom je hier terecht:
 
 - **Vereisten** — controleert of de extra software die Legacy nodig heeft (Kinect SDK's, Visual C++ runtimes) is geïnstalleerd, en laat je ontbrekende software installeren.
 
+![Dialoogvenster met softwarevereisten](images/07-requirements-nl.png)
+
 ## 4. Losse nummers kiezen
 
 Klik op **"Kaarten / nummers selecteren"** (op elk moment, vanuit het

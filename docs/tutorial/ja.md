@@ -91,6 +91,8 @@ Legacy Downloader は **Legacy Offline PC** と曲パックをパソコンにダ
 
 - **必要条件** — Legacyに必要な追加ソフトウェア（Kinect SDK、Visual C++ ランタイム）が導入済みかを確認し、不足しているものをインストールできます。
 
+![ソフトウェア要件ダイアログ](images/07-requirements-ja.png)
+
 ## 4. 個々の曲を選ぶ
 
 いつでもメインウィンドウから**「マップ / 曲を選択」**をクリックすると、
