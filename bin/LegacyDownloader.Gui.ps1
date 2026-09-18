@@ -2652,10 +2652,19 @@ function Show-RequirementsDialog {
     $colIcon.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
     [void]$grid.Columns.Add($colIcon)
 
+    # The name is a real link to that item's official Microsoft download
+    # page (even for bundled items, which still have one for reference) -
+    # styled + wired below, same "open externally, fall back to a
+    # copy-this-link message" pattern the tutorial link elsewhere in this
+    # file already uses.
+    $linkFont = New-Object System.Drawing.Font($script:FontBase, [System.Drawing.FontStyle]::Underline)
     $colName = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
     $colName.ReadOnly = $true
     $colName.AutoSizeMode = [System.Windows.Forms.DataGridViewAutoSizeColumnMode]::Fill
     $colName.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
+    $colName.DefaultCellStyle.ForeColor = $script:ColorPrimary
+    $colName.DefaultCellStyle.SelectionForeColor = $script:ColorPrimary
+    $colName.DefaultCellStyle.Font = $linkFont
     [void]$grid.Columns.Add($colName)
 
     $colAction = New-Object System.Windows.Forms.DataGridViewButtonColumn
@@ -2732,6 +2741,28 @@ function Show-RequirementsDialog {
             $y += $delta
         }
     }
+
+    $grid.Add_CellClick({
+        param($s, $e)
+        if ($e.RowIndex -lt 0 -or $e.ColumnIndex -ne 1) { return }
+        $row = $grid.Rows[$e.RowIndex]
+        $id = $row.Tag
+        $item = $script:ReqDialogItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+        if (-not $item -or -not $item.OfficialUrl) { return }
+        try {
+            Start-Process $item.OfficialUrl | Out-Null
+        } catch {
+            Info-Box (T 'gui.tutorial_open_failed' @{ url = $item.OfficialUrl }) (T 'gui.err_title')
+        }
+    })
+    $grid.Add_CellMouseEnter({
+        param($s, $e)
+        if ($e.RowIndex -ge 0 -and $e.ColumnIndex -eq 1) { $grid.Cursor = [System.Windows.Forms.Cursors]::Hand }
+    })
+    $grid.Add_CellMouseLeave({
+        param($s, $e)
+        if ($e.RowIndex -ge 0 -and $e.ColumnIndex -eq 1) { $grid.Cursor = [System.Windows.Forms.Cursors]::Default }
+    })
 
     # Installs run synchronously (Start-Process -Wait, inside Install-
     # Requirement) rather than through the async job+timer pattern the main
