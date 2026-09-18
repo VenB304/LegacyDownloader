@@ -1458,7 +1458,19 @@ function Get-RequirementDefinitions {
             UninstallPatterns = @('Visual C\+\+ 2012', 'x86')
         }
         [PSCustomObject]@{
-            Id = 'vc2015'; Name = 'Visual C++ 2015-2022 Redistributable (x86)'
+            # Legacy.exe's own linker version is 14.0 - it was genuinely
+            # built with the VS2015 toolset. Microsoft has since split VS2015
+            # out of the "latest v14" bucket into its own legacy/unsupported
+            # download (as of their Dec 2025 doc update), which now covers
+            # VS2017-2026 and keeps extending every VS release - so "2015" is
+            # the real lower bound that matters here (what actually built the
+            # game) and "+" avoids re-going-stale every time Microsoft ships
+            # a new VS version, unlike a fixed upper year would. The FETCH
+            # itself (see FetchUrl below) is still the CURRENT "latest v14"
+            # redistributable - Microsoft's own compatibility promise is that
+            # a newer v14 redistributable always satisfies an app built with
+            # an older v14 toolset, VS2015 included.
+            Id = 'vc2015'; Name = 'Visual C++ 2015+ Redistributable (x86)'
             Bundled = $false; BundledRelPath = $null
             OfficialUrl = 'https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist'
             FetchUrl    = 'https://aka.ms/vc14/vc_redist.x86.exe'
@@ -1548,7 +1560,8 @@ function Test-UninstallDisplayNameMatch([string[]]$Patterns) {
 
 function Test-Vc2015Installed {
     # Microsoft's own documented Intune/SCCM detection method for the VC++
-    # 2015-2022 x86 runtime (binary-compatible across 2015/17/19/22/26, all
+    # v14 x86 runtime (binary-compatible from VS2015 through whatever the
+    # current VS release is - 2026 as of this writing, and climbing - all
     # tracked under version "14.0"): an Installed=1 DWORD under this fixed
     # key, present since the very first 2015 release - unlike VC++
     # 2010/2012, which each register under their own product-specific
