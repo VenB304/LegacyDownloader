@@ -680,6 +680,73 @@ function Choose-Language([string]$CurrentCode) {
     }
 }
 
+function Show-RequirementsWizard([string]$GamePath) {
+    # Status + optional install for the software Legacy.exe needs beyond
+    # what Windows ships (Kinect SDKs / VC++ redistributables / DirectX
+    # runtime - see Get-RequirementDefinitions in the Core module for the
+    # full rationale, verified against the real PE import table). Plain
+    # ASCII status tags, not the 0x2713/0x2717 glyphs the GUI uses - this
+    # console avoids relying on Unicode glyph coverage in an arbitrary
+    # terminal font (see the collapsed/expanded arrow glyph fix elsewhere
+    # in this project's history). Synchronous like the rest of this
+    # console UI - runs to completion before returning, which is what
+    # gives it the "blocks progressing" behavior the GUI achieves with a
+    # modal dialog; called from one place only (the one-time first-run
+    # flow at the bottom of this file, and the [5] main-menu option below)
+    # never automatically, in Linux.
+    Write-Host ""
+    Write-Host (HR)
+    Write-Host ("  " + (T 'menu.requirements_title'))
+    Write-Host (HR)
+    Write-Host ""
+    Write-Host (T 'menu.requirements_intro')
+    Write-Host ""
+
+    $status = Get-RequirementsStatus -GamePath $GamePath
+    foreach ($it in $status) {
+        $tag = if ($it.Installed) { T 'menu.requirements_installed' } else { T 'menu.requirements_missing' }
+        Write-Host ("  [{0,-7}] {1}" -f $tag, $it.Name)
+    }
+    Write-Host ""
+
+    $missing = @($status | Where-Object { -not $_.Installed })
+    if ($missing.Count -eq 0) {
+        Write-Host (T 'menu.requirements_all_done')
+        Pause-Continue
+        return
+    }
+
+    foreach ($item in $missing) {
+        if (-not (Confirm-YesNo (T 'menu.requirements_install_prompt' @{ name = $item.Name }))) { continue }
+        Write-Host (T 'menu.requirements_downloading' @{ name = $item.Name })
+        $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
+        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+        if (-not $fetch.Ok) {
+            Write-Host (T 'menu.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }) -ForegroundColor Yellow
+            continue
+        }
+        Write-Host (T 'menu.requirements_installing' @{ name = $item.Name })
+        $res = Install-Requirement -Item $item -Path $fetch.Path
+        if ($res.Cancelled) {
+            Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow
+        } elseif ($res.Ok) {
+            Write-Host (T 'menu.requirements_install_done' @{ name = $item.Name }) -ForegroundColor Green
+        } else {
+            Write-Host (T 'menu.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }) -ForegroundColor Red
+        }
+    }
+
+    Write-Host ""
+    $finalStatus = Get-RequirementsStatus -GamePath $GamePath
+    $stillMissing = @($finalStatus | Where-Object { -not $_.Installed })
+    if ($stillMissing.Count -eq 0) {
+        Write-Host (T 'menu.requirements_all_done')
+    } else {
+        Write-Host (T 'menu.requirements_some_missing')
+    }
+    Pause-Continue
+}
+
 function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$CurrentSongFilters = '') {
     # Returns $null (no change) or @{ Editions = <csv|'AUTO'>; SongFilters = <raw SONGFILTERS string> }.
     while ($true) {
@@ -867,6 +934,14 @@ if ([string]::IsNullOrWhiteSpace($cfg.GamePath)) {
         Write-Host ""
         Write-Host (T 'done.not_downloaded' @{ path = $cfg.GamePath })
     }
+    # One-time-only requirements check for a brand-new install - the
+    # whole surrounding block already only runs once, gated on a missing
+    # config.txt, so a single call here (unlike the GUI, which needs two
+    # separate hook points because its first-run download is async)
+    # covers both the "have" and "download it for me" console paths.
+    # Skipped entirely on Linux - see Show-RequirementsWizard.
+    if (-not $IsLinux) { Show-RequirementsWizard -GamePath $cfg.GamePath }
+
     Write-Host ""
     Write-Host (T 'done.come_back')
     Pause-Continue
@@ -922,8 +997,15 @@ while ($true) {
     Write-Host (T 'menu.opt_choose')
     Write-Host (T 'menu.opt_folder')
     Write-Host (T 'menu.opt_language')
-    Write-Host (T 'menu.opt_exit')
-    $choice = Read-Host (T 'menu.choose_1_5')
+    if (-not $IsLinux) { Write-Host (T 'menu.opt_requirements') }
+    # NOT "Write-Host (if (...) {...} else {...})" - a bare if/else isn't a
+    # valid expression inside a call's argument parens in PS 5.1 outside an
+    # assignment (this exact mistake broke the song picker once before in
+    # this project - see 2026-09-14 project history). Assign first instead.
+    $exitLine   = if ($IsLinux) { T 'menu.opt_exit' } else { T 'menu.opt_exit_reqs' }
+    $choosePrompt = if ($IsLinux) { T 'menu.choose_1_5' } else { T 'menu.choose_1_6' }
+    Write-Host $exitLine
+    $choice = Read-Host $choosePrompt
 
     switch ($choice) {
         '1' {
@@ -977,10 +1059,23 @@ while ($true) {
             Pause-Brief -Seconds 1
         }
         '5' {
-            Write-Host ""
-            Write-Host (T 'menu.goodbye')
-            Start-Sleep -Seconds 1
-            exit 0
+            if ($IsLinux) {
+                Write-Host ""
+                Write-Host (T 'menu.goodbye')
+                Start-Sleep -Seconds 1
+                exit 0
+            }
+            Show-RequirementsWizard -GamePath $cfg.GamePath
+        }
+        '6' {
+            if ($IsLinux) {
+                Pause-Brief (T 'common.not_valid_option')
+            } else {
+                Write-Host ""
+                Write-Host (T 'menu.goodbye')
+                Start-Sleep -Seconds 1
+                exit 0
+            }
         }
         default {
             Pause-Brief (T 'common.not_valid_option')

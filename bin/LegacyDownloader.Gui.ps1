@@ -463,6 +463,23 @@ function Finish-Downloads {
     Append-Log "----"
     Append-Log ("$([char]0x2713) " + (T 'gui.done_title'))
     Info-Box (T 'gui.done_body') (T 'gui.done_title')
+    Ensure-FirstRunRequirementsChecked
+}
+
+# One-time-only requirements check for a brand-new install ('get' from
+# Run-SetupDialog - existing installs, which already have a config.txt,
+# never hit Run-SetupDialog at all and so never hit this either; they only
+# ever discover the feature through the main window's Requirements button).
+# Called from both places a fresh 'get' setup can finish: a real download
+# completing (Finish-Downloads) and the "nothing to download, already up to
+# date" early-out in On-PlanReady - the folder-already-has-the-game branch
+# of the first-run Add_Shown handler goes through On-Check, which can hit
+# either exit depending on what's actually on disk.
+function Ensure-FirstRunRequirementsChecked {
+    if ($script:FirstRunMode -ne 'get' -or $script:ReqsFirstRunChecked) { return }
+    $script:ReqsFirstRunChecked = $true
+    Show-RequirementsDialog -FirstRun
+    Refresh-RequirementsButton
 }
 
 function Build-DownloadQueue($Plan, $KeepFiles) {
@@ -2526,6 +2543,161 @@ function Show-TrackedViewDialog {
     $f.Dispose()
 }
 
+# ===========================================================================
+# software requirements: Kinect SDKs / VC++ redistributables / DirectX
+# runtime. Two callers: the one-time check right after a brand-new install's
+# first-run setup finishes (-FirstRun - "Continue" as the closing action),
+# and the on-demand "Requirements" button on the main window (no -FirstRun -
+# "Close"). Always re-detects live, never trusts a stale snapshot - see
+# $refresh below, called both on open and after every install attempt.
+# ===========================================================================
+
+function Show-RequirementsDialog {
+    param([switch]$FirstRun)
+    $gp = $script:Cfg.GamePath
+    $script:ReqDialogItems = @()   # parallel to $clb's items, refreshed below - script-scoped so Add_Click closures see updates a plain local wouldn't
+
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.requirements_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.ForeColor = $script:ColorText
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false
+
+    $introText = if ($FirstRun) { T 'gui.requirements_intro_firstrun' } else { T 'gui.requirements_intro' }
+    $introSize = [System.Windows.Forms.TextRenderer]::MeasureText(
+        $introText, $script:FontBase, (New-Object System.Drawing.Size(452, 0)),
+        [System.Windows.Forms.TextFormatFlags]::WordBreak)
+    $lblIntro = New-Label $introText 14 14 452 ($introSize.Height + 6)
+    $lblIntro.ForeColor = $script:ColorMuted
+
+    $y = $lblIntro.Bottom + 8
+    $summary = New-Object System.Windows.Forms.TextBox
+    $summary.Multiline = $true; $summary.ReadOnly = $true
+    $summary.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+    $summary.SetBounds(14, $y, 452, 96)
+    $summary.Font = $script:FontMono
+    $summary.BackColor = $script:ColorCard
+    $summary.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    $y += $summary.Height + 10
+
+    $clb = New-Object System.Windows.Forms.CheckedListBox
+    $clb.CheckOnClick = $true
+    $clb.Font = $script:FontBase
+    $clb.BackColor = $script:ColorCard
+    $clb.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    $clb.SetBounds(14, $y, 452, 84)
+    $y += $clb.Height + 10
+
+    $log = New-Object System.Windows.Forms.TextBox
+    $log.Multiline = $true; $log.ReadOnly = $true
+    $log.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+    $log.SetBounds(14, $y, 452, 84)
+    $log.Font = $script:FontMono
+    $log.BackColor = $script:ColorCard
+    $log.ForeColor = $script:ColorText
+    $log.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    $y += $log.Height + 12
+
+    $closeLabel = if ($FirstRun) { T 'gui.requirements_btn_continue' } else { T 'gui.btn_close' }
+    $btnInstall = New-Btn (T 'gui.requirements_btn_install_selected') 14 $y 0 32 $true
+    $btnClose   = New-Btn $closeLabel 0 $y 0 32 $false
+    foreach ($b in @($btnInstall, $btnClose)) {
+        $b.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $btnClose.Left = 466 - $btnClose.Width
+    $y += 46
+
+    $appendLog = {
+        param($Line)
+        $log.AppendText($Line + "`r`n")
+        $log.SelectionStart = $log.TextLength
+        $log.ScrollToCaret()
+    }
+
+    $refresh = {
+        $script:ReqDialogItems = @(Get-RequirementsStatus -GamePath $gp)
+        $lines = foreach ($it in $script:ReqDialogItems) {
+            $glyph = if ($it.Installed) { [char]0x2713 } else { [char]0x2717 }
+            $note = if ((-not $it.Installed) -and $it.Interactive) { T 'gui.requirements_interactive_note' } else { '' }
+            "$glyph $($it.Name)$note"
+        }
+        $missingCount = @($script:ReqDialogItems | Where-Object { -not $_.Installed }).Count
+        if ($missingCount -eq 0) { $lines += ''; $lines += (T 'gui.requirements_all_done') }
+        $summary.Text = ($lines -join "`r`n")
+
+        $clb.Items.Clear()
+        foreach ($it in $script:ReqDialogItems) {
+            if (-not $it.Installed) { [void]$clb.Items.Add($it.Name, $true) }
+        }
+        $btnInstall.Enabled = ($missingCount -gt 0)
+    }
+    & $refresh
+
+    # Installs run synchronously (Start-Process -Wait, inside Install-
+    # Requirement) rather than through the async job+timer pattern the main
+    # window's downloads use - a deliberate simplification, not an
+    # oversight: this is a one-at-a-time, explicitly-confirmed action (the
+    # user just clicked Install), not a long unattended background transfer,
+    # and a wait cursor + disabled controls during each step communicates
+    # "busy" clearly enough for something this short-lived. DoEvents before
+    # each blocking call at least flushes the log line and cursor change to
+    # the screen first.
+    $btnInstall.Add_Click({
+        param($s, $e)
+        $checkedNames = @()
+        for ($i = 0; $i -lt $clb.Items.Count; $i++) { if ($clb.GetItemChecked($i)) { $checkedNames += [string]$clb.Items[$i] } }
+        if ($checkedNames.Count -eq 0) { return }
+
+        $f.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        $btnInstall.Enabled = $false; $btnClose.Enabled = $false; $clb.Enabled = $false
+        foreach ($name in $checkedNames) {
+            $item = $script:ReqDialogItems | Where-Object { $_.Name -eq $name } | Select-Object -First 1
+            if (-not $item) { continue }
+
+            & $appendLog (T 'gui.requirements_downloading' @{ name = $item.Name })
+            [System.Windows.Forms.Application]::DoEvents()
+            $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
+            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+            if (-not $fetch.Ok) {
+                & $appendLog (T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl })
+                continue
+            }
+
+            & $appendLog (T 'gui.requirements_installing' @{ name = $item.Name })
+            [System.Windows.Forms.Application]::DoEvents()
+            $res = Install-Requirement -Item $item -Path $fetch.Path
+            if ($res.Cancelled) {
+                & $appendLog ("$([char]0x2717) " + (T 'gui.requirements_install_cancelled' @{ name = $item.Name }))
+            } elseif ($res.Ok) {
+                & $appendLog ("$([char]0x2713) " + (T 'gui.requirements_install_done' @{ name = $item.Name }))
+            } else {
+                & $appendLog ("$([char]0x2717) " + (T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }))
+            }
+        }
+        $f.Cursor = [System.Windows.Forms.Cursors]::Default
+        $btnClose.Enabled = $true; $clb.Enabled = $true
+        & $refresh
+    })
+    $btnClose.Add_Click({ param($s, $e) $f.Close() })
+
+    $f.ClientSize = New-Object System.Drawing.Size(480, $y)
+    $f.CancelButton = $btnClose
+    $f.Controls.AddRange(@($lblIntro, $summary, $clb, $log, $btnInstall, $btnClose))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        Start-Sleep -Milliseconds 200
+        $f.Dispose()
+        return
+    }
+    [void]$f.ShowDialog($script:Form)
+    $f.Dispose()
+}
+
 function Refresh-Tracking {
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
         $script:RbEverything.Checked = $true
@@ -2577,12 +2749,34 @@ function Apply-I18n {
     $script:BtnSelect.Text    = T 'gui.btn_select_maps_songs'
     $script:BtnCheck.Text     = T 'gui.btn_check'
     $script:BtnExit.Text      = T 'gui.btn_exit'
+    $script:BtnRequirements.Text = T 'gui.btn_requirements'
     $script:BtnViewTracked.Text = T 'gui.btn_view_tracked'
     $btnViewTrackedWidth = [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnViewTracked.Text, $script:BtnViewTracked.Font).Width + 24
     $script:BtnViewTracked.Width = $btnViewTrackedWidth
     $script:BtnViewTracked.Left = 480 - $btnViewTrackedWidth
     Refresh-FolderStatus
     Refresh-Tracking
+    Refresh-RequirementsButton
+}
+
+function Refresh-RequirementsButton {
+    if ($null -eq $script:BtnRequirements) { return }
+    $status = Get-RequirementsStatus -GamePath $script:Cfg.GamePath
+    $missing = @($status | Where-Object { -not $_.Installed })
+    $bothKinectMissing = (@($status | Where-Object { $_.Id -in @('kinect18', 'kinect20') -and -not $_.Installed })).Count -eq 2
+    # Both Kinect SDKs missing (or most items missing) is the failure mode
+    # Ven has a direct real-world report of actually crashing the game, not
+    # just a theoretical gap - that case gets red rather than yellow.
+    $colors = if ($missing.Count -eq 0) {
+        @{ Base = [System.Drawing.Color]::FromArgb(224, 247, 231); Hover = [System.Drawing.Color]::FromArgb(200, 235, 210); Down = [System.Drawing.Color]::FromArgb(180, 225, 195) }
+    } elseif ($bothKinectMissing -or $missing.Count -ge 4) {
+        @{ Base = [System.Drawing.Color]::FromArgb(253, 226, 226); Hover = [System.Drawing.Color]::FromArgb(245, 200, 200); Down = [System.Drawing.Color]::FromArgb(235, 180, 180) }
+    } else {
+        @{ Base = [System.Drawing.Color]::FromArgb(255, 247, 219); Hover = [System.Drawing.Color]::FromArgb(250, 235, 180); Down = [System.Drawing.Color]::FromArgb(245, 225, 150) }
+    }
+    $script:BtnRequirements.BackColor = $colors.Base
+    $script:BtnRequirements.FlatAppearance.MouseOverBackColor = $colors.Hover
+    $script:BtnRequirements.FlatAppearance.MouseDownBackColor = $colors.Down
 }
 
 function Set-Busy([bool]$On) {
@@ -2626,6 +2820,7 @@ function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
     if ($Plan.TotalFiles -eq 0) {
         Info-Box (T 'gui.uptodate_body' @{ editions = $Plan.LocalEditions; songs = $Plan.LocalSongs }) (T 'gui.uptodate_title')
         Append-Log (T 'preview.up_to_date')
+        Ensure-FirstRunRequirementsChecked
         return
     }
 
@@ -2910,6 +3105,14 @@ function Build-MainForm {
     $script:TxtLog.ForeColor = $script:ColorText
     $script:TxtLog.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
 
+    # Requirements status button - fixed size, left of Exit (same size, per
+    # Ven's layout call). Color reflects aggregate status - green/yellow/red,
+    # same convention as the tracked-songs dialog's row coloring - refreshed
+    # in Refresh-RequirementsButton (called from Apply-I18n and after the
+    # dialog closes, since an install may have just changed the status).
+    $script:BtnRequirements = New-Btn '' 318 496 90 28 $false
+    $script:BtnRequirements.Add_Click({ param($s, $e) Show-RequirementsDialog; Refresh-RequirementsButton })
+
     # Exit Button
     $script:BtnExit = New-Btn '' 418 496 90 28 $false
     $script:BtnExit.Add_Click({ param($s, $e) $script:Form.Close() })
@@ -2917,7 +3120,7 @@ function Build-MainForm {
     $script:Form.Controls.AddRange(@(
             $script:LblLang, $script:CmbLang,
             $script:GrpFolder, $script:GrpSongs,
-            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnExit
+            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnRequirements, $script:BtnExit
         ))
 
     $script:ScanTimer = New-Object System.Windows.Forms.Timer
@@ -2973,6 +3176,15 @@ function Build-MainForm {
 
 if (-not $env:LEGACY_GUI_SELFTEST -and [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
     $script:FirstRunMode = Run-SetupDialog
+    # 'have': nothing async follows (no base download to wait on, unlike
+    # 'get' - see Ensure-FirstRunRequirementsChecked for that path), so the
+    # one-time check can just run right here, before the main window exists.
+    # $script:Form is still $null at this point - same as Run-SetupDialog's
+    # own ShowDialog() call just above, which has the same constraint.
+    if ($script:FirstRunMode -eq 'have') {
+        Show-RequirementsDialog -FirstRun
+        $script:ReqsFirstRunChecked = $true
+    }
 }
 
 Build-MainForm
@@ -2998,6 +3210,19 @@ if ($env:LEGACY_GUI_SELFTEST) {
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-TrackedViewDialog threw: $($_.Exception.Message)" -ForegroundColor Red
     }
+
+    Write-Host "`n=== Show-RequirementsDialog (real Get-RequirementsStatus against this machine - structural test only, not asserting specific installed/missing values, same spirit as the tracked-view test above) ==="
+    try {
+        Show-RequirementsDialog
+        Show-RequirementsDialog -FirstRun
+        Write-Host "  ran with no exception (both -FirstRun and non)"
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-RequirementsDialog threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+    Write-Host "`n=== BtnRequirements gating ==="
+    Write-Host "  Left=$($script:BtnRequirements.Left) Width=$($script:BtnRequirements.Width) (expect same width as BtnExit=$($script:BtnExit.Width), positioned to its left)"
+    if ($script:BtnRequirements.Width -ne $script:BtnExit.Width) { Write-Host "  SELFTEST FAILURE: width mismatch" -ForegroundColor Red }
+    if ($script:BtnRequirements.Right + 10 -ne $script:BtnExit.Left) { Write-Host "  SELFTEST FAILURE: not positioned 10px left of BtnExit" -ForegroundColor Red }
     Write-Host "`n=== Show-SongBrowserDialog (waits for the real async catalog load) ==="
     $null = Show-SongBrowserDialog
     $script:Form.Dispose()
