@@ -740,7 +740,9 @@ function Show-RequirementsWizard([string]$GamePath) {
         # asking "is it actually installed now" is more honest than
         # trusting a guessed-at exit code.
         $nowInstalled = (@(Get-RequirementsStatus -GamePath $GamePath | Where-Object { $_.Id -eq $item.Id }))[0].Installed
-        if ($nowInstalled) {
+        if ($nowInstalled -and $res.RebootRequired) {
+            Write-Host (T 'menu.requirements_install_done_reboot' @{ name = $item.Name }) -ForegroundColor Green
+        } elseif ($nowInstalled) {
             Write-Host (T 'menu.requirements_install_done' @{ name = $item.Name }) -ForegroundColor Green
         } elseif ($res.Cancelled) {
             Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow

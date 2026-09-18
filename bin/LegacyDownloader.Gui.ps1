@@ -2816,7 +2816,9 @@ function Show-RequirementsDialog {
             # convention unverified), so asking "is it actually installed
             # now" is more honest than trusting a guessed-at exit code.
             $nowInstalled = (@(Get-RequirementsStatus -GamePath $gp | Where-Object { $_.Id -eq $item.Id }))[0].Installed
-            $lblStatus.Text = if ($nowInstalled) {
+            $lblStatus.Text = if ($nowInstalled -and $res.RebootRequired) {
+                T 'gui.requirements_install_done_reboot' @{ name = $item.Name }
+            } elseif ($nowInstalled) {
                 T 'gui.requirements_install_done' @{ name = $item.Name }
             } elseif ($res.Cancelled) {
                 T 'gui.requirements_install_cancelled' @{ name = $item.Name }

@@ -1706,15 +1706,20 @@ function Install-Requirement {
         $code = 0
         try { $code = [int]$proc.ExitCode } catch { $code = 0 }
         # 3010 = success, reboot required; 1638 = a newer version is already
-        # installed - both are effectively "fine," not a real failure.
+        # installed - both are effectively "fine," not a real failure. A
+        # driver install (the Kinect SDKs especially) can leave the
+        # registry/files saying "installed" before a pending reboot
+        # actually finishes activating it - RebootRequired is surfaced
+        # separately from Ok so a caller can say so, rather than silently
+        # implying everything's immediately ready to use.
         $ok = ($code -eq 0 -or $code -eq 3010 -or $code -eq 1638)
-        return [PSCustomObject]@{ Ok = $ok; Cancelled = $false; ExitCode = $code }
+        return [PSCustomObject]@{ Ok = $ok; Cancelled = $false; ExitCode = $code; RebootRequired = ($code -eq 3010) }
     } catch [System.InvalidOperationException] {
-        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1 }
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1; RebootRequired = $false }
     } catch [System.ComponentModel.Win32Exception] {
-        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1 }
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1; RebootRequired = $false }
     } catch {
-        return [PSCustomObject]@{ Ok = $false; Cancelled = $false; ExitCode = -1 }
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $false; ExitCode = -1; RebootRequired = $false }
     }
 }
 
