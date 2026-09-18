@@ -2789,7 +2789,7 @@ function Show-RequirementsDialog {
         if (-not $item -or $item.Installed) { return }
 
         $f.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-        $grid.Enabled = $false; $btnClose.Enabled = $false
+        $grid.Enabled = $false; $btnClose.Enabled = $false; $btnRefresh.Enabled = $false
 
         $lblStatus.Text = T 'gui.requirements_downloading' @{ name = $item.Name }
         [System.Windows.Forms.Application]::DoEvents()
@@ -2828,7 +2828,7 @@ function Show-RequirementsDialog {
         }
 
         $f.Cursor = [System.Windows.Forms.Cursors]::Default
-        $grid.Enabled = $true; $btnClose.Enabled = $true
+        $grid.Enabled = $true; $btnClose.Enabled = $true; $btnRefresh.Enabled = $true
         $savedStatus = $lblStatus.Text
         & $refresh
         if ($lblStatus.Text -eq (T 'gui.requirements_all_done') -or [string]::IsNullOrEmpty($lblStatus.Text)) {
