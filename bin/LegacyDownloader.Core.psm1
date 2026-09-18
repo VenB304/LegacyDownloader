@@ -1406,6 +1406,277 @@ function Get-BaseSyncExcludes {
     return $ex
 }
 
+# ----------------------------------------------------------------------------
+# Software requirements: the Kinect SDKs / Visual C++ redistributables /
+# DirectX End-User Runtime that Legacy.exe needs beyond what Windows ships
+# natively. Verified against Legacy.exe's REAL PE import table (Python
+# pefile, not a string scan) plus a real Discord bug report, not guessed -
+# see docs/notes/ in the repo for the analysis. Every URL below was checked
+# by hand against Microsoft's own download pages; none of these are
+# third-party mirrors, per project decision (official Microsoft sources
+# only, or a clear manual link on failure - never a fallback host).
+# ----------------------------------------------------------------------------
+
+function Get-RequirementDefinitions {
+    # Static catalog, one entry per requirement. Names are proper nouns and
+    # deliberately never localized/translated (same convention as "Legacy.exe"
+    # / "Kinect10.dll" / "config.xml" elsewhere in this project).
+    #   Bundled/BundledRelPath - path (relative to GamePath) to the copy that
+    #     already ships in the game's own Support\ folder, if any.
+    #   OfficialUrl  - Microsoft's own landing page for this download; shown
+    #     to the user as the manual-fallback link if a fetch fails.
+    #   FetchUrl     - the actual installer file, for Get-RequirementInstaller
+    #     to download directly. $null for items that are always bundled.
+    #   SilentArgs   - command-line args for an unattended install, or $null
+    #     if the installer has no silent mode at all (both Kinect SDKs - by
+    #     Microsoft's own design, EULA acceptance can't be scripted).
+    #   CheckDlls    - DLL(s) whose real presence in the correct system
+    #     folder is checked alongside (VC++/DirectX) or instead of (none
+    #     apply to the Kinect SDKs, which don't ship their own consumable
+    #     DLL - Kinect10.dll/Kinect20.dll already ship with the game itself)
+    #     the registry, so a registry key left behind by a broken/partial
+    #     install doesn't read as "installed."
+    #   UninstallPatterns - substrings (all must match, AND) checked against
+    #     DisplayName entries in the Uninstall registry hive.
+    return @(
+        [PSCustomObject]@{
+            Id = 'vc2010'; Name = 'Visual C++ 2010 Redistributable (x86)'
+            Bundled = $false; BundledRelPath = $null
+            OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=26999'
+            FetchUrl    = 'https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x86.exe'
+            SilentArgs  = '/q /norestart'
+            CheckDlls   = @('msvcp100.dll', 'msvcr100.dll')
+            UninstallPatterns = @('Visual C\+\+ 2010', 'x86')
+        }
+        [PSCustomObject]@{
+            Id = 'vc2012'; Name = 'Visual C++ 2012 Redistributable (x86)'
+            Bundled = $true; BundledRelPath = 'Support\vcredist\vcredist_x86.exe'
+            OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=30679'
+            FetchUrl    = 'https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x86.exe'
+            SilentArgs  = '/install /quiet /norestart'
+            CheckDlls   = @('msvcp110.dll', 'msvcr110.dll')
+            UninstallPatterns = @('Visual C\+\+ 2012', 'x86')
+        }
+        [PSCustomObject]@{
+            Id = 'vc2015'; Name = 'Visual C++ 2015-2022 Redistributable (x86)'
+            Bundled = $false; BundledRelPath = $null
+            OfficialUrl = 'https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist'
+            FetchUrl    = 'https://aka.ms/vc14/vc_redist.x86.exe'
+            SilentArgs  = '/install /quiet /norestart'
+            CheckDlls   = @('msvcp140.dll', 'vcruntime140.dll')
+            UninstallPatterns = @()   # detected via Test-Vc2015Installed instead
+        }
+        [PSCustomObject]@{
+            # Legacy.exe only imports modern d3d11.dll/dxgi.dll (both native
+            # to Windows) - the D3DX9/10/11 components this redist also
+            # provides genuinely aren't needed. It's needed narrowly for
+            # XINPUT1_3.dll, which Windows does NOT ship natively (only
+            # xinput1_4.dll/xinput9_1_0.dll are built in) - confirmed via a
+            # real Discord user's missing-DLL crash report, after an earlier
+            # AI-generated analysis wrongly claimed this whole item was
+            # unnecessary.
+            Id = 'directx'; Name = 'DirectX End-User Runtime (June 2010)'
+            Bundled = $true; BundledRelPath = 'Support\DirectX\DXSETUP.exe'
+            OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=8109'
+            FetchUrl    = $null
+            SilentArgs  = '/silent'
+            CheckDlls   = @('xinput1_3.dll')
+            UninstallPatterns = @()   # legacy cab installer, no reliable registry marker - see Test-SystemDllPresent
+        }
+        [PSCustomObject]@{
+            Id = 'kinect18'; Name = 'Kinect for Windows SDK 1.8'
+            Bundled = $false; BundledRelPath = $null
+            OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=40278'
+            FetchUrl    = 'https://download.microsoft.com/download/e/1/d/e1dec243-0389-4a23-87bf-f47de869fc1a/KinectSDK-v1.8-Setup.exe'
+            SilentArgs  = $null   # no silent install exists - Microsoft's own EULA-driven design
+            CheckDlls   = @()
+            UninstallPatterns = @('Kinect for Windows SDK', 'v?1\.8')
+        }
+        [PSCustomObject]@{
+            Id = 'kinect20'; Name = 'Kinect for Windows SDK 2.0'
+            Bundled = $false; BundledRelPath = $null
+            OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=44561'
+            FetchUrl    = 'https://download.microsoft.com/download/f/2/d/f2d1012e-3bc6-49c5-b8b3-5acff58af7b8/KinectSDK-v2.0_1409-Setup.exe'
+            SilentArgs  = $null
+            CheckDlls   = @()
+            UninstallPatterns = @('Kinect for Windows SDK', 'v?2\.0')
+        }
+    )
+}
+
+function Test-SystemDllPresent([string]$DllName) {
+    # Whether $DllName exists in the correct system directory for an x86
+    # process - Legacy.exe is 32-bit (confirmed via its PE header), so on a
+    # 64-bit OS the DLL that matters is the SysWOW64 copy, not the native
+    # 64-bit one in System32. On a genuinely 32-bit OS, System32 IS the
+    # 32-bit directory.
+    if ($IsLinux) { return $false }
+    $sysDir = if ([Environment]::Is64BitOperatingSystem) {
+        Join-Path $env:WINDIR 'SysWOW64'
+    } else {
+        Join-Path $env:WINDIR 'System32'
+    }
+    return (Test-Path -LiteralPath (Join-Path $sysDir $DllName))
+}
+
+function Test-UninstallDisplayNameMatch([string[]]$Patterns) {
+    # True if some entry in the registry's "installed programs" list
+    # (Uninstall hive, both the native and the 32-bit/Wow6432Node view -
+    # these installers are all x86 even on a 64-bit OS) has a DisplayName
+    # matching every pattern in $Patterns (AND, not one brittle exact-order
+    # phrase - Microsoft's own exact DisplayName wording has varied release
+    # to release, e.g. "x86" vs "(x86)", so requiring the meaningful
+    # substrings independently is more robust than betting on one string).
+    if ($IsLinux -or $Patterns.Count -eq 0) { return $false }
+    $roots = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    )
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        foreach ($k in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
+            $dn = $null
+            try { $dn = (Get-ItemProperty -LiteralPath $k.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName } catch { }
+            if (-not $dn) { continue }
+            $allMatch = $true
+            foreach ($p in $Patterns) { if ($dn -notmatch $p) { $allMatch = $false; break } }
+            if ($allMatch) { return $true }
+        }
+    }
+    return $false
+}
+
+function Test-Vc2015Installed {
+    # Microsoft's own documented Intune/SCCM detection method for the VC++
+    # 2015-2022 x86 runtime (binary-compatible across 2015/17/19/22/26, all
+    # tracked under version "14.0"): an Installed=1 DWORD under this fixed
+    # key, present since the very first 2015 release - unlike VC++
+    # 2010/2012, which each register under their own product-specific
+    # entries with no equivalent single stable key, so those two are
+    # detected via Test-UninstallDisplayNameMatch instead.
+    if ($IsLinux) { return $false }
+    $path = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\VisualStudio\14.0\VC\Runtimes\X86'
+    if (-not (Test-Path -LiteralPath $path)) { return $false }
+    try {
+        $v = (Get-ItemProperty -LiteralPath $path -Name Installed -ErrorAction SilentlyContinue).Installed
+        return ($v -eq 1)
+    } catch { return $false }
+}
+
+function Get-RequirementsStatus {
+    # One status object per Get-RequirementDefinitions entry, reflecting
+    # whether it's ACTUALLY satisfied right now on this machine. The three
+    # VC++ items and DirectX all get a real DLL-file-presence check, not
+    # registry alone - a stale-but-present registry key from a broken/
+    # partial install is exactly the failure mode behind the real
+    # MSVCP140.dll-class crash reports this feature exists to catch, so a
+    # registry-only check would hide precisely the case that matters.
+    [CmdletBinding()]
+    param([string]$GamePath)
+
+    $defs = Get-RequirementDefinitions
+    $out = @()
+    foreach ($d in $defs) {
+        $dllsOk = $true
+        foreach ($dll in $d.CheckDlls) { if (-not (Test-SystemDllPresent $dll)) { $dllsOk = $false; break } }
+
+        $installed = switch ($d.Id) {
+            'vc2010'   { $dllsOk -and (Test-UninstallDisplayNameMatch $d.UninstallPatterns) }
+            'vc2012'   { $dllsOk -and (Test-UninstallDisplayNameMatch $d.UninstallPatterns) }
+            'vc2015'   { $dllsOk -and (Test-Vc2015Installed) }
+            'directx'  { $dllsOk }   # no reliable registry marker for a legacy cab installer - file presence is ground truth here
+            'kinect18' { Test-UninstallDisplayNameMatch $d.UninstallPatterns }
+            'kinect20' { Test-UninstallDisplayNameMatch $d.UninstallPatterns }
+            default    { $false }
+        }
+
+        $bundledPath = $null
+        if ($d.Bundled -and $GamePath) {
+            $p = [System.IO.Path]::Combine($GamePath, $d.BundledRelPath)
+            if (Test-Path -LiteralPath $p) { $bundledPath = $p }
+        }
+
+        $out += [PSCustomObject]@{
+            Id          = $d.Id
+            Name        = $d.Name
+            Installed   = [bool]$installed
+            BundledPath = $bundledPath
+            OfficialUrl = $d.OfficialUrl
+            FetchUrl    = $d.FetchUrl
+            SilentArgs  = $d.SilentArgs
+            Interactive = ($null -eq $d.SilentArgs)
+        }
+    }
+    return $out
+}
+
+function Get-RequirementInstaller {
+    # Ensures a local, runnable installer file for $Item exists, either by
+    # using the already-bundled copy or by downloading it from its own
+    # FetchUrl. NEVER falls back to any other host - on any failure returns
+    # .Ok = $false with .OfficialUrl still set, so the caller can show a
+    # manual-download link instead of a dead end.
+    param(
+        [Parameter(Mandatory = $true)]$Item,
+        [Parameter(Mandatory = $true)][string]$DestDir
+    )
+    if ($Item.BundledPath -and (Test-Path -LiteralPath $Item.BundledPath)) {
+        return [PSCustomObject]@{ Ok = $true; Path = $Item.BundledPath; OfficialUrl = $Item.OfficialUrl }
+    }
+    if ([string]::IsNullOrWhiteSpace($Item.FetchUrl)) {
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+    }
+    try {
+        if (-not (Test-Path -LiteralPath $DestDir)) { [System.IO.Directory]::CreateDirectory($DestDir) | Out-Null }
+    } catch {
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+    }
+    $fileName = Split-Path -Leaf ([Uri]$Item.FetchUrl).AbsolutePath
+    if ([string]::IsNullOrWhiteSpace($fileName)) { $fileName = "$($Item.Id).exe" }
+    $dest = Join-Path $DestDir $fileName
+    try {
+        Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 180 -ErrorAction Stop
+        if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
+        return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl }
+    } catch {
+        Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+    }
+}
+
+function Install-Requirement {
+    # Runs $Item's installer at $Path. Silent items pass their documented
+    # unattended args and wait for the process to exit; the two Kinect SDKs
+    # have no silent mode at all (Microsoft's own EULA-driven design) - just
+    # launched and waited on, showing their own UI same as a manual install.
+    # A user cancelling the elevation (UAC) prompt surfaces as a Win32Exception
+    # from Start-Process, not a crash - reported as Cancelled, not a failure,
+    # so the caller can show "skipped" rather than an alarming error.
+    # Exit code isn't treated as the final word either way - the caller
+    # re-runs Get-RequirementsStatus afterward as the real source of truth.
+    param(
+        [Parameter(Mandatory = $true)]$Item,
+        [Parameter(Mandatory = $true)][string]$Path
+    )
+    try {
+        $proc = if ($Item.SilentArgs) {
+            Start-Process -FilePath $Path -ArgumentList $Item.SilentArgs -Wait -PassThru -ErrorAction Stop
+        } else {
+            Start-Process -FilePath $Path -Wait -PassThru -ErrorAction Stop
+        }
+        $code = 0
+        try { $code = [int]$proc.ExitCode } catch { $code = 0 }
+        # 3010 = success, reboot required; 1638 = a newer version is already
+        # installed - both are effectively "fine," not a real failure.
+        $ok = ($code -eq 0 -or $code -eq 3010 -or $code -eq 1638)
+        return [PSCustomObject]@{ Ok = $ok; Cancelled = $false; ExitCode = $code }
+    } catch [System.ComponentModel.Win32Exception] {
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1 }
+    } catch {
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $false; ExitCode = -1 }
+    }
+}
+
 Export-ModuleMember -Function `
     Initialize-LegacyCore, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
@@ -1418,4 +1689,5 @@ Export-ModuleMember -Function `
     Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
-    Get-DuplicateTitleKeys, Get-SongTitleForDisplay
+    Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
+    Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement
