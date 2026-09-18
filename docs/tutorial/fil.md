@@ -76,7 +76,27 @@ matapos; makikita mo ang progreso habang gumagalaw sa window.
 > Hiwalay na hakbang ang mga kanta — ang unang download ay ang base na laro
 > lamang, kaya huwag mag-alala kung wala pang lumabas na kanta.
 
-## 3. Ang main window
+## 3. Pagsuri sa mga kinakailangang software
+
+Kailangan ng Legacy ng ilang karagdagang software na hindi kasama sa
+Windows — Kinect SDKs at Visual C++ runtimes. Awtomatiko itong sinusuri ng
+Legacy Downloader, minsan lang:
+
+- **Kung mayroon ka nang laro**, agad mangyayari ang pagsuring ito, bago
+  pa lumabas ang main window.
+- **Kung pinili mo ang "I-download mo para sa akin"**, mangyayari ito
+  awtomatiko kapag natapos na ang download sa itaas.
+
+![Dialog ng mga kinakailangang software](images/07-requirements-fil.png)
+
+Ang anumang naka-mark na pula ay kulang — i-click ang **I-install** sa
+tabi nito para i-download at i-install ito, o i-click ang naka-link na
+pangalan para buksan sa halip ang opisyal na pahina ng download ng
+Microsoft. Kapag berde na ang lahat, i-click ang **Isara** para magpatuloy.
+Puwede mong buksan ulit ang pagsuring ito anumang oras mula sa buton na
+**Requirements** sa main window.
+
+## 4. Ang main window
 
 Kapag nasa lugar na ang base na laro, dito ka makakarating:
 
@@ -95,12 +115,10 @@ Kapag nasa lugar na ang base na laro, dito ka makakarating:
 - **Mag-download / Suriin ang mga update** — ang malaking buton. I-click
   ito para kunin ang napili mo, at i-click ulit anumang oras mamaya para
   suriin ang bagong kanta o update.
+- **Requirements** — binubuksan ulit ang pagsuri mula sa nakaraang hakbang,
+  anumang oras na gusto mong suriin ulit o i-install ang nalaktawan mo.
 
-- **Requirements** — sinusuri kung naka-install na ang mga karagdagang software na kailangan ng Legacy (Kinect SDKs, Visual C++ runtimes), at pinapayagan kang i-install ang kulang.
-
-![Dialog ng mga kinakailangang software](images/07-requirements-fil.png)
-
-## 4. Pagpili ng indibidwal na kanta
+## 5. Pagpili ng indibidwal na kanta
 
 I-click ang **Pumili ng mapa / kanta** (mula sa main window, anumang oras)
 para buksan ang picker:
@@ -132,7 +150,7 @@ umatras nang hindi nagbabago ng anuman.
 > gagana pa rin ang mga ito, wala lang magandang pangalan hanggang
 > may magdagdag nito.
 
-## 5. Pagsusuri ng mga update
+## 6. Pagsusuri ng mga update
 
 Ang pag-click sa malaking buton ay hindi agad nagda-download — muna
 nitong **sinusuri** kung ano ang kulang o nagbago. Habang sinusuri, maaaring
@@ -162,7 +180,7 @@ Ang iyong mga setting sa laro (resolution, windowed/fullscreen) ay hindi
 kailanman ginagalaw ng update, minodify man o hindi.
 </details>
 
-## 6. Habang nagda-download
+## 7. Habang nagda-download
 
 Ang progress bar at ang log box sa ibaba nito ay nag-a-update nang live —
 makikita mong nakalista ang laro at bawat song pack habang natatapos, isa-isa.
@@ -174,7 +192,7 @@ makikita mo ito:
 
 Iyon ang kumpirmasyon mo na gumana ito — simulan mo na ang laro.
 
-## 7. Pagbalik mamaya para sa bagong kanta
+## 8. Pagbalik mamaya para sa bagong kanta
 
 Patakbuhin lang ulit ang `LegacyDownloader-GUI.bat` anumang oras. Naaalala
 nito ang iyong folder at ang mga pinili mong kanta, at ang pag-click sa

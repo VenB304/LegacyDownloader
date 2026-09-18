@@ -70,7 +70,26 @@ open** until it finishes; you'll see progress moving in the window.
 > Songs are a separate, second step — the first download is just the base
 > game itself, so don't worry that no songs appeared yet.
 
-## 3. The main window
+## 3. Checking software requirements
+
+Legacy needs a few extra pieces of software that Windows doesn't include
+by default — Kinect SDKs and Visual C++ runtimes. Legacy Downloader
+checks for these automatically, once:
+
+- **If you already had the game**, this check happens right away, before
+  the main window even appears.
+- **If you chose "Download it for me"**, it happens automatically once
+  that first download above finishes instead.
+
+![Software requirements dialog](images/07-requirements-en.png)
+
+Anything shown in red is missing — click its **Install** button to fetch
+and install it, or click the linked name to open Microsoft's own download
+page instead. Once everything shows green, click **Close** to continue.
+You can reopen this check any time later from the **Requirements** button
+on the main window.
+
+## 4. The main window
 
 Once the base game is in place, you land here:
 
@@ -87,12 +106,10 @@ Once the base game is in place, you land here:
 - **Download / Check for updates** — the big button. Click it to fetch
   whatever you picked, and click it again any time later to check for new
   songs or updates.
+- **Requirements** — reopens the software check from the previous step,
+  any time you want to re-check or install something you skipped.
 
-- **Requirements** — checks whether the extra software Legacy needs (Kinect SDKs, Visual C++ runtimes) is installed, and lets you install anything missing.
-
-![Software requirements dialog](images/07-requirements-en.png)
-
-## 4. Picking individual songs
+## 5. Picking individual songs
 
 Click **Select maps / songs** (from the main window, any time) to open the
 picker:
@@ -121,7 +138,7 @@ anything.
 > with their filename instead of a title) — they'll download and work
 > fine, just without a friendly name until someone adds one.
 
-## 5. Checking for updates
+## 6. Checking for updates
 
 Clicking the big button doesn't download anything right away — it first
 **checks** what you're missing. While it's checking, the progress bar may
@@ -150,7 +167,7 @@ Your in-game settings (screen resolution, windowed/fullscreen) are never
 touched by an update, modded or not.
 </details>
 
-## 6. While it downloads
+## 7. While it downloads
 
 The progress bar and the log box below it update live — you'll see the game
 and each song pack listed as they finish, one by one. **Don't close the
@@ -160,7 +177,7 @@ window while this is running.** When everything's done, you'll see:
 
 That's your confirmation it worked — go start the game.
 
-## 7. Coming back later for new songs
+## 8. Coming back later for new songs
 
 Just run `LegacyDownloader-GUI.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs

@@ -77,7 +77,27 @@ verás el progreso avanzando en la ventana.
 > juego base, así que no te preocupes si todavía no aparece ninguna
 > canción.
 
-## 3. La ventana principal
+## 3. Comprobar los requisitos de software
+
+Legacy necesita algunos programas adicionales que Windows no trae de
+serie — Kinect SDKs y tiempos de ejecución de Visual C++. Legacy
+Downloader los comprueba automáticamente, una sola vez:
+
+- **Si ya tenías el juego**, esta comprobación ocurre de inmediato, antes
+  de que aparezca la ventana principal.
+- **Si elegiste «Descárgamelo»**, ocurre automáticamente en cuanto termina
+  la descarga de arriba.
+
+![Diálogo de requisitos de software](images/07-requirements-es.png)
+
+Lo que aparece en rojo falta — haz clic en **Instalar** junto a ese
+elemento para descargarlo e instalarlo, o haz clic en el nombre con
+enlace para abrir la página oficial de descarga de Microsoft en su lugar.
+Cuando todo esté en verde, haz clic en **Cerrar** para continuar. Puedes
+volver a abrir esta comprobación cuando quieras desde el botón
+**Requisitos** de la ventana principal.
+
+## 4. La ventana principal
 
 Una vez que el juego base está en su sitio, llegas aquí:
 
@@ -95,12 +115,10 @@ Una vez que el juego base está en su sitio, llegas aquí:
 - **«Descargar / Buscar actualizaciones»** — el botón grande. Haz clic para
   obtener lo que elegiste, y vuelve a hacer clic más adelante para buscar
   canciones nuevas o actualizaciones.
+- **Requisitos** — vuelve a abrir la comprobación del paso anterior, cuando
+  quieras volver a comprobar o instalar algo que te hubieras saltado.
 
-- **Requisitos** — comprueba si el software adicional que Legacy necesita (Kinect SDKs, tiempos de ejecución de Visual C++) está instalado, y te permite instalar lo que falte.
-
-![Diálogo de requisitos de software](images/07-requirements-es.png)
-
-## 4. Elegir canciones individuales
+## 5. Elegir canciones individuales
 
 Haz clic en **«Elegir mapas / canciones»** (desde la ventana principal, en
 cualquier momento) para abrir el selector:
@@ -132,7 +150,7 @@ sin cambiar nada.
 > se descargarán y funcionarán bien, solo que sin un nombre amigable hasta
 > que alguien lo añada.
 
-## 5. Comprobación de actualizaciones
+## 6. Comprobación de actualizaciones
 
 Hacer clic en el botón grande no descarga nada de inmediato — primero
 **comprueba** qué te falta o ha cambiado. Mientras comprueba, la barra de
@@ -162,7 +180,7 @@ Tus ajustes dentro del juego (resolución, pantalla completa/ventana) nunca
 se tocan con una actualización, esté modificado o no.
 </details>
 
-## 6. Durante la descarga
+## 7. Durante la descarga
 
 La barra de progreso y el registro de abajo se actualizan en vivo — verás
 el juego y cada paquete de canciones listados a medida que terminan, uno
@@ -173,7 +191,7 @@ Cuando todo termine, verás:
 
 Esa es tu confirmación de que todo funcionó — ve a iniciar el juego.
 
-## 7. Volver más tarde por canciones nuevas
+## 8. Volver más tarde por canciones nuevas
 
 Simplemente ejecuta `LegacyDownloader-GUI.bat` de nuevo cuando quieras. Recuerda
 tu carpeta y tus canciones elegidas, y hacer clic en **«Descargar / Buscar

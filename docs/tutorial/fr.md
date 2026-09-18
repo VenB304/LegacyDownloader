@@ -75,7 +75,27 @@ jusqu'à la fin ; la progression s'affiche dans la fenêtre.
 > uniquement le jeu de base ; ne vous inquiétez donc pas si aucune chanson
 > n'apparaît encore.
 
-## 3. La fenêtre principale
+## 3. Vérification des prérequis logiciels
+
+Legacy a besoin de quelques logiciels supplémentaires que Windows n'inclut
+pas d'origine — des Kinect SDK et des runtimes Visual C++. Legacy
+Downloader les vérifie automatiquement, une seule fois :
+
+- **Si vous aviez déjà le jeu**, cette vérification a lieu immédiatement,
+  avant même que la fenêtre principale n'apparaisse.
+- **Si vous avez choisi « Téléchargez-le pour moi »**, elle a lieu
+  automatiquement une fois le téléchargement ci-dessus terminé.
+
+![Boîte de dialogue des prérequis logiciels](images/07-requirements-fr.png)
+
+Ce qui est affiché en rouge manque — cliquez sur **Installer** à côté pour
+le télécharger et l'installer, ou cliquez sur le nom en lien pour ouvrir à
+la place la page de téléchargement officielle de Microsoft. Une fois que
+tout est vert, cliquez sur **Fermer** pour continuer. Vous pouvez rouvrir
+cette vérification à tout moment depuis le bouton **Prérequis** de la
+fenêtre principale.
+
+## 4. La fenêtre principale
 
 Une fois le jeu de base en place, vous arrivez ici :
 
@@ -93,12 +113,11 @@ Une fois le jeu de base en place, vous arrivez ici :
 - **« Télécharger / Vérifier les mises à jour »** — le gros bouton.
   Cliquez dessus pour récupérer ce que vous avez choisi, et cliquez à
   nouveau plus tard pour vérifier les nouvelles chansons ou mises à jour.
+- **Prérequis** — rouvre la vérification de l'étape précédente, à tout
+  moment où vous voulez revérifier ou installer quelque chose que vous
+  aviez ignoré.
 
-- **Prérequis** — vérifie si les logiciels supplémentaires dont Legacy a besoin (Kinect SDK, runtimes Visual C++) sont installés, et permet d'installer ce qui manque.
-
-![Boîte de dialogue des prérequis logiciels](images/07-requirements-fr.png)
-
-## 4. Choisir des chansons individuelles
+## 5. Choisir des chansons individuelles
 
 Cliquez sur **« Sélectionner des cartes / chansons »** (depuis la fenêtre
 principale, à tout moment) pour ouvrir le sélecteur :
@@ -130,7 +149,7 @@ en arrière sans rien changer.
 > titre) — elles se téléchargeront et fonctionneront normalement, juste
 > sans nom convivial tant que quelqu'un ne l'aura pas ajouté.
 
-## 5. Vérification des mises à jour
+## 6. Vérification des mises à jour
 
 Cliquer sur le gros bouton ne télécharge rien immédiatement — il
 **vérifie** d'abord ce qui manque ou a changé. Pendant la vérification, la
@@ -160,7 +179,7 @@ Vos réglages en jeu (résolution, plein écran/fenêtré) ne sont jamais
 touchés par une mise à jour, moddée ou non.
 </details>
 
-## 6. Pendant le téléchargement
+## 7. Pendant le téléchargement
 
 La barre de progression et le journal en dessous se mettent à jour en
 direct — vous verrez le jeu et chaque pack de chansons listés au fur et à
@@ -172,7 +191,7 @@ que cela s'exécute.** Une fois tout terminé, vous verrez :
 
 C'est votre confirmation que tout a fonctionné — allez lancer le jeu.
 
-## 7. Revenir plus tard pour de nouvelles chansons
+## 8. Revenir plus tard pour de nouvelles chansons
 
 Relancez simplement `LegacyDownloader-GUI.bat` à tout moment. Il se souvient de
 votre dossier et de vos choix de chansons, et cliquer sur **« Télécharger /

@@ -76,7 +76,27 @@ er fertig ist; der Fortschritt wird im Fenster angezeigt.
 > Basisspiel selbst, also mach dir keine Sorgen, wenn noch keine Songs
 > auftauchen.
 
-## 3. Das Hauptfenster
+## 3. Softwarevoraussetzungen prüfen
+
+Legacy braucht ein paar zusätzliche Programme, die Windows nicht von Haus
+aus mitbringt — Kinect SDKs und Visual C++ Runtimes. Legacy Downloader
+prüft das automatisch, einmalig:
+
+- **Wenn du das Spiel schon hattest**, passiert diese Prüfung sofort,
+  bevor das Hauptfenster überhaupt erscheint.
+- **Wenn du „Lade es für mich herunter" gewählt hast**, passiert sie
+  stattdessen automatisch, sobald der Download oben fertig ist.
+
+![Softwarevoraussetzungen-Dialog](images/07-requirements-de.png)
+
+Alles, was rot markiert ist, fehlt — klicke daneben auf **Installieren**,
+um es herunterzuladen und zu installieren, oder klicke auf den verlinkten
+Namen, um stattdessen Microsofts eigene Download-Seite zu öffnen. Sobald
+alles grün ist, klicke auf **Schließen**, um fortzufahren. Du kannst diese
+Prüfung jederzeit später über den **Anforderungen**-Button im Hauptfenster
+erneut öffnen.
+
+## 4. Das Hauptfenster
 
 Sobald das Basisspiel vorhanden ist, landest du hier:
 
@@ -94,12 +114,11 @@ Sobald das Basisspiel vorhanden ist, landest du hier:
 - **„Herunterladen / Nach Updates suchen"** — der große Button. Klicke ihn,
   um zu holen, was du ausgewählt hast, und klicke ihn später erneut, um
   nach neuen Songs oder Updates zu suchen.
+- **Anforderungen** — öffnet die Prüfung aus dem vorherigen Schritt erneut,
+  jederzeit, wenn du etwas erneut prüfen oder nachträglich installieren
+  willst.
 
-- **Anforderungen** — prüft, ob die zusätzliche Software, die Legacy braucht (Kinect SDKs, Visual C++ Runtimes), installiert ist, und lässt dich Fehlendes installieren.
-
-![Softwarevoraussetzungen-Dialog](images/07-requirements-de.png)
-
-## 4. Einzelne Songs auswählen
+## 5. Einzelne Songs auswählen
 
 Klicke jederzeit im Hauptfenster auf **„Karten / Songs auswählen"**, um den
 Picker zu öffnen:
@@ -130,7 +149,7 @@ um ohne Änderungen zurückzugehen.
 > heruntergeladen und funktionieren, nur eben ohne netten Namen, bis
 > jemand einen hinzufügt.
 
-## 5. Nach Updates suchen
+## 6. Nach Updates suchen
 
 Ein Klick auf den großen Button lädt nicht sofort etwas herunter — er
 **prüft** zuerst, was fehlt oder sich geändert hat. Während der Prüfung
@@ -160,7 +179,7 @@ Deine Spieleinstellungen (Auflösung, Fenster-/Vollbildmodus) werden bei
 einem Update nie angerührt, ob modifiziert oder nicht.
 </details>
 
-## 6. Während des Downloads
+## 7. Während des Downloads
 
 Der Fortschrittsbalken und das Protokollfeld darunter aktualisieren sich
 live — du siehst das Spiel und jedes Song-Paket aufgelistet, sobald sie
@@ -173,7 +192,7 @@ das läuft.** Wenn alles fertig ist, siehst du:
 Das ist deine Bestätigung, dass alles geklappt hat — geh und starte das
 Spiel.
 
-## 7. Später wiederkommen für neue Songs
+## 8. Später wiederkommen für neue Songs
 
 Starte `LegacyDownloader-GUI.bat` einfach jederzeit erneut. Es merkt sich
 deinen Ordner und deine Song-Auswahl, und ein Klick auf **„Herunterladen /

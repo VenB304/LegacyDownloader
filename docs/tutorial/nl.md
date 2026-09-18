@@ -75,7 +75,26 @@ het klaar is; je ziet de voortgang bewegen in het venster.
 > basisspel zelf, dus maak je geen zorgen als er nog geen nummers
 > verschijnen.
 
-## 3. Het hoofdvenster
+## 3. Softwarevereisten controleren
+
+Legacy heeft een paar extra programma's nodig die Windows niet standaard
+meelevert — Kinect SDK's en Visual C++ runtimes. Legacy Downloader
+controleert dit automatisch, eenmalig:
+
+- **Als je het spel al had**, gebeurt deze controle meteen, voordat het
+  hoofdvenster zelfs maar verschijnt.
+- **Als je "Download het voor mij" hebt gekozen**, gebeurt het in plaats
+  daarvan automatisch zodra de download hierboven klaar is.
+
+![Dialoogvenster met softwarevereisten](images/07-requirements-nl.png)
+
+Alles wat rood wordt getoond ontbreekt — klik op **Installeren** ernaast
+om het te downloaden en te installeren, of klik op de gekoppelde naam om
+in plaats daarvan Microsofts eigen downloadpagina te openen. Zodra alles
+groen is, klik je op **Sluiten** om verder te gaan. Je kunt deze controle
+later altijd opnieuw openen via de knop **Vereisten** op het hoofdvenster.
+
+## 4. Het hoofdvenster
 
 Zodra het basisspel op zijn plek staat, kom je hier terecht:
 
@@ -93,12 +112,10 @@ Zodra het basisspel op zijn plek staat, kom je hier terecht:
 - **"Downloaden / Controleren op updates"** — de grote knop. Klik erop om
   op te halen wat je hebt gekozen, en klik er later opnieuw op om te
   controleren op nieuwe nummers of updates.
+- **Vereisten** — opent de controle van de vorige stap opnieuw, wanneer je
+  iets wilt herchecken of alsnog wilt installeren wat je hebt overgeslagen.
 
-- **Vereisten** — controleert of de extra software die Legacy nodig heeft (Kinect SDK's, Visual C++ runtimes) is geïnstalleerd, en laat je ontbrekende software installeren.
-
-![Dialoogvenster met softwarevereisten](images/07-requirements-nl.png)
-
-## 4. Losse nummers kiezen
+## 5. Losse nummers kiezen
 
 Klik op **"Kaarten / nummers selecteren"** (op elk moment, vanuit het
 hoofdvenster) om de kiezer te openen:
@@ -129,7 +146,7 @@ gaan zonder iets te wijzigen.
 > worden gewoon gedownload en werken prima, alleen zonder leuke naam
 > totdat iemand er een toevoegt.
 
-## 5. Controleren op updates
+## 6. Controleren op updates
 
 Op de grote knop klikken downloadt niet meteen iets — het **controleert**
 eerst wat er ontbreekt of veranderd is. Tijdens het controleren kan de
@@ -160,7 +177,7 @@ Je spelinstellingen (resolutie, venster-/volledig scherm) worden nooit
 aangeraakt door een update, gemod of niet.
 </details>
 
-## 6. Tijdens het downloaden
+## 7. Tijdens het downloaden
 
 De voortgangsbalk en het logvak eronder werken live bij — je ziet het
 spel en elk songpakket vermeld zodra ze klaar zijn, één voor één.
@@ -171,7 +188,7 @@ je:
 
 Dat is je bevestiging dat het gelukt is — ga het spel starten.
 
-## 7. Later terugkomen voor nieuwe nummers
+## 8. Later terugkomen voor nieuwe nummers
 
 Voer `LegacyDownloader-GUI.bat` gewoon op elk moment opnieuw uit. Het onthoudt
 je map en je nummerkeuzes, en klikken op **"Downloaden / Controleren op
