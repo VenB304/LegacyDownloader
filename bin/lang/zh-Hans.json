@@ -270,7 +270,7 @@
   "gui.requirements_status_installed": "已安装",
   "gui.requirements_status_missing": "缺失",
   "gui.requirements_interactive_note": " (会打开自己的安装窗口)",
-  "gui.requirements_btn_install_selected": "安装所选项",
+  "gui.requirements_btn_install": "安装",
   "gui.requirements_btn_continue": "继续",
   "gui.requirements_downloading": "正在下载 {name}...",
   "gui.requirements_installing": "正在安装 {name}...",

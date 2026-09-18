@@ -270,7 +270,7 @@
   "gui.requirements_status_installed": "Naka-install",
   "gui.requirements_status_missing": "Kulang",
   "gui.requirements_interactive_note": " (magbubukas ng sarili nitong installer window)",
-  "gui.requirements_btn_install_selected": "I-install ang Napili",
+  "gui.requirements_btn_install": "I-install",
   "gui.requirements_btn_continue": "Magpatuloy",
   "gui.requirements_downloading": "Dina-download ang {name}...",
   "gui.requirements_installing": "Ini-install ang {name}...",

@@ -2552,10 +2552,40 @@ function Show-TrackedViewDialog {
 # $refresh below, called both on open and after every install attempt.
 # ===========================================================================
 
+function New-StatusIcon([bool]$Ok) {
+    # 16x16 status dot, drawn procedurally rather than shipping another
+    # embedded-bitmap asset (like the language flags) - green+check for
+    # installed, red+X for missing. Cached per-state so the grid's
+    # per-cell Image assignment isn't allocating a fresh bitmap per row
+    # per refresh.
+    if ($null -eq $script:ReqStatusIcons) { $script:ReqStatusIcons = @{} }
+    if ($script:ReqStatusIcons.ContainsKey($Ok)) { return $script:ReqStatusIcons[$Ok] }
+    $bmp = New-Object System.Drawing.Bitmap(16, 16)
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $g.Clear([System.Drawing.Color]::Transparent)
+    $color = if ($Ok) { [System.Drawing.Color]::FromArgb(46, 160, 90) } else { [System.Drawing.Color]::FromArgb(214, 69, 69) }
+    $brush = New-Object System.Drawing.SolidBrush($color)
+    $g.FillEllipse($brush, 0, 0, 15, 15)
+    $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::White, 2)
+    $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    if ($Ok) {
+        $g.DrawLines($pen, @(
+            (New-Object System.Drawing.Point(4, 8)), (New-Object System.Drawing.Point(7, 11)), (New-Object System.Drawing.Point(12, 5))))
+    } else {
+        $g.DrawLine($pen, 5, 5, 11, 11)
+        $g.DrawLine($pen, 11, 5, 5, 11)
+    }
+    $pen.Dispose(); $brush.Dispose(); $g.Dispose()
+    $script:ReqStatusIcons[$Ok] = $bmp
+    return $bmp
+}
+
 function Show-RequirementsDialog {
     param([switch]$FirstRun)
     $gp = $script:Cfg.GamePath
-    $script:ReqDialogItems = @()   # parallel to $clb's items, refreshed below - script-scoped so Add_Click closures see updates a plain local wouldn't
+    $script:ReqDialogItems = @()   # parallel to $grid's rows, refreshed below - script-scoped so Add_Click closures see updates a plain local wouldn't
 
     $f = New-Object System.Windows.Forms.Form
     $f.Text = T 'gui.requirements_title'
@@ -2573,119 +2603,189 @@ function Show-RequirementsDialog {
     $lblIntro = New-Label $introText 14 14 452 ($introSize.Height + 6)
     $lblIntro.ForeColor = $script:ColorMuted
 
-    $y = $lblIntro.Bottom + 8
-    $summary = New-Object System.Windows.Forms.TextBox
-    $summary.Multiline = $true; $summary.ReadOnly = $true
-    $summary.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $summary.SetBounds(14, $y, 452, 96)
-    $summary.Font = $script:FontMono
-    $summary.BackColor = $script:ColorCard
-    $summary.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-    $y += $summary.Height + 10
+    # Single grid - status icon + name + an inline per-row Install button -
+    # replacing the earlier design's three stacked text boxes (a text
+    # summary, a separate checkbox list, and a log) with one place that
+    # shows everything. Same DataGridView conventions the editions
+    # checklist elsewhere in this dialog set already established
+    # (CellBorderStyle for a clean look, EditProgrammatically so clicks are
+    # handled explicitly rather than through WinForms' own edit-in-place
+    # behavior).
+    # Grid height is sized exactly to its row count (no header row, since
+    # ColumnHeadersVisible is off below) - a fixed guess left visible dead
+    # space under the last row when the list is short.
+    $itemCount = @(Get-RequirementDefinitions).Count
+    $rowHeight = 32
+    # +2 for the FixedSingle border, + (itemCount-1) for the SingleHorizontal
+    # separator line drawn between every pair of rows.
+    $gridHeight = $itemCount * $rowHeight + ($itemCount - 1) + 2
 
-    $clb = New-Object System.Windows.Forms.CheckedListBox
-    $clb.CheckOnClick = $true
-    $clb.Font = $script:FontBase
-    $clb.BackColor = $script:ColorCard
-    $clb.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-    $clb.SetBounds(14, $y, 452, 84)
-    $y += $clb.Height + 10
+    $y = $lblIntro.Bottom + 10
+    $grid = New-Object System.Windows.Forms.DataGridView
+    $grid.SetBounds(14, $y, 452, $gridHeight)
+    $grid.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    $grid.CellBorderStyle = [System.Windows.Forms.DataGridViewCellBorderStyle]::SingleHorizontal
+    $grid.ColumnHeadersVisible = $false
+    $grid.RowHeadersVisible = $false
+    $grid.AllowUserToAddRows = $false
+    $grid.AllowUserToDeleteRows = $false
+    $grid.AllowUserToResizeRows = $false
+    $grid.AllowUserToResizeColumns = $false
+    $grid.MultiSelect = $false
+    $grid.SelectionMode = [System.Windows.Forms.DataGridViewSelectionMode]::FullRowSelect
+    $grid.EditMode = [System.Windows.Forms.DataGridViewEditMode]::EditProgrammatically
+    $grid.StandardTab = $false
+    $grid.ScrollBars = [System.Windows.Forms.ScrollBars]::None
+    $grid.RowTemplate.Height = $rowHeight
+    $grid.BackgroundColor = $script:ColorCard
+    $grid.GridColor = $script:ColorBorder
+    $grid.DefaultCellStyle.BackColor = $script:ColorCard
+    $grid.DefaultCellStyle.ForeColor = $script:ColorText
+    $grid.DefaultCellStyle.SelectionBackColor = $script:ColorCard
+    $grid.DefaultCellStyle.SelectionForeColor = $script:ColorText
+    $grid.DefaultCellStyle.Padding = New-Object System.Windows.Forms.Padding(4, 0, 0, 0)
 
-    $log = New-Object System.Windows.Forms.TextBox
-    $log.Multiline = $true; $log.ReadOnly = $true
-    $log.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $log.SetBounds(14, $y, 452, 84)
-    $log.Font = $script:FontMono
-    $log.BackColor = $script:ColorCard
-    $log.ForeColor = $script:ColorText
-    $log.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-    $y += $log.Height + 12
+    $colIcon = New-Object System.Windows.Forms.DataGridViewImageColumn
+    $colIcon.Width = 34
+    $colIcon.ImageLayout = [System.Windows.Forms.DataGridViewImageCellLayout]::Zoom
+    $colIcon.Resizable = [System.Windows.Forms.DataGridViewTriState]::False
+    $colIcon.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
+    [void]$grid.Columns.Add($colIcon)
+
+    $colName = New-Object System.Windows.Forms.DataGridViewTextBoxColumn
+    $colName.ReadOnly = $true
+    $colName.AutoSizeMode = [System.Windows.Forms.DataGridViewAutoSizeColumnMode]::Fill
+    $colName.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
+    [void]$grid.Columns.Add($colName)
+
+    $colAction = New-Object System.Windows.Forms.DataGridViewButtonColumn
+    $colAction.Width = 80
+    $colAction.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $colAction.UseColumnTextForButtonValue = $false
+    $colAction.Resizable = [System.Windows.Forms.DataGridViewTriState]::False
+    $colAction.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
+    $colAction.DefaultCellStyle.BackColor = $script:ColorCard
+    [void]$grid.Columns.Add($colAction)
+
+    $y += $grid.Height + 10
+    $lblStatus = New-Label '' 14 $y 452 18
+    $lblStatus.ForeColor = $script:ColorMuted
+    $y += $lblStatus.Height + 10
 
     $closeLabel = if ($FirstRun) { T 'gui.requirements_btn_continue' } else { T 'gui.btn_close' }
-    $btnInstall = New-Btn (T 'gui.requirements_btn_install_selected') 14 $y 0 32 $true
-    $btnClose   = New-Btn $closeLabel 0 $y 0 32 $false
-    foreach ($b in @($btnInstall, $btnClose)) {
-        $b.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
-    }
+    $btnClose = New-Btn $closeLabel 0 $y 0 32 $true
+    $btnClose.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($btnClose.Text, $btnClose.Font).Width + 28)
     $btnClose.Left = 466 - $btnClose.Width
     $y += 46
 
-    $appendLog = {
-        param($Line)
-        $log.AppendText($Line + "`r`n")
-        $log.SelectionStart = $log.TextLength
-        $log.ScrollToCaret()
-    }
-
     $refresh = {
         $script:ReqDialogItems = @(Get-RequirementsStatus -GamePath $gp)
-        $lines = foreach ($it in $script:ReqDialogItems) {
-            $glyph = if ($it.Installed) { [char]0x2713 } else { [char]0x2717 }
-            $note = if ((-not $it.Installed) -and $it.Interactive) { T 'gui.requirements_interactive_note' } else { '' }
-            "$glyph $($it.Name)$note"
+        $grid.Rows.Clear()
+        foreach ($it in $script:ReqDialogItems) {
+            $idx = $grid.Rows.Add()
+            $row = $grid.Rows[$idx]
+            $row.Cells[0].Value = New-StatusIcon $it.Installed
+            $name = $it.Name
+            if ((-not $it.Installed) -and $it.Interactive) { $name += (T 'gui.requirements_interactive_note') }
+            $row.Cells[1].Value = $name
+            $actionCell = $row.Cells[2]
+            if ($it.Installed) {
+                # Disabled-looking, not just an empty cell - ReadOnly stops
+                # WinForms' own edit-on-click, and the click handler itself
+                # also no-ops for an installed row regardless (belt and
+                # suspenders, in case ReadOnly alone doesn't block
+                # CellContentClick for a button column in some WinForms
+                # version).
+                $actionCell.Value = T 'gui.requirements_status_installed'
+                $actionCell.ReadOnly = $true
+                $actionCell.Style.ForeColor = $script:ColorMuted
+                $actionCell.Style.SelectionForeColor = $script:ColorMuted
+                $actionCell.Style.BackColor = $script:ColorBg
+                $actionCell.Style.SelectionBackColor = $script:ColorBg
+            } else {
+                $actionCell.Value = T 'gui.requirements_btn_install'
+            }
+            $row.Tag = $it.Id
         }
         $missingCount = @($script:ReqDialogItems | Where-Object { -not $_.Installed }).Count
-        if ($missingCount -eq 0) { $lines += ''; $lines += (T 'gui.requirements_all_done') }
-        $summary.Text = ($lines -join "`r`n")
-
-        $clb.Items.Clear()
-        foreach ($it in $script:ReqDialogItems) {
-            if (-not $it.Installed) { [void]$clb.Items.Add($it.Name, $true) }
-        }
-        $btnInstall.Enabled = ($missingCount -gt 0)
+        $lblStatus.Text = if ($missingCount -eq 0) { T 'gui.requirements_all_done' } else { '' }
     }
     & $refresh
+
+    # Manual row/border/separator pixel math (RowTemplate.Height * count +
+    # border + separator allowance) kept leaving a several-pixel sliver of
+    # dead space below the last row - WinForms' actual rendered row bounds
+    # don't line up exactly with that arithmetic. Measuring the REAL
+    # rendered bottom of the last row directly (after the grid has a
+    # handle and real rows, which & $refresh just populated) and
+    # snug-fitting to that is exact regardless of what's actually eating
+    # the extra pixels.
+    [void]$grid.Handle
+    if ($grid.Rows.Count -gt 0) {
+        $lastRowRect = $grid.GetRowDisplayRectangle($grid.Rows.Count - 1, $true)
+        $neededHeight = $lastRowRect.Bottom + 2   # +2 for the FixedSingle border
+        if ($neededHeight -ne $grid.Height) {
+            $delta = $neededHeight - $grid.Height
+            $grid.Height = $neededHeight
+            $lblStatus.Top += $delta
+            $btnClose.Top += $delta
+            $y += $delta
+        }
+    }
 
     # Installs run synchronously (Start-Process -Wait, inside Install-
     # Requirement) rather than through the async job+timer pattern the main
     # window's downloads use - a deliberate simplification, not an
-    # oversight: this is a one-at-a-time, explicitly-confirmed action (the
-    # user just clicked Install), not a long unattended background transfer,
-    # and a wait cursor + disabled controls during each step communicates
-    # "busy" clearly enough for something this short-lived. DoEvents before
-    # each blocking call at least flushes the log line and cursor change to
-    # the screen first.
-    $btnInstall.Add_Click({
+    # oversight: each install is its own explicit, one-at-a-time click, not
+    # a long unattended background transfer, and a wait cursor + disabled
+    # grid communicates "busy" clearly enough for something this
+    # short-lived. DoEvents before each blocking call at least flushes the
+    # status line and cursor change to the screen first.
+    $grid.Add_CellContentClick({
         param($s, $e)
-        $checkedNames = @()
-        for ($i = 0; $i -lt $clb.Items.Count; $i++) { if ($clb.GetItemChecked($i)) { $checkedNames += [string]$clb.Items[$i] } }
-        if ($checkedNames.Count -eq 0) { return }
+        if ($e.RowIndex -lt 0 -or $e.ColumnIndex -ne 2) { return }
+        $row = $grid.Rows[$e.RowIndex]
+        $id = $row.Tag
+        $item = $script:ReqDialogItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
+        if (-not $item -or $item.Installed) { return }
 
         $f.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-        $btnInstall.Enabled = $false; $btnClose.Enabled = $false; $clb.Enabled = $false
-        foreach ($name in $checkedNames) {
-            $item = $script:ReqDialogItems | Where-Object { $_.Name -eq $name } | Select-Object -First 1
-            if (-not $item) { continue }
+        $grid.Enabled = $false; $btnClose.Enabled = $false
 
-            & $appendLog (T 'gui.requirements_downloading' @{ name = $item.Name })
-            [System.Windows.Forms.Application]::DoEvents()
-            $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
-            if (-not $fetch.Ok) {
-                & $appendLog (T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl })
-                continue
-            }
-
-            & $appendLog (T 'gui.requirements_installing' @{ name = $item.Name })
+        $lblStatus.Text = T 'gui.requirements_downloading' @{ name = $item.Name }
+        [System.Windows.Forms.Application]::DoEvents()
+        $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
+        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+        if (-not $fetch.Ok) {
+            $lblStatus.Text = T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }
+        } else {
+            $lblStatus.Text = T 'gui.requirements_installing' @{ name = $item.Name }
             [System.Windows.Forms.Application]::DoEvents()
             $res = Install-Requirement -Item $item -Path $fetch.Path
-            if ($res.Cancelled) {
-                & $appendLog ("$([char]0x2717) " + (T 'gui.requirements_install_cancelled' @{ name = $item.Name }))
+            $lblStatus.Text = if ($res.Cancelled) {
+                T 'gui.requirements_install_cancelled' @{ name = $item.Name }
             } elseif ($res.Ok) {
-                & $appendLog ("$([char]0x2713) " + (T 'gui.requirements_install_done' @{ name = $item.Name }))
+                T 'gui.requirements_install_done' @{ name = $item.Name }
             } else {
-                & $appendLog ("$([char]0x2717) " + (T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }))
+                T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }
             }
         }
+
         $f.Cursor = [System.Windows.Forms.Cursors]::Default
-        $btnClose.Enabled = $true; $clb.Enabled = $true
+        $grid.Enabled = $true; $btnClose.Enabled = $true
+        $savedStatus = $lblStatus.Text
         & $refresh
+        if ($lblStatus.Text -eq (T 'gui.requirements_all_done') -or [string]::IsNullOrEmpty($lblStatus.Text)) {
+            # $refresh only sets an "all done" or blank status - keep the
+            # just-finished line visible instead of blanking it immediately.
+            $lblStatus.Text = $savedStatus
+        }
     })
     $btnClose.Add_Click({ param($s, $e) $f.Close() })
 
     $f.ClientSize = New-Object System.Drawing.Size(480, $y)
     $f.CancelButton = $btnClose
-    $f.Controls.AddRange(@($lblIntro, $summary, $clb, $log, $btnInstall, $btnClose))
+    $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $btnClose))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()

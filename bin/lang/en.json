@@ -271,7 +271,7 @@
   "gui.requirements_status_installed": "Installed",
   "gui.requirements_status_missing": "Missing",
   "gui.requirements_interactive_note": " (opens its own installer window)",
-  "gui.requirements_btn_install_selected": "Install Selected",
+  "gui.requirements_btn_install": "Install",
   "gui.requirements_btn_continue": "Continue",
   "gui.requirements_downloading": "Downloading {name}...",
   "gui.requirements_installing": "Installing {name}...",

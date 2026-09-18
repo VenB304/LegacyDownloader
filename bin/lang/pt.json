@@ -270,7 +270,7 @@
   "gui.requirements_status_installed": "Instalado",
   "gui.requirements_status_missing": "Falta",
   "gui.requirements_interactive_note": " (abre sua própria janela de instalação)",
-  "gui.requirements_btn_install_selected": "Instalar selecionados",
+  "gui.requirements_btn_install": "Instalar",
   "gui.requirements_btn_continue": "Continuar",
   "gui.requirements_downloading": "A baixar {name}...",
   "gui.requirements_installing": "A instalar {name}...",

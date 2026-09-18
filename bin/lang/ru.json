@@ -270,7 +270,7 @@
   "gui.requirements_status_installed": "Установлено",
   "gui.requirements_status_missing": "Отсутствует",
   "gui.requirements_interactive_note": " (откроется отдельное окно установки)",
-  "gui.requirements_btn_install_selected": "Установить выбранное",
+  "gui.requirements_btn_install": "Установить",
   "gui.requirements_btn_continue": "Продолжить",
   "gui.requirements_downloading": "Загрузка {name}...",
   "gui.requirements_installing": "Установка {name}...",

@@ -270,7 +270,7 @@
   "gui.requirements_status_installed": "설치됨",
   "gui.requirements_status_missing": "없음",
   "gui.requirements_interactive_note": " (별도의 설치 창이 열립니다)",
-  "gui.requirements_btn_install_selected": "선택 항목 설치",
+  "gui.requirements_btn_install": "설치",
   "gui.requirements_btn_continue": "계속",
   "gui.requirements_downloading": "{name} 다운로드 중...",
   "gui.requirements_installing": "{name} 설치 중...",
