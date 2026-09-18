@@ -94,6 +94,8 @@ Zodra het basisspel op zijn plek staat, kom je hier terecht:
   op te halen wat je hebt gekozen, en klik er later opnieuw op om te
   controleren op nieuwe nummers of updates.
 
+- **Vereisten** — controleert of de extra software die Legacy nodig heeft (Kinect SDK's, Visual C++ runtimes) is geïnstalleerd, en laat je ontbrekende software installeren.
+
 ## 4. Losse nummers kiezen
 
 Klik op **"Kaarten / nummers selecteren"** (op elk moment, vanuit het
@@ -196,7 +198,8 @@ cijfertoetsen:
 [2] Kiezen welke nummers je wilt
 [3] Spelmap wijzigen
 [4] Taal
-[5] Afsluiten
+[5] Softwarevereisten controleren
+[6] Afsluiten
 ```
 
 > **Opmerking over lettertype:** de grafische versie toont alle talen

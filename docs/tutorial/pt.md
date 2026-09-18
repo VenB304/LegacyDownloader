@@ -93,6 +93,8 @@ Assim que o jogo base estiver pronto, você chega aqui:
   obter o que você escolheu, e clique novamente mais tarde para verificar
   novas músicas ou atualizações.
 
+- **Requisitos** — verifica se o software adicional que o Legacy precisa (Kinect SDKs, runtimes do Visual C++) está instalado, e permite instalar o que faltar.
+
 ## 4. Escolhendo músicas individuais
 
 Clique em **"Selecionar mapas / músicas"** (a partir da janela principal, a
@@ -195,7 +197,8 @@ navegando com as teclas numéricas:
 [2] Escolher quais músicas baixar
 [3] Alterar pasta do jogo
 [4] Idioma
-[5] Sair
+[5] Verificar requisitos de software
+[6] Sair
 ```
 
 > **Nota sobre a fonte:** a versão gráfica exibe todos os idiomas

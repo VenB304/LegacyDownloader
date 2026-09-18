@@ -8,9 +8,12 @@ Ships with a WinForms GUI (default) and a text-menu console front-end,
 both available in 13 languages and both able to pick individual songs
 within an edition — not just whole editions — with search and
 Difficulty/Effort filters, and surface songs that are on the live share
-but missing from the community sheet. Runs natively on Linux via
-PowerShell Core too (community contribution, credit
-[@leleletus](https://github.com/leleletus)) — see
+but missing from the community sheet. A **Requirements** checker
+verifies the Kinect SDKs and Visual C++ runtimes the game itself needs
+are installed and can fetch/install whatever's missing (Windows only —
+see [Software requirements](#software-requirements) below). Runs
+natively on Linux via PowerShell Core too (community contribution,
+credit [@leleletus](https://github.com/leleletus)) — see
 [Running on Linux](#running-on-linux) below. Under the hood: size-only
 comparison (so an exFAT-mounted play drive doesn't get flagged as
 out of date on every run), folder-level detection, a dry-run preview
@@ -67,6 +70,26 @@ the console menu it's **[2] Choose which songs to get** → **[2] Specific
 maps / songs**. Either way it opens a picker where you can check whole
 editions or individual songs within them, search by title/artist/codename,
 and filter by Difficulty/Effort.
+
+## Software requirements
+
+Legacy Offline PC itself needs a handful of Microsoft runtimes/drivers
+beyond what Windows ships out of the box — verified against `Legacy.exe`'s
+own PE import table and real DLL/registry checks, not guessed:
+
+- Kinect for Windows SDK 1.8 and 2.0 (the drivers/service behind the
+  `Kinect10.dll`/`Kinect20.dll` the game already ships with)
+- Visual C++ 2010, 2012, and 2015+ Redistributable (x86)
+- DirectX End-User Runtime (June 2010) — narrowly for `XINPUT1_3.dll`,
+  which Windows doesn't ship natively
+
+Click the **Requirements** button on the main window (or **[5] Check
+software requirements** in the console menu) any time to see what's
+installed and fetch/install anything missing — every download comes from
+its own official Microsoft page, never a third-party mirror. This is
+shown once automatically the first time you set up a brand-new install;
+existing installs only ever see it if you open it yourself. Windows only
+— not available when running on Linux.
 
 ## Language
 

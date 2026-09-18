@@ -88,6 +88,8 @@ Once the base game is in place, you land here:
   whatever you picked, and click it again any time later to check for new
   songs or updates.
 
+- **Requirements** — checks whether the extra software Legacy needs (Kinect SDKs, Visual C++ runtimes) is installed, and lets you install anything missing.
+
 ## 4. Picking individual songs
 
 Click **Select maps / songs** (from the main window, any time) to open the
@@ -182,7 +184,8 @@ navigated with number keys:
 [2] Choose which songs to get
 [3] Change game folder
 [4] Language
-[5] Exit
+[5] Check software requirements
+[6] Exit
 ```
 
 > **Font note:** the graphical version displays every language correctly.

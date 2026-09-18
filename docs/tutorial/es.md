@@ -96,6 +96,8 @@ Una vez que el juego base está en su sitio, llegas aquí:
   obtener lo que elegiste, y vuelve a hacer clic más adelante para buscar
   canciones nuevas o actualizaciones.
 
+- **Requisitos** — comprueba si el software adicional que Legacy necesita (Kinect SDKs, tiempos de ejecución de Visual C++) está instalado, y te permite instalar lo que falte.
+
 ## 4. Elegir canciones individuales
 
 Haz clic en **«Elegir mapas / canciones»** (desde la ventana principal, en
@@ -196,7 +198,8 @@ lugar. Mismas funciones, navegando con teclas numéricas:
 [2] Elegir qué canciones descargar
 [3] Cambiar la carpeta del juego
 [4] Idioma
-[5] Salir
+[5] Comprobar requisitos de software
+[6] Salir
 ```
 
 > **Nota sobre la fuente:** la versión gráfica muestra todos los idiomas

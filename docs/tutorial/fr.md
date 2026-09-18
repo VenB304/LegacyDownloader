@@ -94,6 +94,8 @@ Une fois le jeu de base en place, vous arrivez ici :
   Cliquez dessus pour récupérer ce que vous avez choisi, et cliquez à
   nouveau plus tard pour vérifier les nouvelles chansons ou mises à jour.
 
+- **Prérequis** — vérifie si les logiciels supplémentaires dont Legacy a besoin (Kinect SDK, runtimes Visual C++) sont installés, et permet d'installer ce qui manque.
+
 ## 4. Choisir des chansons individuelles
 
 Cliquez sur **« Sélectionner des cartes / chansons »** (depuis la fenêtre
@@ -197,7 +199,8 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 [2] Choisir les chansons à récupérer
 [3] Changer le dossier du jeu
 [4] Langue
-[5] Quitter
+[5] Vérifier les logiciels requis
+[6] Quitter
 ```
 
 > **Remarque sur la police :** la version graphique affiche correctement

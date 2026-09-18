@@ -96,6 +96,8 @@ Kapag nasa lugar na ang base na laro, dito ka makakarating:
   ito para kunin ang napili mo, at i-click ulit anumang oras mamaya para
   suriin ang bagong kanta o update.
 
+- **Requirements** — sinusuri kung naka-install na ang mga karagdagang software na kailangan ng Legacy (Kinect SDKs, Visual C++ runtimes), at pinapayagan kang i-install ang kulang.
+
 ## 4. Pagpili ng indibidwal na kanta
 
 I-click ang **Pumili ng mapa / kanta** (mula sa main window, anumang oras)
@@ -199,7 +201,8 @@ gamit ang number keys:
 [2] Piliin kung aling mga kanta ang kukunin
 [3] Baguhin ang folder ng laro
 [4] Wika
-[5] Lumabas
+[5] Suriin ang mga kailangang software
+[6] Lumabas
 ```
 
 > **Tala tungkol sa font:** ipinapakita nang tama ng graphical na bersyon

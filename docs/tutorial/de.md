@@ -95,6 +95,8 @@ Sobald das Basisspiel vorhanden ist, landest du hier:
   um zu holen, was du ausgewählt hast, und klicke ihn später erneut, um
   nach neuen Songs oder Updates zu suchen.
 
+- **Anforderungen** — prüft, ob die zusätzliche Software, die Legacy braucht (Kinect SDKs, Visual C++ Runtimes), installiert ist, und lässt dich Fehlendes installieren.
+
 ## 4. Einzelne Songs auswählen
 
 Klicke jederzeit im Hauptfenster auf **„Karten / Songs auswählen"**, um den
@@ -197,7 +199,8 @@ Zifferntasten:
 [2] Songs auswählen
 [3] Spielordner ändern
 [4] Sprache
-[5] Beenden
+[5] Softwarevoraussetzungen prüfen
+[6] Beenden
 ```
 
 > **Hinweis zur Schriftart:** Die grafische Version zeigt alle Sprachen

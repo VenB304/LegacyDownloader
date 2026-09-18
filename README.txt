@@ -75,7 +75,8 @@ In the console menu you'll see:
   [2] Choose which songs to get
   [3] Change game folder
   [4] Language
-  [5] Exit
+  [5] Check software requirements
+  [6] Exit
 
 
 BEFORE IT DOWNLOADS ANYTHING
@@ -105,6 +106,21 @@ It only ever adds or updates files - it never deletes anything on its
 own. If you uncheck an edition you'd previously downloaded, it'll ask
 whether to delete those files or just leave them on disk. Nothing is
 ever removed without you being asked first.
+
+
+SOFTWARE REQUIREMENTS
+----------------------
+
+Legacy Offline PC itself needs a few Microsoft runtimes/drivers besides
+Windows itself: the Kinect for Windows SDK (1.8 and 2.0), Visual C++
+2010/2012/2015+ Redistributable, and the DirectX End-User Runtime.
+
+Click "Requirements" on the main window (or "[5] Check software
+requirements" in the console menu) any time to see what's installed and
+install anything missing - each download comes straight from its own
+official Microsoft page, never anywhere else. You'll see this once
+automatically the very first time you set this tool up; after that it's
+only ever shown if you open it yourself. Windows only.
 
 
 LANGUAGE
