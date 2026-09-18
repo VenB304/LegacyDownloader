@@ -727,10 +727,23 @@ function Show-RequirementsWizard([string]$GamePath) {
         }
         Write-Host (T 'menu.requirements_installing' @{ name = $item.Name })
         $res = Install-Requirement -Item $item -Path $fetch.Path
-        if ($res.Cancelled) {
-            Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow
-        } elseif ($res.Ok) {
+        if ($fetch.Downloaded) {
+            # Only the temp-folder copy just downloaded - never the
+            # bundled Support\ folder copy, which $fetch.Path points
+            # straight at when it came from there instead.
+            Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
+        }
+
+        # Trust a fresh real re-check over the installer's own exit code -
+        # not every installer here follows the same MSI 0/3010/1638
+        # convention (DXSETUP.exe's exact convention is unverified), so
+        # asking "is it actually installed now" is more honest than
+        # trusting a guessed-at exit code.
+        $nowInstalled = (@(Get-RequirementsStatus -GamePath $GamePath | Where-Object { $_.Id -eq $item.Id }))[0].Installed
+        if ($nowInstalled) {
             Write-Host (T 'menu.requirements_install_done' @{ name = $item.Name }) -ForegroundColor Green
+        } elseif ($res.Cancelled) {
+            Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow
         } else {
             Write-Host (T 'menu.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }) -ForegroundColor Red
         }

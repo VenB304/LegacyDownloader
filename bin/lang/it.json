@@ -271,6 +271,7 @@
   "gui.requirements_status_missing": "Mancante",
   "gui.requirements_interactive_note": " (apre una propria finestra di installazione)",
   "gui.requirements_btn_install": "Installa",
+  "gui.requirements_btn_refresh": "Aggiorna",
   "gui.requirements_btn_continue": "Continua",
   "gui.requirements_downloading": "Download di {name}...",
   "gui.requirements_installing": "Installazione di {name}...",

@@ -1633,27 +1633,39 @@ function Get-RequirementInstaller {
         [Parameter(Mandatory = $true)]$Item,
         [Parameter(Mandatory = $true)][string]$DestDir
     )
+    # .Downloaded distinguishes a real temp-folder download (safe for a
+    # caller to delete once it's done with it) from the bundled path
+    # (points straight at the game's own Support\ folder - never delete
+    # that).
     if ($Item.BundledPath -and (Test-Path -LiteralPath $Item.BundledPath)) {
-        return [PSCustomObject]@{ Ok = $true; Path = $Item.BundledPath; OfficialUrl = $Item.OfficialUrl }
+        return [PSCustomObject]@{ Ok = $true; Path = $Item.BundledPath; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
     }
     if ([string]::IsNullOrWhiteSpace($Item.FetchUrl)) {
-        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
     }
     try {
         if (-not (Test-Path -LiteralPath $DestDir)) { [System.IO.Directory]::CreateDirectory($DestDir) | Out-Null }
     } catch {
-        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
     }
-    $fileName = Split-Path -Leaf ([Uri]$Item.FetchUrl).AbsolutePath
-    if ([string]::IsNullOrWhiteSpace($fileName)) { $fileName = "$($Item.Id).exe" }
-    $dest = Join-Path $DestDir $fileName
+    # Always keyed by Item.Id, not a name parsed from the URL - vc2010 and
+    # vc2012's real Microsoft download links both happen to end in the
+    # same "vcredist_x86.exe" leaf name (vc2012's is normally never used
+    # since it's bundled, but IS reachable as a fallback if the Support
+    # folder copy is ever missing/corrupted), which would otherwise let
+    # two different items collide on the same destination file.
+    $dest = Join-Path $DestDir "$($Item.Id).exe"
     try {
-        Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 180 -ErrorAction Stop
+        # 600s, not the original 180s - the largest of these (Kinect SDK
+        # 2.0) is ~275MB, which a 180s cap would fail on anything slower
+        # than a genuinely fast connection even when the transfer was
+        # otherwise working fine.
+        Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
         if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
-        return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl }
+        return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl; Downloaded = $true }
     } catch {
         Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
-        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl }
+        return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
     }
 }
 
@@ -1662,11 +1674,25 @@ function Install-Requirement {
     # unattended args and wait for the process to exit; the two Kinect SDKs
     # have no silent mode at all (Microsoft's own EULA-driven design) - just
     # launched and waited on, showing their own UI same as a manual install.
-    # A user cancelling the elevation (UAC) prompt surfaces as a Win32Exception
-    # from Start-Process, not a crash - reported as Cancelled, not a failure,
-    # so the caller can show "skipped" rather than an alarming error.
     # Exit code isn't treated as the final word either way - the caller
     # re-runs Get-RequirementsStatus afterward as the real source of truth.
+    #
+    # A user declining the elevation (UAC) prompt does NOT surface as a
+    # System.ComponentModel.Win32Exception (ERROR_CANCELLED/1223), despite
+    # that being the real underlying error ShellExecuteEx throws - verified
+    # against real reports of this exact PowerShell behavior, not assumed:
+    # Start-Process's own cmdlet wrapping swallows that Win32Exception and
+    # rethrows a bare System.InvalidOperationException instead (no
+    # InnerException, so the real native error code never reaches calling
+    # code at all). Catching InvalidOperationException as the actual
+    # "declined" case - broadly, not by matching the exception's message
+    # text, which would break on a non-English Windows install - is safe
+    # specifically because every call here uses a fixed FilePath and a
+    # fixed (or absent) ArgumentList we control; there's no other
+    # parameter-shape mistake this narrow call could realistically throw
+    # that kind of exception for. The Win32Exception catch is kept too, in
+    # case some other PowerShell/Windows version path does throw it
+    # directly.
     param(
         [Parameter(Mandatory = $true)]$Item,
         [Parameter(Mandatory = $true)][string]$Path
@@ -1683,6 +1709,8 @@ function Install-Requirement {
         # installed - both are effectively "fine," not a real failure.
         $ok = ($code -eq 0 -or $code -eq 3010 -or $code -eq 1638)
         return [PSCustomObject]@{ Ok = $ok; Cancelled = $false; ExitCode = $code }
+    } catch [System.InvalidOperationException] {
+        return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1 }
     } catch [System.ComponentModel.Win32Exception] {
         return [PSCustomObject]@{ Ok = $false; Cancelled = $true; ExitCode = -1 }
     } catch {

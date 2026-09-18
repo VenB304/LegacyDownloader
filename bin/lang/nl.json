@@ -271,6 +271,7 @@
   "gui.requirements_status_missing": "Ontbreekt",
   "gui.requirements_interactive_note": " (opent een eigen installatievenster)",
   "gui.requirements_btn_install": "Installeren",
+  "gui.requirements_btn_refresh": "Vernieuwen",
   "gui.requirements_btn_continue": "Doorgaan",
   "gui.requirements_downloading": "{name} wordt gedownload...",
   "gui.requirements_installing": "{name} wordt geïnstalleerd...",

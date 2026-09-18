@@ -2681,6 +2681,14 @@ function Show-RequirementsDialog {
     $lblStatus.ForeColor = $script:ColorMuted
     $y += $lblStatus.Height + 10
 
+    # Manual re-check, for when automatic detection has a false negative
+    # (something installed outside this app that the registry/DLL checks
+    # don't happen to catch) - left-aligned, opposite Close, matching the
+    # secondary-action-on-the-left convention the preview dialog's own
+    # "Show file list" button already uses in this file.
+    $btnRefresh = New-Btn (T 'gui.requirements_btn_refresh') 14 $y 0 32 $false
+    $btnRefresh.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($btnRefresh.Text, $btnRefresh.Font).Width + 28)
+
     $closeLabel = if ($FirstRun) { T 'gui.requirements_btn_continue' } else { T 'gui.btn_close' }
     $btnClose = New-Btn $closeLabel 0 $y 0 32 $true
     $btnClose.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($btnClose.Text, $btnClose.Font).Width + 28)
@@ -2793,10 +2801,25 @@ function Show-RequirementsDialog {
             $lblStatus.Text = T 'gui.requirements_installing' @{ name = $item.Name }
             [System.Windows.Forms.Application]::DoEvents()
             $res = Install-Requirement -Item $item -Path $fetch.Path
-            $lblStatus.Text = if ($res.Cancelled) {
-                T 'gui.requirements_install_cancelled' @{ name = $item.Name }
-            } elseif ($res.Ok) {
+            if ($fetch.Downloaded) {
+                # Only ever the temp-folder copy Get-RequirementInstaller
+                # just downloaded - $fetch.Path points straight at the
+                # game's own Support\ folder when it came from there
+                # instead, and that must never be touched.
+                Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
+            }
+
+            # Trust a fresh real re-check over the installer's own exit
+            # code for the message shown - not every installer here
+            # follows the same MSI 0/3010/1638 exit-code convention
+            # (DXSETUP.exe in particular is a legacy cab installer, exact
+            # convention unverified), so asking "is it actually installed
+            # now" is more honest than trusting a guessed-at exit code.
+            $nowInstalled = (@(Get-RequirementsStatus -GamePath $gp | Where-Object { $_.Id -eq $item.Id }))[0].Installed
+            $lblStatus.Text = if ($nowInstalled) {
                 T 'gui.requirements_install_done' @{ name = $item.Name }
+            } elseif ($res.Cancelled) {
+                T 'gui.requirements_install_cancelled' @{ name = $item.Name }
             } else {
                 T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }
             }
@@ -2812,11 +2835,16 @@ function Show-RequirementsDialog {
             $lblStatus.Text = $savedStatus
         }
     })
+    $btnRefresh.Add_Click({
+        param($s, $e)
+        $lblStatus.Text = ''
+        & $refresh
+    })
     $btnClose.Add_Click({ param($s, $e) $f.Close() })
 
     $f.ClientSize = New-Object System.Drawing.Size(480, $y)
     $f.CancelButton = $btnClose
-    $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $btnClose))
+    $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $btnRefresh, $btnClose))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()

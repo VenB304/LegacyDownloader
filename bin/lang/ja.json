@@ -271,6 +271,7 @@
   "gui.requirements_status_missing": "未導入",
   "gui.requirements_interactive_note": " (専用のインストーラー画面が開きます)",
   "gui.requirements_btn_install": "インストール",
+  "gui.requirements_btn_refresh": "更新",
   "gui.requirements_btn_continue": "続ける",
   "gui.requirements_downloading": "{name} をダウンロード中...",
   "gui.requirements_installing": "{name} をインストール中...",
