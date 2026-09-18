@@ -263,7 +263,7 @@
   "gui.trackedview_legend_red": "Na-download, hindi sinusubaybayan",
   "gui.trackedview_empty": "Wala pang sinusubaybayan o na-download.",
   "gui.btn_close": "Isara",
-  "gui.btn_requirements": "Requirements",
+  "gui.btn_requirements": "Pangangailangan",
   "gui.requirements_title": "Mga Kailangang Software",
   "gui.requirements_intro_firstrun": "Kailangan ng Legacy ng ilang karagdagang software para gumana nang maayos. I-install ang kulang sa baba, o magpatuloy muna at ayusin na lang mamaya - pwede mo itong i-check ulit anumang oras gamit ang Requirements button sa main window.",
   "gui.requirements_intro": "Ito ang mga karagdagang software na kailangan ng Legacy para gumana nang maayos.",
