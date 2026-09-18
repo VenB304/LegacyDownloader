@@ -713,8 +713,23 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         Write-Host ""
         if ($browse.Action -ne 'Confirm') { continue }
 
+        # The picker's own "Done" is the real confirmation - captured here so
+        # it survives regardless of what happens with the preview/download
+        # below, matching the GUI's "Select maps / songs" button (which
+        # saves on picker-OK, independent of whether an update-check ever
+        # runs afterward). This used to only ever return at the very end of
+        # the function, after the WHOLE preview flow completed - cancelling
+        # the preview (below) looped back to the top of this wizard instead
+        # of returning, so the caller's `if ($null -ne $mapsResult)` guard
+        # saw $null and silently discarded the entire selection with no
+        # warning. Confirmed as a real bug via a live interactive test:
+        # picking a song, then cancelling the immediately-following preview,
+        # lost the pick entirely even though the preview itself correctly
+        # showed it as part of what would download.
+        $result = @{ Editions = $browse.Editions; SongFilters = $browse.SongFilters }
+
         $prev = Show-UpdatePreview -GamePath $GamePath -Editions $browse.Editions -SongFilters $browse.SongFilters
-        if ($prev.Dismissed) { continue }
+        if ($prev.Dismissed) { return $result }
 
         # Whole editions dropped, or editions narrowed to fewer songs, may
         # have local files the player no longer wants - ask once per
@@ -759,7 +774,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
             Write-Host ""
             Invoke-Update -GamePath $GamePath -Editions $browse.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $browse.SongFilters -Confirmed
         }
-        return @{ Editions = $browse.Editions; SongFilters = $browse.SongFilters }
+        return $result
     }
 }
 
