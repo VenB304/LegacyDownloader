@@ -82,7 +82,7 @@
 
   "maps.header": "取得する曲を選択",
   "maps.opt_everything": "[1] すべて (全エディション、新しいものも追加次第自動的に)",
-  "maps.opt_specific": "[2] 特定のエディションのみ (例: Just Dance 2019 のみ、または数種類)",
+  "maps.opt_specific": "[2] 特定のマップ / 曲 (エディション全体、または個別の曲を選択)",
   "maps.opt_mainmenu": "[3] メインメニューへ",
   "maps.go_back_list": "リストに戻りますか?",
   "maps.delete_or_keep": "'{edition}' のローカルファイルも削除しますか、それとも追跡をやめるだけにしますか?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "すべて (全エディション、新しいものも自動的に)",
   "gui.rb_specific": "特定のエディションのみ",
   "gui.btn_select_maps_songs": "マップ / 曲を選択",
-  "gui.tracking": "追跡中: {editions}",
+  "gui.tracking_summary": "追跡中: {editions} 個のエディションで {songs} 曲",
+  "gui.btn_view_tracked": "追跡中を表示",
   "gui.tracking_auto": "追跡中: すべて",
   "gui.tracking_none": "追跡中: まだ何も選択されていません",
   "gui.btn_check": "ダウンロード / 更新を確認",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{total}曲中{shown}曲を表示、{selected}曲を選択",
   "gui.songbrowser_scanning_share": "(シートに載っていない曲がないか、サーバーを確認中です...)",
   "gui.songbrowser_none_selected_body": "何もチェックされていないため、ここからは何も追跡されません。マップ/曲をチェックするか、代わりに「すべて」を選択してください。",
-  "gui.songbrowser_edition_total_suffix": " ({count}曲)"
+  "gui.songbrowser_edition_total_suffix": " ({count}曲)",
+
+  "gui.trackedview_title": "追跡中の曲",
+  "gui.trackedview_status": "{total}件中{shown}件を表示",
+  "gui.trackedview_search_hint": "タイトル、アーティスト、エディションで検索...",
+  "gui.trackedview_legend_green": "ダウンロード済み",
+  "gui.trackedview_legend_yellow": "追跡中、未ダウンロード",
+  "gui.trackedview_legend_red": "ダウンロード済み、未追跡",
+  "gui.trackedview_empty": "追跡中またはダウンロード済みの曲はまだありません。",
+  "gui.btn_close": "閉じる"
 }

@@ -895,7 +895,7 @@ while ($true) {
     }
 
     Write-Host (HR)
-    Write-Host ("  " + (T 'menu.title'))
+    Write-Host ("  " + (T 'menu.title') + " " + $Version)
     Write-Host (T 'menu.game_folder' @{ path = $cfg.GamePath })
     Write-Host (T 'menu.editions' @{ editions = $edDisplay })
     Write-Host (T 'menu.language_line' @{ language = $langLabel })

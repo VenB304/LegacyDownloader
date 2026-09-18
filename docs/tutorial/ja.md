@@ -4,7 +4,7 @@ Legacy Downloader は **Legacy Offline PC** と曲パックをパソコンにダ
 最新の状態に保つツールです。専門的な知識は一切必要ありません — 以下の画像の順番に
 沿って進めるだけです。
 
-他の言語: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
+他の言語: [English](en.md) · [Français](fr.md) · [Español](es.md) · [Filipino](fil.md) ·
 [Deutsch](de.md) · [Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) ·
 [한국어](ko.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 

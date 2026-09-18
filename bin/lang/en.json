@@ -168,7 +168,8 @@
   "gui.rb_everything": "Everything (all editions, plus new ones automatically)",
   "gui.rb_specific": "Specific",
   "gui.btn_select_maps_songs": "Select maps / songs",
-  "gui.tracking": "Tracking: {editions}",
+  "gui.tracking_summary": "Tracking: {songs} song(s) across {editions} edition(s)",
+  "gui.btn_view_tracked": "View tracked",
   "gui.tracking_auto": "Tracking: everything",
   "gui.tracking_none": "Tracking: nothing selected yet",
   "gui.btn_check": "Download / Check for updates",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} of {total} songs shown, {selected} selected",
   "gui.songbrowser_scanning_share": "(still checking the share for extra songs not in the sheet...)",
   "gui.songbrowser_none_selected_body": "Nothing is checked, so nothing would be tracked from here. Check some maps/songs, or use \"Everything\" instead.",
-  "gui.songbrowser_edition_total_suffix": " ({count} songs)"
+  "gui.songbrowser_edition_total_suffix": " ({count} songs)",
+
+  "gui.trackedview_title": "Tracked Songs",
+  "gui.trackedview_status": "{shown} of {total} shown",
+  "gui.trackedview_search_hint": "Search by title, artist, or edition...",
+  "gui.trackedview_legend_green": "Downloaded",
+  "gui.trackedview_legend_yellow": "Tracked, not downloaded yet",
+  "gui.trackedview_legend_red": "Downloaded, not tracked",
+  "gui.trackedview_empty": "Nothing tracked or downloaded yet.",
+  "gui.btn_close": "Close"
 }

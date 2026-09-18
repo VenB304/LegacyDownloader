@@ -4,7 +4,7 @@ Legacy Downloader
 Everything you need is in this folder already - no separate downloads,
 no accounts, nothing else to install.
 
-A step-by-step tutorial with screenshots (in 12 languages) is available at:
+A step-by-step tutorial with screenshots (in 13 languages) is available at:
 https://github.com/VenB304/LegacyDownloader/tree/main/docs/tutorial
 The app itself also has a "Need help? Open the tutorial" link on the
 first-run welcome screen.
@@ -116,9 +116,9 @@ In the console menu: choose option [4] Language.
 Your choice is saved automatically. On first run the language is
 detected from your Windows system language.
 
-Supported: English, Francais, Deutsch, Espanol, Italiano, Portugues,
-Nederlands, Japanese, Korean, Chinese (Simplified), Chinese
-(Traditional), Russian. (12 total.)
+Supported: English, Francais, Deutsch, Espanol, Filipino, Italiano,
+Portugues, Nederlands, Japanese, Korean, Chinese (Simplified), Chinese
+(Traditional), Russian. (13 total.)
 
 Note for the console/text menu: the GUI displays every language
 correctly. In the plain console window, Japanese, Korean, Chinese,

@@ -82,7 +82,7 @@
 
   "maps.header": "Songs zum Herunterladen auswählen",
   "maps.opt_everything": "[1] Alles (alle Editionen, plus neue, sobald sie erscheinen)",
-  "maps.opt_specific": "[2] Nur bestimmte Editionen (z. B. nur Just Dance 2019 oder ein paar)",
+  "maps.opt_specific": "[2] Bestimmte Karten / Songs (ganze Editionen oder einzelne Songs auswählen)",
   "maps.opt_mainmenu": "[3] Zurück zum Hauptmenü",
   "maps.go_back_list": "Zurück zur Liste?",
   "maps.delete_or_keep": "Auch die lokalen Dateien für „{edition}“ löschen oder nur nicht mehr verfolgen?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Alles (alle Editionen, neue automatisch dazu)",
   "gui.rb_specific": "Nur bestimmte Editionen",
   "gui.btn_select_maps_songs": "Karten / Songs auswählen",
-  "gui.tracking": "Verfolgt: {editions}",
+  "gui.tracking_summary": "Verfolgt: {songs} Song(s) in {editions} Edition(en)",
+  "gui.btn_view_tracked": "Verfolgte anzeigen",
   "gui.tracking_auto": "Verfolgt: alles",
   "gui.tracking_none": "Verfolgt: noch nichts ausgewählt",
   "gui.btn_check": "Herunterladen / Nach Updates suchen",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} von {total} Songs angezeigt, {selected} ausgewählt",
   "gui.songbrowser_scanning_share": "(prüft noch auf dem Server nach zusätzlichen Songs, die nicht im Blatt stehen...)",
   "gui.songbrowser_none_selected_body": "Nichts ist ausgewählt, es würde also nichts verfolgt werden. Wähle ein paar Karten/Songs aus, oder verwende stattdessen „Alles“.",
-  "gui.songbrowser_edition_total_suffix": " ({count} Songs)"
+  "gui.songbrowser_edition_total_suffix": " ({count} Songs)",
+
+  "gui.trackedview_title": "Verfolgte Songs",
+  "gui.trackedview_status": "{shown} von {total} angezeigt",
+  "gui.trackedview_search_hint": "Suche nach Titel, Interpret oder Edition...",
+  "gui.trackedview_legend_green": "Heruntergeladen",
+  "gui.trackedview_legend_yellow": "Verfolgt, noch nicht heruntergeladen",
+  "gui.trackedview_legend_red": "Heruntergeladen, nicht verfolgt",
+  "gui.trackedview_empty": "Noch nichts verfolgt oder heruntergeladen.",
+  "gui.btn_close": "Schließen"
 }

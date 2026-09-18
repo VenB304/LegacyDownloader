@@ -82,7 +82,7 @@
 
   "maps.header": "選擇要取得的歌曲",
   "maps.opt_everything": "[1] 全部（所有版本，以及新版本發布時自動取得）",
-  "maps.opt_specific": "[2] 僅特定版本（如只要 Just Dance 2019，或幾個版本）",
+  "maps.opt_specific": "[2] 特定地圖 / 歌曲（整個版本，或選取單首歌曲）",
   "maps.opt_mainmenu": "[3] 返回主選單",
   "maps.go_back_list": "返回清單？",
   "maps.delete_or_keep": "是否同時刪除「{edition}」的本機檔案，還是只停止追蹤？",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "全部（所有版本，以及新版本自動取得）",
   "gui.rb_specific": "僅特定版本",
   "gui.btn_select_maps_songs": "選擇地圖 / 歌曲",
-  "gui.tracking": "正在追蹤：{editions}",
+  "gui.tracking_summary": "正在追蹤：{editions} 個版本中的 {songs} 首歌曲",
+  "gui.btn_view_tracked": "查看已追蹤",
   "gui.tracking_auto": "正在追蹤：全部",
   "gui.tracking_none": "正在追蹤：尚未選擇任何內容",
   "gui.btn_check": "下載 / 檢查更新",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "共 {total} 首歌曲，顯示 {shown} 首，已選 {selected} 首",
   "gui.songbrowser_scanning_share": "（仍在伺服器上檢查表格中沒有的額外歌曲...）",
   "gui.songbrowser_none_selected_body": "未勾選任何內容，因此此處不會追蹤任何內容。請勾選一些地圖/歌曲，或改用「全部」。",
-  "gui.songbrowser_edition_total_suffix": "（{count} 首歌曲）"
+  "gui.songbrowser_edition_total_suffix": "（{count} 首歌曲）",
+
+  "gui.trackedview_title": "已追蹤的歌曲",
+  "gui.trackedview_status": "顯示 {total} 項中的 {shown} 項",
+  "gui.trackedview_search_hint": "依標題、藝人或版本搜尋...",
+  "gui.trackedview_legend_green": "已下載",
+  "gui.trackedview_legend_yellow": "正在追蹤，尚未下載",
+  "gui.trackedview_legend_red": "已下載，未追蹤",
+  "gui.trackedview_empty": "尚無追蹤或已下載的內容。",
+  "gui.btn_close": "關閉"
 }

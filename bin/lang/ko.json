@@ -82,7 +82,7 @@
 
   "maps.header": "받을 노래 선택",
   "maps.opt_everything": "[1] 전부 (모든 에디션, 새로 나오는 것도 자동으로)",
-  "maps.opt_specific": "[2] 특정 에디션만 (예: Just Dance 2019 만, 또는 몇 개)",
+  "maps.opt_specific": "[2] 특정 맵 / 노래 (에디션 전체 또는 개별 노래 선택)",
   "maps.opt_mainmenu": "[3] 메인 메뉴로",
   "maps.go_back_list": "목록으로 돌아가시겠습니까?",
   "maps.delete_or_keep": "'{edition}' 의 로컬 파일도 삭제하시겠습니까, 아니면 추적만 중단하시겠습니까?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "전부 (모든 에디션, 새로운 것도 자동으로)",
   "gui.rb_specific": "특정 에디션만",
   "gui.btn_select_maps_songs": "맵 / 노래 선택",
-  "gui.tracking": "추적 중: {editions}",
+  "gui.tracking_summary": "추적 중: {editions}개 에디션에서 {songs}곡",
+  "gui.btn_view_tracked": "추적 항목 보기",
   "gui.tracking_auto": "추적 중: 전부",
   "gui.tracking_none": "추적 중: 아직 아무것도 선택되지 않음",
   "gui.btn_check": "다운로드 / 업데이트 확인",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{total}곡 중 {shown}곡 표시, {selected}곡 선택됨",
   "gui.songbrowser_scanning_share": "(시트에 없는 추가 노래가 있는지 서버에서 계속 확인 중...)",
   "gui.songbrowser_none_selected_body": "선택된 항목이 없어 여기서는 아무것도 추적되지 않습니다. 맵/노래를 선택하거나 대신 \"전부\"를 사용하세요.",
-  "gui.songbrowser_edition_total_suffix": " ({count}곡)"
+  "gui.songbrowser_edition_total_suffix": " ({count}곡)",
+
+  "gui.trackedview_title": "추적 중인 노래",
+  "gui.trackedview_status": "{total}개 중 {shown}개 표시됨",
+  "gui.trackedview_search_hint": "제목, 아티스트, 에디션으로 검색...",
+  "gui.trackedview_legend_green": "다운로드됨",
+  "gui.trackedview_legend_yellow": "추적 중, 아직 다운로드 안 됨",
+  "gui.trackedview_legend_red": "다운로드됨, 추적 안 됨",
+  "gui.trackedview_empty": "아직 추적 중이거나 다운로드된 항목이 없습니다.",
+  "gui.btn_close": "닫기"
 }

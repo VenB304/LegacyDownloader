@@ -61,6 +61,7 @@ $script:FlagB64 = @{
     'de'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAABxUlEQVQ4ja3Ty24URxQA0FPVNWT8APwIEYoMgjVIZpdIUf4i4g/5APb5CUvsYY1lGxuPPY/uWyyqEZOJ2SBaurpd1apT91Z3p1LK3xFxjOf4LSK2kXLOq4j4jEucjXGOT5hhjowdPBrXH6eU0r94VWs9QHL3tRyxszVwMYLbI/gMuwn1O8gPXflnYlAyjvAUB7g3Pqi4xpXW48WY53cg09F4jPIP/tAOYH8E6xgz7Y2sg5e4wbCG7eN3rd30lvoS3Vpl63lzbjmC/TieYgsrvEPZWqvoLmAzT/BgY83X+0BZh9Iu6ZdWbl0wzFu+C94EQyu1dEdsv2B6RN5rYOqIBXFLXDFcMlzQXzFcEzNqbVCa0O2z9Zj725Td1+z9xfQJqfx/61gQnxo4XH4DRUPThLKPR+yeUqZ/MnnaqvpPL2PkCflXyuF3+hznlivqR0odB/MFfU8M1Gj/YE50uX2sXyNtHmIlgtt5W1dqcHruuu996AenQ++mMqimXbKTk73MYc4OuuReyW2jrLU8DCyX6uzW+RBOSq3enF04ifB+lZx2K7NIovamkezUsJc4iMEhDifFw8z9LplEqKvezWLp49B7X6uTL16L4e3tydldAAAAAElFTkSuQmCC'
     'en'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAMAAADTRh9nAAABgFBMVEUBG1SYl6efDSfKfooAG1cCLGy+n6UCIF0AE0YAGlSpL0LAlZynUmifDSeSkqLTiJjZ2dm7u7u2b3i/VG6vt8NGZJGUPUjFpq1AS2xRT3VeWoAAEkV5cImapbm6FDSjCh+mCSCflKR9hJa3EzMCKWmGeZLHDizJEjLCDCfkj5/afo7OIUEAF1TgeotTZpWpscjFvMwCK3DGGzXLFjjRPlbll6PliJrqp7Lonq2tuM9dcJkBIWTPL0rVW3HduMOjVHNhVH8qT4mwW3EWKmK7CyNGWYMxRXbLJkDt1Nvcc4P39/q8hZ/ck6DsydHIbYSGU3mWFSerqr6YhKWifJZ8T3Q7ToWZXmxfe6jBa4rayNTptb3Iz98VOXemnK5NUHW4tsuPmbHbipe5sMStpLfhhJO9fZFpWIbpqrWsGDdTW3a1bH+Ch6uPepXda33NT2GEg6bByNqvKkT77/IAET+HXoj67O7rusUoNFhtNkqMocKgbIHNw9IpR4Pcz9rV2eSdlqS0UDBzAAAAJnRSTlM1jXrzwaw9ta1CdaTTZ1XsbGzsvI2jvf6jvr6cVNT55/nUjeecVBCdCscAAAEnSURBVBjTHdADlsMAFADAX7trW1HjpE3T1LZtrG3j6vte5wgD+tnFJZ1Od6hS2+wmADAdmS2wMOOXG12Om2wfbGkNBsO6VfMHhabL3foIcWMBZRSlGwyP2DiE6Oem61WmBygqc7VC3snSJHChRsntfuz8oOj9aYA4G9DxPnjKmQxO4ZKEokk/nkwzd5U6XPpEr8OR8IoIkqKOnSMidVuEc0EQHA4BmUJ5HsOiRXjwUQTudFE3CCJ6EzyfEH11+Cxfyekc7s9hWFvCqexJ5foCYt8eViICQRbDfjsv7myPjjyB4vnC89WaMsYwJsa0iXC1/wYxdhQIRkhyEo0yZHzYchLhd+hprGsGo1a7t7M7JMmIp7QyvwwW8+Y0x25T728YjcZV1Zz+HwHdQPKkb2RfAAAAAElFTkSuQmCC'
     'es'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAACmUlEQVQ4y22Ty25jRRCGv2r3sR1fZpJ4MmRAkBkWLBAoiH0WiCUPxcMgJN6DBRuEyEgsAI2GEZpLHHzie+zTp+tnYTsJEd0qVau79P1VrSr77pNPzzz7qbs/C+6PDXXkWMZTFrMsn7j7SNjIlUtzjTMs3FkJBVDXPR9JeubSafQ6f7tn9kXD7JAQzAQKjivgiIyRQ6PK7qUsjLL5OEuLbL6WCCZ1DDvCeDpx70W5f91tRKIZutmG2Cwn4PJmNjvO0nHGcNvcSwKEGSDjChEpMvtPE52jiqJXY9HBRK4gr4y0CKS5sZ4GqpmRFlBfbwQFEKH50GkOalJvTXzyVcnJaaL3OFH0akIUo2GH+TDQfSC6rTVpHqimgWoWqJdGWhpyIUGIovkg0zzIFKkmvnc2ZnACMWwkyzIwfFXw+/MOH36W+PzLJf33EwDapaXbs219SvDqDwjYNsg3/u27J5QvjOnkI8r1Ga//eYT0X9gOtIPhoK0F+Z1Ah+XVCYtJg8niAPnHXPx5jHwreC92Z7t3zxDuK68iNA8S9fgN899+RGqh/wPpNqu7WcYb9bApa//4HU1bY3tj+ipJH5xg3Mvu7hfcgecEsZoGLp8XVJcNVtPAejHFVdDKNa0Clr+OeD1s0eo7Rdcp2qJo6waYK1hNjPJt4MUvhv3wTV+Pxi3WF4HVLOC1cLYt0XbinhO7ugHGthPbm7YXoq7gemJcXQR+/lvENz+18dDA3Uk4rlugLYUtDRsZgYCJ7SSBpE21ElniWiJ5JrrE2PM8u/+V4bJGS3dlzNpIXWAfMTB0aNC07UiyBWaJWtI1Kl2cR5e+n3k+z9hLzC9dWtQ1TqPRdvduNvYNDrMxcPdBhIeG9SUVQkrSMsEwu7800/m/wsXxL/gOJaYAAAAASUVORK5CYII='
+    'fil'     = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAACwElEQVQ4jV2SzWtcVRjGf++dO5lOJ0njpGkRKzZYN0WI7lRwKYpb0bVr9/4PbgQXuomIq1qwKS1WaKkRIoK6URlb2lADKWrSJtOZZJr5uHPnnvdxcW8mQzi8vOfz9z7nOccufnj5zfWdwRLuiyg64+IkQRYpjFx+QJZ1kLdwWuBtPNvHrYdHCZ5GYDWCFnBfBC3Zlys/rN66b6+sNjr1Ti8YAlzgDgoQHNxTFNp4aOFhH/ceHoa4IuAksgWc86RPp+3OHysaVN9g7V6f67/u8Mu9dg6UJnKAEPIsz/vyYh2Q5fv6/xKXSlVefbHO0oUzLL1Q5Zu1Kld+2qI/CMVmgRtQAovyuagoxGFBB43AnVjxeUCU1eKtlxMunK1zrl5h+fuHNPeSI5WHVuiY+kOgO8iJAZQ9RslvkDVZPP0OH7//EvXpMp9f3WBzuzcB4BjQi7GPPY8lQdaG/auQ7aDKRWZnFvno3WlOlcp8dqnExnafhPgINg4feznlQ54d7hZAjWD0H3g/9wmoxMZ7s9skrd95sHvAflSlU6pyYBX6VmZEhOTUQsIzWZezoyeUu38XQB/CzNtACSs/h3cT9q7/zN6Vm7x+909eywIDi8fAXlQmJUKIWkiYy7rMhgPuh6QAls9hlQ8AI93q0rq8TPvb7xj+s4Vy46goZWE05DQq3qhoyvNIjqMcaFPPQylj8Nddml9do71yAx8MiiMUh4AJwNG8cB1FLE8RTr+xweNPv6Zz80c8hHH1AjOGqvh7AnyygFQoTNZ5eqfE9idf0L69RvBcOoAhIshDeebYVQ9BiTxXmD5qsX5tufvk1urDIJqZvI8pCDtheM3EHDAfibqZpiKBTYCDRIo0ILQdNeLBg3Dp0Y3bjZHCpmHNkULPZJ6VdMI8q7lHc5jXg9s8pvlYOoUxY1B2UCbvp9JuhjYVrPE/NV8thfosIwwAAAAASUVORK5CYII='
     'fr'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAAB2UlEQVQ4jY2SPW4TURRGz33z7DhxEJFHQZRkAShUdNCwAdgBPYugoqBlD6yCkhVkBaG0EmxMYsfxeO79KDz+i+yIJ13Nm+bofPd7ll9/fBPYOeFnwLMIHRFh79++nH/99OF2Pp//lTSQNACG7j66+vJtMv7x816tSFFH1xWnCjuT/Dw7fCalV7LUQxgmsKBz2KUsS9wdd6/cfShpUNf16MbSpErMwi0lFUeGnWK8GKk+zop4R+4AQAgkIDg4OKQsSyTh7m13f94M43YbIyEJQyQSIIaITMQCIiCC9b8AMDNyzuScWZ7j3KLGEICBJOaIkMiEN5AN4HL2HElIgdDijohm8trqAbAx3AlkCWQN1cowwBtAPPg+ZoiaTS1AIRGwabgERVPO/sg0kM3IQvh6h/6glP/Y4SZsZagdhku7RyIvI24bxj7g9rPZW8pmw1rP7shNf49GbiJuxV4Zet3AHOQgMZtOGI1GFEWxetg5Z8yssYot0L1i49nU0zEev8CvibhD+Gx62+n3+92U0klKqUwp9YqiaOec+T2944981WyFNMWHgS4y6Dvz2QXSJebXeEywFFFVncFg0JV0Yma9iCiBstVqPe2Pb5/cyFsBqhV3lXRVo0u5XfwD3Lj3FBPR3T4AAAAASUVORK5CYII='
     'it'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAYAAADkmO9VAAAB40lEQVQ4jZWTvXLTQBRGv7u7/kkcJhlrwjBU5AnCQE3FC9CFt6GmoaSh5k1oKP0EofQk2DGOFWJL9/soVjI2iSHszB1pC505R1pZ+vD2FeGnEE8APqZhH6K9efqyev/i7Lqqqh+SJpImAKbuPrv4+KlcfPl6KzLQMXD4sZwnAk+Tw9+hF58rhiEggwSI6B/uoSgKuDvcfeXuU0mTuq5nc4vlSrakhRCi9o3hGMmezVZ+kCS+xl4XiAAggARk6A36KIoCkuDuXXd/0gwWvR4sRkiESQhmgISphAQSCEJrloHNHoCZIaWElBLaddDpog4BYpaQiEoCM9AzBA1wDSV2LZGQOyQ1Q7CZbEgCpt8gEaB2A6UMRQNk3nOdLN9Ibk3/AdyYbKcN4J1k/TUZDWQbTHhO9vuT/8NQdw09A7eSdxtSBPmHIe/7KFvJDzVs7QiyPTZq3mEL10OAGdTeayu5qgEnUHu+UljObzCbzRBjXB/slBLMLD9MQSDEbHdL30ieLxdwfkPllxBv4PLl1aI/Ho8HIYSjEEIRQhjGGLspJXwvS1x5lX9LEitRP+VTAqME4TPK5Qi1ncN5CdUlFMhy2Z9MJgNJR2Y2JFkAKDqdzuH4ev5oXlUdmlRTNyv6RS2dixr9AmYGJOT/Z+8EAAAAAElFTkSuQmCC'
     'ja'      = 'iVBORw0KGgoAAAANSUhEUgAAABQAAAAPCAMAAADTRh9nAAAA5FBMVEXX19fQ0NDMzMzc3NzMzMzFxcXe3t7Pz8/h4eHMzMzl5eXb29va2trX19fZ2dnKysrLy8vGxsbAwMDAwMDZ2dne3t7Z2dnj4+Pi4uLX19fb29vT09Pe3t65ubn////7+/v6+vq9AC7x8PG7ACv+/f65ACm/ATPV1dW2ACfR0dH89/jv7+/29vbo6Ojbe5O+vr7GxsbKM1jqsb7s7Oz08vO7DzbBCTjPSWrDw8PBFj7stsTsusbgjaHX19fz8/O2AyrKysrt7e326OvOV3DNQGL9+vvtxc3EOlfNzc3aaojUboTg4ODg1fN6AAAAHnRSTlO1d6bUVDyuQfMz/bu+japwrqCNaWzEnOfUxOfs/r1uIjwUAAAA10lEQVQY01XQ15KCQBAF0CYJomLWTaIM44gIKEFds2PYNfz//8gAVmk/nltdfatBbpS0XE5rlbiyKEv5vCxyPBSUkCJEQ1dtfzQLAEVBucDGwTob+xA5EaIUbZ09DLqM8NK7eoGdxL0nrnxCiL8+JzjJcE6IYRiL5SviGTPTnGc4TJFRvz9lR3u/Keonk5n1jsEiJss6JuvjDO21v7N2/39vqNuBd/NWOMOLsx3RkI4idEi7YxSjIhRBg0/hS7mrruuqP98d4Dkx/o0ki/VyrcpXKtVaXXoAVAEniyY09XwAAAAASUVORK5CYII='
@@ -683,6 +684,14 @@ function Show-SongBrowserDialog {
     # Returns $null (cancel) or @{ Editions = <csv>; SongFilters = <raw
     # SONGFILTERS string>; Catalog = <raw catalog array> } (Catalog lets the
     # caller run Get-SongRemovalPlan without a second fetch).
+    #
+    # -SeedFromDisk: seed the checked set from Get-LocalSongSelection (what's
+    # actually downloaded) instead of $script:Cfg's own Editions/SongFilters.
+    # Only used for the Everything -> Specific toggle, where config still
+    # says AUTO (which Initialize-SongSelectionContext treats as "check the
+    # entire catalog") even though nothing new was necessarily ever fetched
+    # while Everything was briefly selected.
+    param([switch]$SeedFromDisk)
     $f = New-Object System.Windows.Forms.Form
     $f.Text = T 'gui.songbrowser_title'
     $f.Font = $script:FontBase
@@ -1407,7 +1416,12 @@ function Show-SongBrowserDialog {
     $populateFromCatalog = {
         param($catalog)
         $script:SbCatalog = $catalog
-        $script:SbCtx = Initialize-SongSelectionContext -Catalog $catalog -CurrentEditions $script:Cfg.Editions -CurrentSongFilters $script:Cfg.SongFilters
+        if ($SeedFromDisk) {
+            $seed = Get-LocalSongSelection -GamePath $script:Cfg.GamePath -Catalog $catalog
+            $script:SbCtx = Initialize-SongSelectionContext -Catalog $catalog -CurrentEditions $seed.Editions -CurrentSongFilters $seed.SongFilters
+        } else {
+            $script:SbCtx = Initialize-SongSelectionContext -Catalog $catalog -CurrentEditions $script:Cfg.Editions -CurrentSongFilters $script:Cfg.SongFilters
+        }
         # .Invoke(), not '&' - $computeFieldCache itself is only side-
         # effecting (populates $script:SbFieldCache, returns nothing
         # useful), but '&' still carries the same real per-call pipeline
@@ -2114,74 +2128,446 @@ function Refresh-FolderStatus {
     }
 }
 
+function Show-TrackedViewDialog {
+    # Read-only reconciliation view opened by the main window's "View
+    # tracked" button (only enabled in Specific mode with something
+    # tracked): shows every song that's either tracked (per config) or
+    # actually downloaded, color-coded by which is true - Green (both),
+    # Yellow (tracked, not downloaded yet), Red (downloaded, not/no longer
+    # tracked). Deliberately built to look and behave like
+    # Show-SongBrowserDialog (same column set incl. Columns... visibility,
+    # same Difficulty/Effort filter dropdowns, same search box, same native
+    # sort arrows) - the only differences are no checkboxes anywhere (this
+    # is a viewer, not a picker: no Check/Uncheck-shown buttons, no OK/Save,
+    # a plain non-interactive editions list instead of clbEditions's
+    # checkbox column) and the added row-color status coding. It does NOT
+    # reuse Show-SongBrowserDialog's own code, though: that function's
+    # actual bulk is a tightly-coupled checkbox/tri-state-selection state
+    # machine (SelectedKeys mutation, edition Indeterminate logic, OK-button
+    # enablement) that has nothing to do with a read-only view and would
+    # add real risk threading a mode flag through it. Uses its own $script:
+    # Tv*-prefixed state so nothing here can collide with $script:Sb*
+    # if both dialogs are ever open in the same session (sequentially -
+    # neither is modeless).
+    $catalog = @(Get-CachedSongCatalog)
+    $status = Get-TrackedDownloadStatus -GamePath $script:Cfg.GamePath -Editions $script:Cfg.Editions -SongFilters $script:Cfg.SongFilters -Catalog $catalog
+    $dupKeys = if ($catalog.Count -gt 0) { Get-DuplicateTitleKeys -Rows $catalog } else { $null }
+
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.trackedview_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $true
+    $f.ShowIcon = $false
+    $f.ClientSize = New-Object System.Drawing.Size(1000, 648)
+    $f.MinimumSize = New-Object System.Drawing.Size(860, 480)
+
+    # ---- top row: search box + Difficulty/Effort filter dropdowns ----
+    $diffTierValues = @('unrated', '1', '2', '3', '4')
+    $diffTierLabels = @((Format-DifficultyTier $null), (Format-DifficultyTier 1), (Format-DifficultyTier 2), (Format-DifficultyTier 3), (Format-DifficultyTier 4))
+    $effTierValues  = @('0', '1', '2', '3', '4')
+    $effTierLabels  = @((Format-EffortTier 0), (Format-EffortTier 1), (Format-EffortTier 2), (Format-EffortTier 3), (Format-EffortTier 4))
+    $dropdownArrowSuffix = ' ' + [char]0x25BE
+
+    $btnEffort = New-Btn (T 'gui.songbrowser_all_efforts') 826 14 160 24 $false
+    $btnEffort.Anchor = 'Top,Right'
+    $btnEffort.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+    $btnDifficulty = New-Btn (T 'gui.songbrowser_all_difficulties') 658 14 160 24 $false
+    $btnDifficulty.Anchor = 'Top,Right'
+    $btnDifficulty.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+
+    $resizeFilterButtons = {
+        $pad = 20
+        $effWidth = [System.Windows.Forms.TextRenderer]::MeasureText($btnEffort.Text, $btnEffort.Font).Width + $pad
+        $diffWidth = [System.Windows.Forms.TextRenderer]::MeasureText($btnDifficulty.Text, $btnDifficulty.Font).Width + $pad
+        $rightEdge = 986
+        $btnEffort.Width = $effWidth
+        $btnEffort.Left = $rightEdge - $effWidth
+        $btnDifficulty.Width = $diffWidth
+        $btnDifficulty.Left = $btnEffort.Left - 8 - $diffWidth
+    }
+    $updateDifficultyButtonText = {
+        $n = $script:TvDifficultyFilter.Count
+        $btnDifficulty.Text = if ($n -eq 0) { (T 'gui.songbrowser_all_difficulties') + $dropdownArrowSuffix }
+                              elseif ($n -eq 1) { $diffTierLabels[[Array]::IndexOf($diffTierValues, @($script:TvDifficultyFilter)[0])] + $dropdownArrowSuffix }
+                              else { (T 'gui.songbrowser_n_selected' @{ count = $n }) + $dropdownArrowSuffix }
+        & $resizeFilterButtons
+    }
+    $updateEffortButtonText = {
+        $n = $script:TvEffortFilter.Count
+        $btnEffort.Text = if ($n -eq 0) { (T 'gui.songbrowser_all_efforts') + $dropdownArrowSuffix }
+                          elseif ($n -eq 1) { $effTierLabels[[Array]::IndexOf($effTierValues, @($script:TvEffortFilter)[0])] + $dropdownArrowSuffix }
+                          else { (T 'gui.songbrowser_n_selected' @{ count = $n }) + $dropdownArrowSuffix }
+        & $resizeFilterButtons
+    }
+    & $updateDifficultyButtonText
+    & $updateEffortButtonText
+
+    $diffPopup = New-FilterDropdown $diffTierLabels
+    $applyDifficultyFilterToggle = {
+        param([int]$Index, [bool]$Checked)
+        $diffPopup.Items[$Index].Checked = $Checked
+        $val = $diffTierValues[$Index]
+        if ($Checked) { [void]$script:TvDifficultyFilter.Add($val) } else { [void]$script:TvDifficultyFilter.Remove($val) }
+        & $updateDifficultyButtonText
+        & $refreshList
+    }
+    $diffPopup.Menu.Add_ItemClicked({
+        param($s, $e)
+        $idx = $diffPopup.Items.IndexOf($e.ClickedItem)
+        if ($idx -lt 0) { return }
+        & $applyDifficultyFilterToggle $idx (-not $e.ClickedItem.Checked)
+    })
+    $btnDifficulty.Add_Click({ param($s, $e) $diffPopup.Menu.Show($btnDifficulty, (New-Object System.Drawing.Point(0, $btnDifficulty.Height))) })
+
+    $effPopup = New-FilterDropdown $effTierLabels
+    $applyEffortFilterToggle = {
+        param([int]$Index, [bool]$Checked)
+        $effPopup.Items[$Index].Checked = $Checked
+        $val = $effTierValues[$Index]
+        if ($Checked) { [void]$script:TvEffortFilter.Add($val) } else { [void]$script:TvEffortFilter.Remove($val) }
+        & $updateEffortButtonText
+        & $refreshList
+    }
+    $effPopup.Menu.Add_ItemClicked({
+        param($s, $e)
+        $idx = $effPopup.Items.IndexOf($e.ClickedItem)
+        if ($idx -lt 0) { return }
+        & $applyEffortFilterToggle $idx (-not $e.ClickedItem.Checked)
+    })
+    $btnEffort.Add_Click({ param($s, $e) $effPopup.Menu.Show($btnEffort, (New-Object System.Drawing.Point(0, $btnEffort.Height))) })
+
+    $txtSearch = New-Object System.Windows.Forms.TextBox
+    $txtSearch.SetBounds(14, 14, 636, 24)
+    $txtSearch.Anchor = 'Top,Left,Right'
+    $txtSearch.Font = $script:FontBase
+
+    $btnClearSearch = New-Object System.Windows.Forms.Button
+    $btnClearSearch.Text = [string][char]0x00D7
+    $btnClearSearch.Font = $script:FontBase
+    $btnClearSearch.Size = New-Object System.Drawing.Size(20, 20)
+    $btnClearSearch.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $btnClearSearch.FlatAppearance.BorderSize = 0
+    $btnClearSearch.FlatAppearance.MouseOverBackColor = $script:ColorBg
+    $btnClearSearch.FlatAppearance.MouseDownBackColor = $script:ColorBorder
+    $btnClearSearch.BackColor = [System.Drawing.Color]::Transparent
+    $btnClearSearch.ForeColor = $script:ColorMuted
+    $btnClearSearch.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $btnClearSearch.TabStop = $false
+    $btnClearSearch.Visible = $false
+    $repositionClearSearchBtn = {
+        $btnClearSearch.Location = New-Object System.Drawing.Point(
+            ($txtSearch.Right - $btnClearSearch.Width - 3),
+            ($txtSearch.Top + [int](($txtSearch.Height - $btnClearSearch.Height) / 2)))
+    }
+    $txtSearch.Add_SizeChanged({ & $repositionClearSearchBtn })
+    & $repositionClearSearchBtn
+    $txtSearch.Add_TextChanged({ $btnClearSearch.Visible = ($txtSearch.Text.Length -gt 0) })
+    $btnClearSearch.Add_Click({ param($s, $e) $txtSearch.Text = ''; $txtSearch.Focus() })
+
+    # ---- editions list (plain names, no checkboxes - single-select filter) ----
+    $lblEditions = New-Label (T 'gui.songbrowser_editions_header') 14 44 240 18
+    $lblEditions.Font = $script:FontBold
+
+    $lstEditions = New-Object System.Windows.Forms.ListBox
+    $lstEditions.SetBounds(14, 66, 240, 500)
+    $lstEditions.Anchor = 'Top,Left,Bottom'
+    $lstEditions.Font = $script:FontBase
+    $lstEditions.IntegralHeight = $false
+    $lstEditions.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+
+    # ---- song list: same data-driven column set as the picker (Columns... toggle) ----
+    $fieldByKey = [ordered]@{
+        Code       = @{ Header = (T 'gui.songbrowser_col_codename');   Width = 110; Value = { param($r) [string]$r.Code } }
+        Title      = @{ Header = (T 'gui.songbrowser_col_title');      Width = 210; Value = { param($r) if ($r.IsUnknown) { "$($r.Edition)/$($r.Code)_pc.ipk" } elseif ([string]::IsNullOrWhiteSpace($r.Title)) { $r.Code } else { $r.Title } } }
+        Artist     = @{ Header = (T 'gui.songbrowser_col_artist');     Width = 150; Value = { param($r) if ($r.IsUnknown) { '' } else { [string]$r.Artist } } }
+        Difficulty = @{ Header = (T 'gui.songbrowser_col_difficulty'); Width = 80;  Value = { param($r) if ($r.IsUnknown) { '' } else { Format-DifficultyTier $r.Difficulty } } }
+        Effort     = @{ Header = (T 'gui.songbrowser_col_effort');     Width = 80;  Value = { param($r) if ($r.IsUnknown) { '' } else { Format-EffortTier $r.Effort } } }
+    }
+    $script:TvVisibleFieldKeys = @($fieldByKey.Keys)
+
+    $lv = New-Object System.Windows.Forms.ListView
+    $lv.SetBounds(268, 66, 718, 500)
+    $lv.Anchor = 'Top,Left,Right,Bottom'
+    $lv.View = [System.Windows.Forms.View]::Details
+    $lv.CheckBoxes = $false
+    $lv.FullRowSelect = $true
+    $lv.HideSelection = $false
+    $lv.MultiSelect = $false
+    $lv.GridLines = $false
+    $lv.AllowColumnReorder = $true
+    $lv.Font = $script:FontBase
+    $lv.BackColor = $script:ColorCard
+
+    $rebuildColumns = {
+        $lv.Columns.Clear()
+        foreach ($key in $script:TvVisibleFieldKeys) { [void]$lv.Columns.Add($fieldByKey[$key].Header, $fieldByKey[$key].Width) }
+    }
+    & $rebuildColumns
+
+    $btnColumns = New-Btn (T 'gui.songbrowser_btn_columns') 892 42 94 22 $false
+    $btnColumns.Anchor = 'Top,Right'
+    $btnColumns.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnColumns.Text, $btnColumns.Font).Width + 20
+    $btnColumns.Left = 986 - $btnColumns.Width
+
+    $columnMenu = New-Object System.Windows.Forms.ContextMenuStrip
+    foreach ($key in $fieldByKey.Keys) {
+        $mi = New-Object System.Windows.Forms.ToolStripMenuItem($fieldByKey[$key].Header)
+        $mi.Checked = $true
+        $mi.Tag = $key
+        [void]$columnMenu.Items.Add($mi)
+    }
+    $toggleColumnVisibility = {
+        param([string]$Key, [bool]$Visible)
+        if (-not $Visible -and $script:TvVisibleFieldKeys.Count -le 1) { return $false }
+        $keys = [System.Collections.Generic.List[string]]::new([string[]]$script:TvVisibleFieldKeys)
+        if ($Visible) {
+            if (-not $keys.Contains($Key)) {
+                $canonicalOrder = @($fieldByKey.Keys)
+                $insertAt = 0
+                foreach ($k in $keys) {
+                    if ([Array]::IndexOf($canonicalOrder, $k) -lt [Array]::IndexOf($canonicalOrder, $Key)) { $insertAt++ }
+                }
+                $keys.Insert($insertAt, $Key)
+            }
+        } else {
+            [void]$keys.Remove($Key)
+        }
+        $script:TvVisibleFieldKeys = @($keys)
+        & $rebuildColumns
+        $script:TvSort.Column = 0; $script:TvSort.Ascending = $true
+        $sorter.Column = 0; $sorter.Ascending = $true
+        & $refreshList
+        & $updateSortArrows
+        return $true
+    }
+    $columnMenu.Add_ItemClicked({
+        param($s, $e)
+        $key = $e.ClickedItem.Tag
+        if ($null -eq $key) { return }
+        $newVisible = -not $e.ClickedItem.Checked
+        if (& $toggleColumnVisibility $key $newVisible) { $e.ClickedItem.Checked = $newVisible }
+    })
+    $btnColumns.Add_Click({ param($s, $e) $columnMenu.Show($btnColumns, (New-Object System.Drawing.Point(0, $btnColumns.Height))) })
+
+    $colorGreen  = [System.Drawing.Color]::FromArgb(224, 247, 231)
+    $colorYellow = [System.Drawing.Color]::FromArgb(255, 247, 219)
+    $colorRed    = [System.Drawing.Color]::FromArgb(253, 226, 226)
+
+    $lblEmpty = New-Label (T 'gui.trackedview_empty') 268 66 718 24
+    $lblEmpty.ForeColor = $script:ColorMuted
+    $lblEmpty.Anchor = 'Top,Left,Right'
+    $lblEmpty.Visible = ($status.Rows.Count -eq 0)
+
+    # ---- legend + status row, above the Close button ----
+    $legendItems = @(
+        @{ Color = $colorGreen;  Key = 'gui.trackedview_legend_green' },
+        @{ Color = $colorYellow; Key = 'gui.trackedview_legend_yellow' },
+        @{ Color = $colorRed;    Key = 'gui.trackedview_legend_red' }
+    )
+    $legendControls = New-Object System.Collections.Generic.List[object]
+    $legendY = 578
+    $legendX = 14
+    foreach ($item in $legendItems) {
+        $swatch = New-Object System.Windows.Forms.Panel
+        $swatch.SetBounds($legendX, $legendY + 3, 14, 14)
+        $swatch.BackColor = $item.Color
+        $swatch.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+        $swatch.Anchor = 'Bottom,Left'
+        $legendControls.Add($swatch)
+        $legendX += 20
+        $label = T $item.Key
+        $lbl = New-Label $label $legendX $legendY 220 20
+        $lbl.ForeColor = $script:ColorMuted
+        $lbl.Anchor = 'Bottom,Left'
+        $width = [System.Windows.Forms.TextRenderer]::MeasureText($label, $lbl.Font).Width + 6
+        $lbl.Width = $width
+        $legendControls.Add($lbl)
+        $legendX += $width + 16
+    }
+
+    $lblStatus = New-Label '' 14 606 772 20
+    $lblStatus.ForeColor = $script:ColorMuted
+    $lblStatus.Anchor = 'Bottom,Left,Right'
+
+    $btnClose = New-Btn (T 'gui.btn_close') 906 602 80 30 $true
+    $btnClose.Anchor = 'Bottom,Right'
+    $btnClose.Add_Click({ param($s, $e) $f.Close() })
+    $f.CancelButton = $btnClose
+
+    # ---- state (Tv*-prefixed - see the function's own header comment) ----
+    $script:TvFilterEdition = $null
+    $script:TvSort = @{ Column = 1; Ascending = $true }
+    $script:TvDifficultyFilter = New-Object System.Collections.Generic.HashSet[string]
+    $script:TvEffortFilter = New-Object System.Collections.Generic.HashSet[string]
+    $fieldCache = @{}
+    foreach ($r in $status.Rows) {
+        $key = "$($r.Edition)|$($r.Code)"
+        $cache = @{}
+        foreach ($fk in $fieldByKey.Keys) { $cache[$fk] = (& $fieldByKey[$fk].Value $r) }
+        $cache['_status'] = $r.Status
+        $cache['_editionDisp'] = Format-EditionDisplay $r.Edition
+        $fieldCache[$key] = $cache
+    }
+
+    $updateStatusLabel = { $lblStatus.Text = T 'gui.trackedview_status' @{ shown = $lv.Items.Count; total = $status.Rows.Count } }
+
+    $refreshList = {
+        $lv.BeginUpdate()
+        $lv.Items.Clear()
+        $q = $txtSearch.Text.Trim().ToLowerInvariant()
+        $newItems = New-Object System.Collections.Generic.List[System.Windows.Forms.ListViewItem]
+        foreach ($r in $status.Rows) {
+            if ($null -ne $script:TvFilterEdition -and $r.Edition -ne $script:TvFilterEdition) { continue }
+            if ($script:TvDifficultyFilter.Count -gt 0) {
+                $dKey = if ($null -ne $r.Difficulty -and [int]$r.Difficulty -ge 1 -and [int]$r.Difficulty -le 4) { [string][int]$r.Difficulty } else { 'unrated' }
+                if (-not $script:TvDifficultyFilter.Contains($dKey)) { continue }
+            }
+            if ($script:TvEffortFilter.Count -gt 0) {
+                $eKey = if ($null -ne $r.Effort -and [int]$r.Effort -ge 0 -and [int]$r.Effort -le 4) { [string][int]$r.Effort } else { '0' }
+                if (-not $script:TvEffortFilter.Contains($eKey)) { continue }
+            }
+            $key = "$($r.Edition)|$($r.Code)"
+            $rowCache = $fieldCache[$key]
+            if ($q -ne '' -and -not (([string]$rowCache['Title']).ToLowerInvariant().Contains($q) -or ([string]$rowCache['Artist']).ToLowerInvariant().Contains($q) -or ([string]$rowCache['Code']).ToLowerInvariant().Contains($q))) { continue }
+            $values = foreach ($k in $script:TvVisibleFieldKeys) { $rowCache[$k] }
+            $item = [System.Windows.Forms.ListViewItem]::new([string[]]$values)
+            if ($r.IsUnknown) { $item.Name = 'unknown' }
+            $item.Tag = $key
+            $item.BackColor = switch ($rowCache['_status']) { 'Green' { $colorGreen }; 'Yellow' { $colorYellow }; 'Red' { $colorRed }; default { $lv.BackColor } }
+            $newItems.Add($item)
+        }
+        $lv.Items.AddRange($newItems.ToArray())
+        $lv.Sort()
+        $lv.EndUpdate()
+        & $updateStatusLabel
+    }
+
+    [void]$lstEditions.Items.Add((T 'gui.songbrowser_all_editions'))
+    foreach ($ed in $status.Editions) { [void]$lstEditions.Items.Add((Format-EditionDisplay $ed)) }
+    # The change handler below isn't wired up yet at this point, so setting
+    # the initial index can't fire it prematurely (unlike the main window's
+    # radio buttons, which do need an explicit $script:Ready-style guard).
+    $lstEditions.SelectedIndex = 0
+    $lstEditions.Add_SelectedIndexChanged({
+        param($s, $e)
+        $script:TvFilterEdition = if ($lstEditions.SelectedIndex -le 0) { $null } else { $status.Editions[$lstEditions.SelectedIndex - 1] }
+        & $refreshList
+    })
+
+    $searchDebounceTimer = New-Object System.Windows.Forms.Timer
+    $searchDebounceTimer.Interval = 250
+    $searchDebounceTimer.Add_Tick({ param($s, $e) $searchDebounceTimer.Stop(); & $refreshList })
+    $txtSearch.Add_TextChanged({ param($s, $e) $searchDebounceTimer.Stop(); $searchDebounceTimer.Start() })
+
+    $sorter = New-Object LegacyDownloader.SongListSorter
+    $defaultSortCol = [Array]::IndexOf($script:TvVisibleFieldKeys, 'Title')
+    if ($defaultSortCol -lt 0) { $defaultSortCol = 0 }
+    $script:TvSort.Column = $defaultSortCol
+    $sorter.Column = $defaultSortCol
+    $lv.ListViewItemSorter = $sorter
+
+    $updateSortArrows = {
+        for ($i = 0; $i -lt $lv.Columns.Count; $i++) {
+            $direction = if ($i -ne $script:TvSort.Column) { 0 } elseif ($script:TvSort.Ascending) { 1 } else { -1 }
+            [LegacyDownloader.Native]::SetSortArrow($lv.Handle, $i, $direction)
+        }
+    }
+    $lv.Add_ColumnClick({
+        param($s, $e)
+        if ($script:TvSort.Column -eq $e.Column) { $script:TvSort.Ascending = -not $script:TvSort.Ascending }
+        else { $script:TvSort.Column = $e.Column; $script:TvSort.Ascending = $true }
+        $sorter.Column = $script:TvSort.Column
+        $sorter.Ascending = $script:TvSort.Ascending
+        & $updateSortArrows
+        $lv.Sort()
+    })
+
+    & $refreshList
+    [void]$lv.Handle
+    & $updateSortArrows
+
+    $f.Controls.AddRange(@($txtSearch, $btnClearSearch, $btnDifficulty, $btnEffort, $lblEditions, $lstEditions, $btnColumns, $lv, $lblEmpty, $lblStatus, $btnClose))
+    $f.Controls.AddRange($legendControls.ToArray())
+    $btnClearSearch.BringToFront()
+
+    # EM_SETCUEBANNER - same placeholder-text workaround the song picker's
+    # own search box uses (LegacyDownloader.Native is already loaded by
+    # then; this dialog is only ever reachable after the main window, which
+    # loads it, has been built).
+    [void]$txtSearch.Handle
+    [void][LegacyDownloader.Native]::SendMessage($txtSearch.Handle, 0x1501, [IntPtr]::Zero, (T 'gui.trackedview_search_hint'))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  TrackedView: $($status.Rows.Count) row(s), $($status.Editions.Count) edition(s), rendered $($lv.Items.Count)"
+        try {
+            & $applyDifficultyFilterToggle 0 $true
+            [System.Windows.Forms.Application]::DoEvents()
+            Write-Host "  Difficulty filter (unrated) narrowed to $($lv.Items.Count) row(s) with no exception"
+            & $applyDifficultyFilterToggle 0 $false
+            [System.Windows.Forms.Application]::DoEvents()
+            if (-not (& $toggleColumnVisibility 'Artist' $false)) { throw "toggleColumnVisibility refused a legal hide" }
+            [System.Windows.Forms.Application]::DoEvents()
+            Write-Host "  Columns... hide Artist -> $($lv.Columns.Count) columns, no exception"
+            [void](& $toggleColumnVisibility 'Artist' $true)
+            [System.Windows.Forms.Application]::DoEvents()
+        } catch {
+            Write-Host "  SELFTEST FAILURE: $($_.Exception.Message)" -ForegroundColor Red
+        }
+        Start-Sleep -Milliseconds 200
+        $f.Dispose()
+        return
+    }
+    [void]$f.ShowDialog()
+    $f.Dispose()
+}
+
 function Refresh-Tracking {
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
         $script:RbEverything.Checked = $true
-
-        $list = if ($script:CachedRemoteEditions -and $script:CachedRemoteEditions.Count -gt 0) {
-            $script:CachedRemoteEditions
-        } elseif (-not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
-            @(Get-LocalEditions $script:Cfg.GamePath)
-        } else {
-            @()
-        }
-
-        if ($list.Count -gt 0) {
-            $dispList = $list | ForEach-Object { Format-EditionDisplay $_ }
-            $script:LblTracking.Text = T 'gui.tracking_auto'
-            if ($null -ne $script:TxtTracking) {
-                $script:TxtTracking.Visible = $true
-                $script:TxtTracking.Text = ($dispList -join "`r`n")
-            }
-        } else {
-            $script:LblTracking.Text = T 'gui.tracking_auto'
-            if ($null -ne $script:TxtTracking) {
-                $script:TxtTracking.Visible = $true
-                $script:TxtTracking.Text = (T 'gui.rb_everything')
-            }
-        }
+        $script:LblTracking.Text = T 'gui.tracking_auto'
+        if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $false }
     } else {
         $script:RbSpecific.Checked = $true
         $list = @($script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         if ($list.Count -eq 0) {
             $script:LblTracking.Text = T 'gui.tracking_none'
-            if ($null -ne $script:TxtTracking) { $script:TxtTracking.Visible = $false }
+            if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $false }
         } else {
             $songFilterMap = Get-SongFilterMap $script:Cfg.SongFilters
-            # A partially-filtered edition expands into its actual song
-            # titles underneath, the way the picker's own tree/groups do -
-            # resolved from whatever song catalog was last cached on disk
-            # (no live fetch just to render this summary; falls back to the
-            # raw codename for a song that isn't in the cache, or for the
-            # whole edition when there's no cache at all yet).
+            # Whole-edition song counts come from whatever catalog was last
+            # cached on disk (no live fetch just to render this summary,
+            # same tradeoff the picker's own cache-only lookups make) - an
+            # edition the cache doesn't know about yet just doesn't add to
+            # the total, same as it not appearing in the picker's rows.
             $cachedCatalog = @(Get-CachedSongCatalog)
-            $dupKeys = if ($cachedCatalog.Count -gt 0) { Get-DuplicateTitleKeys -Rows $cachedCatalog } else { $null }
-            $catalogByKey = @{}
-            foreach ($rec in $cachedCatalog) { $catalogByKey["$($rec.Edition)|$($rec.Code)"] = $rec }
-
-            $dispLines = @()
+            $catalogCountByEdition = @{}
+            foreach ($rec in $cachedCatalog) {
+                if (-not $catalogCountByEdition.ContainsKey($rec.Edition)) { $catalogCountByEdition[$rec.Edition] = 0 }
+                $catalogCountByEdition[$rec.Edition]++
+            }
+            $totalSongCount = 0
             foreach ($ed in $list) {
-                $disp = Format-EditionDisplay $ed
-                $dispLines += $disp
-                if (-not $songFilterMap.Contains($ed)) { continue }
-                foreach ($code in $songFilterMap[$ed]) {
-                    $rec = $catalogByKey["$ed|$code"]
-                    $title = if ($rec) { Get-SongTitleForDisplay $rec $dupKeys } else { $code }
-                    $dispLines += "    $title"
-                }
+                $totalSongCount += if ($songFilterMap.Contains($ed)) { $songFilterMap[$ed].Count } elseif ($catalogCountByEdition.ContainsKey($ed)) { $catalogCountByEdition[$ed] } else { 0 }
             }
-            $script:LblTracking.Text = T 'gui.tracking' @{ editions = "$($list.Count)" }
-            if ($null -ne $script:TxtTracking) {
-                $script:TxtTracking.Visible = $true
-                $script:TxtTracking.Text = ($dispLines -join "`r`n")
-            }
+            # One total-songs number up front - the full per-edition/
+            # per-song breakdown, with download status, is one click away
+            # via "View tracked".
+            $script:LblTracking.Text = T 'gui.tracking_summary' @{ songs = "$totalSongCount"; editions = "$($list.Count)" }
+            if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $true }
         }
     }
-    $script:BtnSelect.Enabled = -not $script:Busy
+    # Only meaningful in Specific mode - Everything already means "every
+    # edition, downloaded or not," so there's nothing to narrow down.
+    $script:BtnSelect.Enabled = (-not $script:Busy) -and $script:RbSpecific.Checked
 }
 
 function Apply-I18n {
-    $script:Form.Text         = T 'gui.window_title'
+    $script:Form.Text         = (T 'gui.window_title') + ' ' + $Version
     $script:LblLang.Text      = T 'gui.lang_label'
     $script:GrpFolder.Text    = T 'gui.group_folder'
     $script:BtnChange.Text    = T 'gui.btn_change'
@@ -2191,6 +2577,10 @@ function Apply-I18n {
     $script:BtnSelect.Text    = T 'gui.btn_select_maps_songs'
     $script:BtnCheck.Text     = T 'gui.btn_check'
     $script:BtnExit.Text      = T 'gui.btn_exit'
+    $script:BtnViewTracked.Text = T 'gui.btn_view_tracked'
+    $btnViewTrackedWidth = [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnViewTracked.Text, $script:BtnViewTracked.Font).Width + 24
+    $script:BtnViewTracked.Width = $btnViewTrackedWidth
+    $script:BtnViewTracked.Left = 480 - $btnViewTrackedWidth
     Refresh-FolderStatus
     Refresh-Tracking
 }
@@ -2203,7 +2593,7 @@ function Set-Busy([bool]$On) {
     $script:RbEverything.Enabled = $enabled
     $script:RbSpecific.Enabled   = $enabled
     $script:CmbLang.Enabled   = $enabled
-    $script:BtnSelect.Enabled = $enabled
+    $script:BtnSelect.Enabled = $enabled -and $script:RbSpecific.Checked
 }
 
 function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
@@ -2335,7 +2725,7 @@ function On-SongModeChanged {
     # switched to "specific" - open the picker immediately rather than
     # leaving an empty selection hanging (same behavior the button gives).
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
-        $res = Show-SongBrowserDialog
+        $res = Show-SongBrowserDialog -SeedFromDisk
         if ($null -eq $res) {
             # cancelled -> fall back to Everything, nothing changed
             $script:RbEverything.Checked = $true
@@ -2379,7 +2769,7 @@ function Build-MainForm {
     $script:Form.ForeColor = $script:ColorText
     $script:Form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $script:Form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
-    $script:Form.ClientSize = New-Object System.Drawing.Size(520, 580)
+    $script:Form.ClientSize = New-Object System.Drawing.Size(520, 536)
     $script:Form.MaximizeBox = $false
 
     # Top bar: Language label & Owner-Draw ComboBox
@@ -2464,7 +2854,7 @@ function Build-MainForm {
     $script:GrpSongs = New-Object System.Windows.Forms.GroupBox
     $script:GrpSongs.Font = $script:FontBold
     $script:GrpSongs.ForeColor = [System.Drawing.Color]::FromArgb(30, 58, 110)
-    $script:GrpSongs.SetBounds(12, 134, 496, 160)
+    $script:GrpSongs.SetBounds(12, 134, 496, 116)
 
     $script:RbEverything = New-Object System.Windows.Forms.RadioButton
     $script:RbEverything.Font = $script:FontBase
@@ -2479,48 +2869,49 @@ function Build-MainForm {
     $script:BtnSelect = New-Btn '' 210 44 272 26 $false
     $script:BtnSelect.Add_Click({ param($s, $e) On-SelectMapsSongs })
 
-    $script:LblTracking = New-Label '' 16 72 464 18
+    $script:LblTracking = New-Label '' 16 82 340 18
     $script:LblTracking.ForeColor = $script:ColorMuted
 
-    $script:TxtTracking = New-Object System.Windows.Forms.TextBox
-    $script:TxtTracking.Multiline = $true
-    $script:TxtTracking.ReadOnly = $true
-    $script:TxtTracking.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $script:TxtTracking.SetBounds(16, 92, 464, 58)
-    $script:TxtTracking.Font = $script:FontBase
-    $script:TxtTracking.BackColor = [System.Drawing.Color]::FromArgb(250, 251, 253)
-    $script:TxtTracking.ForeColor = $script:ColorText
-    $script:TxtTracking.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    # Opens Show-TrackedViewDialog - only shown (and only ever relevant) for
+    # a Specific selection with something actually tracked; Everything
+    # mode's "Tracking: everything" summary is already as compact as it
+    # gets (see Refresh-Tracking). Sits 10px below BtnSelect's bottom edge
+    # (70) rather than flush against it. Resized to fit its own translated
+    # text (recomputed in Apply-I18n) the same way the song browser's own
+    # Difficulty/Effort filter buttons are - a fixed width doesn't fit
+    # every language's translation of "View tracked".
+    $script:BtnViewTracked = New-Btn '' 356 80 124 24 $false
+    $script:BtnViewTracked.Add_Click({ param($s, $e) Show-TrackedViewDialog })
 
     $script:RbEverything.Add_CheckedChanged({ param($s, $e) if ($script:RbEverything.Checked) { On-SongModeChanged } })
     $script:RbSpecific.Add_CheckedChanged({ param($s, $e) if ($script:RbSpecific.Checked) { On-SongModeChanged } })
-    $script:GrpSongs.Controls.AddRange(@($script:RbEverything, $script:RbSpecific, $script:BtnSelect, $script:LblTracking, $script:TxtTracking))
+    $script:GrpSongs.Controls.AddRange(@($script:RbEverything, $script:RbSpecific, $script:BtnSelect, $script:LblTracking, $script:BtnViewTracked))
 
     # Check for updates button (Primary CTA)
-    $script:BtnCheck = New-Btn '' 12 302 496 38 $true
+    $script:BtnCheck = New-Btn '' 12 258 496 38 $true
     $script:BtnCheck.Add_Click({ param($s, $e) On-Check })
 
     # Progress bar & Status
     $script:Bar = New-Object System.Windows.Forms.ProgressBar
-    $script:Bar.SetBounds(12, 348, 496, 18)
+    $script:Bar.SetBounds(12, 304, 496, 18)
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
     $script:Bar.MarqueeAnimationSpeed = 30
 
-    $script:LblProg = New-Label '' 12 370 496 18
+    $script:LblProg = New-Label '' 12 326 496 18
     $script:LblProg.ForeColor = $script:ColorMuted
 
     # Activity Log
     $script:TxtLog = New-Object System.Windows.Forms.TextBox
     $script:TxtLog.Multiline = $true; $script:TxtLog.ReadOnly = $true
     $script:TxtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $script:TxtLog.SetBounds(12, 392, 496, 140)
+    $script:TxtLog.SetBounds(12, 348, 496, 140)
     $script:TxtLog.Font = $script:FontMono
     $script:TxtLog.BackColor = $script:ColorCard
     $script:TxtLog.ForeColor = $script:ColorText
     $script:TxtLog.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
 
     # Exit Button
-    $script:BtnExit = New-Btn '' 418 540 90 28 $false
+    $script:BtnExit = New-Btn '' 418 496 90 28 $false
     $script:BtnExit.Add_Click({ param($s, $e) $script:Form.Close() })
 
     $script:Form.Controls.AddRange(@(
@@ -2597,6 +2988,15 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "`n=== i18n sanity (a few keys) ==="
     foreach ($k in @('gui.btn_check', 'gui.rb_everything', 'gui.folder_ok', 'gui.progress_downloading')) {
         Write-Host ("  {0} => {1}" -f $k, (T $k @{ songs = 1; label = 'x'; pct = 1; speed = '1 KB'; eta = '1s' }))
+    }
+    Write-Host "`n=== Select maps/songs button gating ==="
+    Write-Host "  Everything selected: RbEverything.Checked=$($script:RbEverything.Checked)  BtnSelect.Enabled=$($script:BtnSelect.Enabled) (expect False)"
+    Write-Host "`n=== Show-TrackedViewDialog (no network, cached catalog only) ==="
+    try {
+        Show-TrackedViewDialog
+        Write-Host "  ran with no exception"
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-TrackedViewDialog threw: $($_.Exception.Message)" -ForegroundColor Red
     }
     Write-Host "`n=== Show-SongBrowserDialog (waits for the real async catalog load) ==="
     $null = Show-SongBrowserDialog

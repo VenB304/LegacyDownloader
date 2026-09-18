@@ -3,7 +3,7 @@
 Legacy Downloader 会把 **Legacy Offline PC** 及其歌曲包下载到您的电脑上，并保持
 更新。使用它不需要任何技术知识——只需按顺序跟着下面的图片操作即可。
 
-其他语言：[English](en.md) · [Français](fr.md) · [Español](es.md) ·
+其他语言：[English](en.md) · [Français](fr.md) · [Español](es.md) · [Filipino](fil.md) ·
 [Deutsch](de.md) · [Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) ·
 [日本語](ja.md) · [한국어](ko.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 

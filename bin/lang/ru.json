@@ -82,7 +82,7 @@
 
   "maps.header": "Выберите песни для загрузки",
   "maps.opt_everything": "[1] Всё (все издания, плюс новые по мере выхода)",
-  "maps.opt_specific": "[2] Только определённые издания (например, только Just Dance 2019 или несколько)",
+  "maps.opt_specific": "[2] Определённые карты / песни (целые издания или выбор отдельных песен)",
   "maps.opt_mainmenu": "[3] Перейти в главное меню",
   "maps.go_back_list": "Вернуться к списку?",
   "maps.delete_or_keep": "Удалить также локальные файлы '{edition}' или просто прекратить отслеживание?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Всё (все издания, плюс новые автоматически)",
   "gui.rb_specific": "Только определённые издания",
   "gui.btn_select_maps_songs": "Выбрать карты / песни",
-  "gui.tracking": "Отслеживается: {editions}",
+  "gui.tracking_summary": "Отслеживается: {songs} песен в {editions} изданиях",
+  "gui.btn_view_tracked": "Показать отслеживаемое",
   "gui.tracking_auto": "Отслеживается: всё",
   "gui.tracking_none": "Отслеживается: ничего пока не выбрано",
   "gui.btn_check": "Скачать / Проверить обновления",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "Показано {shown} из {total} песен, выбрано {selected}",
   "gui.songbrowser_scanning_share": "(всё ещё проверяем сервер на наличие дополнительных песен, которых нет в таблице...)",
   "gui.songbrowser_none_selected_body": "Ничего не отмечено, поэтому отсюда ничего не будет отслеживаться. Отметьте карты/песни или используйте «Всё».",
-  "gui.songbrowser_edition_total_suffix": " ({count} песен)"
+  "gui.songbrowser_edition_total_suffix": " ({count} песен)",
+
+  "gui.trackedview_title": "Отслеживаемые песни",
+  "gui.trackedview_status": "Показано {shown} из {total}",
+  "gui.trackedview_search_hint": "Поиск по названию, исполнителю или изданию...",
+  "gui.trackedview_legend_green": "Загружено",
+  "gui.trackedview_legend_yellow": "Отслеживается, ещё не загружено",
+  "gui.trackedview_legend_red": "Загружено, не отслеживается",
+  "gui.trackedview_empty": "Пока ничего не отслеживается и не загружено.",
+  "gui.btn_close": "Закрыть"
 }

@@ -9,6 +9,13 @@
 
 $ErrorActionPreference = 'Stop'
 
+# Single source of truth for the version shown in the GUI title bar and the
+# console header, and used by tools\build-release.ps1 to name the release
+# zip - bump this one line for a new release, nowhere else.
+$script:AppVersion = 'V8.3'
+
+function Get-AppVersion { return $script:AppVersion }
+
 # --- module-scoped state, filled in by Initialize-LegacyCore ---
 $script:Rclone           = $null
 $script:ConfigPath       = $null
@@ -148,6 +155,7 @@ function Initialize-LegacyCore {
 
     return [PSCustomObject]@{
         ScriptDir        = $ScriptDir
+        Version          = $script:AppVersion
         Rclone           = $script:Rclone
         ConfigPath       = $script:ConfigPath
         RcloneConfigPath = $script:RcloneConfigPath
@@ -249,7 +257,7 @@ function Get-LanguageCode { return $script:LangCode }
 
 # Languages with a docs/tutorial/<code>.md file. Update this list whenever a
 # new translation is added; anything not listed falls back to English.
-$script:TutorialLangs = @('en', 'fr', 'es', 'de', 'it', 'pt', 'nl', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ru')
+$script:TutorialLangs = @('en', 'fr', 'es', 'fil', 'de', 'it', 'pt', 'nl', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'ru')
 
 function Get-TutorialUrl {
     param([string]$Code)
@@ -479,6 +487,136 @@ function Get-LocalEditions([string]$GamePath) {
     return @(Get-ChildItem -LiteralPath $mapsDir -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.Name } | Sort-EditionNames)
 }
 
+function Get-LocalSongMap([string]$GamePath) {
+    # Local counterpart to Get-RemoteSongMap: one recursive filesystem walk
+    # of maps\ instead of one directory listing per edition, grouped by
+    # edition -> the codes actually present on disk (stripping _pc.ipk).
+    # Used to seed the song picker from what's REALLY downloaded rather
+    # than from config's AUTO/specific-list flag, which can say "AUTO" for
+    # a moment with nothing extra actually fetched (e.g. a user who flips
+    # to Everything and immediately back to Specific).
+    $mapsDir = Join-Path $GamePath 'maps'
+    if (-not (Test-Path -LiteralPath $mapsDir)) { return @{} }
+    $map = @{}
+    Get-ChildItem -LiteralPath $mapsDir -Recurse -Filter '*.ipk' -File -ErrorAction SilentlyContinue | ForEach-Object {
+        $ed = $_.Directory.Name
+        $code = $_.BaseName -replace '_pc$', ''
+        if (-not $map.ContainsKey($ed)) { $map[$ed] = New-Object System.Collections.Generic.List[string] }
+        $map[$ed].Add($code)
+    }
+    $out = @{}
+    foreach ($ed in $map.Keys) { $out[$ed] = @($map[$ed] | Sort-Object) }
+    return $out
+}
+
+function Get-LocalSongSelection {
+    # Builds the same {Editions=<csv>; SongFilters=<raw SONGFILTERS>} shape
+    # Save-Config/Initialize-SongSelectionContext already use everywhere
+    # else, but derived from what's actually on disk (Get-LocalSongMap)
+    # instead of from config. An edition whose local codes exactly match
+    # every code the catalog has for it is recorded as a whole edition (no
+    # filter entry, matching the "no entry = every song" convention);
+    # anything short of that - a genuine partial selection, or an edition
+    # the live catalog doesn't currently know about at all - is recorded
+    # explicitly so nothing locally present gets silently dropped.
+    param(
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        [Parameter(Mandatory = $true)]$Catalog
+    )
+    $localMap = Get-LocalSongMap $GamePath
+    if ($localMap.Count -eq 0) { return @{ Editions = ''; SongFilters = '' } }
+
+    $byEdition = @{}
+    foreach ($r in $Catalog) {
+        if (-not $byEdition.ContainsKey($r.Edition)) { $byEdition[$r.Edition] = New-Object System.Collections.Generic.List[string] }
+        $byEdition[$r.Edition].Add($r.Code)
+    }
+
+    $editions = New-Object System.Collections.Generic.List[string]
+    $filterParts = New-Object System.Collections.Generic.List[string]
+    foreach ($ed in (@($localMap.Keys) | Sort-EditionNames)) {
+        $localCodes = [System.Collections.Generic.HashSet[string]]::new([string[]]@($localMap[$ed]), [System.StringComparer]::OrdinalIgnoreCase)
+        if ($localCodes.Count -eq 0) { continue }
+        [void]$editions.Add($ed)
+        $fullCodes = if ($byEdition.ContainsKey($ed)) { @($byEdition[$ed]) } else { @() }
+        $isWholeEdition = ($fullCodes.Count -gt 0) -and (@($fullCodes | Where-Object { -not $localCodes.Contains($_) })).Count -eq 0
+        if ($isWholeEdition) { continue }
+        $codesPresent = if ($fullCodes.Count -gt 0) { @($fullCodes | Where-Object { $localCodes.Contains($_) }) } else { @($localMap[$ed]) }
+        if ($codesPresent.Count -gt 0) { [void]$filterParts.Add("$ed`:" + ($codesPresent -join '|')) }
+    }
+    return @{ Editions = ($editions -join ','); SongFilters = ($filterParts -join ';') }
+}
+
+function Get-TrackedDownloadStatus {
+    # Data model for the main window's "View tracked" dialog: reconciles
+    # what's TRACKED (per config's Editions/SongFilters - reusing the exact
+    # same seeding Initialize-SongSelectionContext already does for the
+    # picker) against what's actually DOWNLOADED (Get-LocalSongMap, real
+    # files on disk), so drift between the two - something tracked that
+    # hasn't been fetched yet, or a leftover file no longer tracked - is
+    # visible instead of silently invisible. Every returned row is one of:
+    #   Green  - tracked AND downloaded
+    #   Yellow - tracked, not yet downloaded
+    #   Red    - downloaded, not (or no longer) tracked
+    # A song downloaded from a custom/local edition the live catalog has
+    # never heard of still gets a row (IsUnknown = $true, same convention
+    # the picker's own share-only-song merge already uses) rather than
+    # being silently dropped, so "someone added their own maps by hand"
+    # is visible here too, not just missing.
+    param(
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        [Parameter(Mandatory = $true)][string]$Editions,
+        [string]$SongFilters = '',
+        [Parameter(Mandatory = $true)]$Catalog
+    )
+    $trackedKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    if (-not [string]::IsNullOrWhiteSpace($Editions)) {
+        $ctx = Initialize-SongSelectionContext -Catalog $Catalog -CurrentEditions $Editions -CurrentSongFilters $SongFilters
+        foreach ($k in $ctx.SelectedKeys) { [void]$trackedKeys.Add($k) }
+    }
+
+    $localMap = Get-LocalSongMap $GamePath
+    $downloadedKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($ed in $localMap.Keys) {
+        foreach ($code in $localMap[$ed]) { [void]$downloadedKeys.Add("$ed|$code") }
+    }
+
+    $byKey = @{}
+    foreach ($r in $Catalog) { $byKey["$($r.Edition)|$($r.Code)"] = $r }
+
+    $unionKeys = [System.Collections.Generic.HashSet[string]]::new($trackedKeys, [System.StringComparer]::OrdinalIgnoreCase)
+    [void]$unionKeys.UnionWith($downloadedKeys)
+
+    $rows = New-Object System.Collections.Generic.List[object]
+    $editionSeen = @{}
+    foreach ($key in $unionKeys) {
+        $sep = $key.IndexOf('|')
+        $ed = $key.Substring(0, $sep)
+        $code = $key.Substring($sep + 1)
+        $tracked = $trackedKeys.Contains($key)
+        $downloaded = $downloadedKeys.Contains($key)
+        $status = if ($tracked -and $downloaded) { 'Green' } elseif ($tracked) { 'Yellow' } else { 'Red' }
+        $rec = $byKey[$key]
+        $row = if ($null -ne $rec) {
+            [PSCustomObject]@{ Edition = $rec.Edition; Code = $rec.Code; Title = $rec.Title; Artist = $rec.Artist; Difficulty = $rec.Difficulty; Effort = $rec.Effort; IsUnknown = $false; Status = $status }
+        } else {
+            [PSCustomObject]@{ Edition = $ed; Code = $code; Title = $null; Artist = $null; Difficulty = $null; Effort = $null; IsUnknown = $true; Status = $status }
+        }
+        $rows.Add($row)
+        if (-not $editionSeen.ContainsKey($ed)) { $editionSeen[$ed] = $true }
+    }
+
+    # .ToArray(), not @($rows) - wrapping a List[object] containing
+    # PSCustomObjects in @() right before/inside a function's return value
+    # hits a real Windows PowerShell 5.1 interpreter bug ("Argument types
+    # do not match" from PSEnumerableBinder) - confirmed in isolation,
+    # .ToArray() sidesteps it cleanly.
+    return @{
+        Rows     = $rows.ToArray()
+        Editions = @(@($editionSeen.Keys) | Sort-EditionNames)
+    }
+}
+
 function ConvertTo-QuotedArg([string]$Value) {
     if ($Value -notmatch '\s') { return $Value }
     $escaped = $Value -replace '(\\+)$', '$1$1'
@@ -509,8 +647,18 @@ function Invoke-RcloneCapture([string[]]$RcloneArgs) {
 }
 
 function ConvertFrom-RcloneSize([string]$Num, [string]$Unit) {
+    # rclone always prints its dry-run sizes with a period decimal point,
+    # regardless of the machine's locale. An unqualified TryParse honors the
+    # CURRENT CULTURE instead: on a Windows region where '.' is a thousands
+    # separator (e.g. de-DE), "753.2" silently parses as 7532 - a ~10x size
+    # inflation, not just a display quirk - and on a region where '.' isn't
+    # valid at all (e.g. fr-FR), it fails outright and returns 0, silently
+    # undercounting. Force invariant parsing so this can't depend on the
+    # user's Windows region.
     $n = 0.0
-    if (-not [double]::TryParse($Num, [ref]$n)) { return [long]0 }
+    $style = [System.Globalization.NumberStyles]::Float
+    $inv = [System.Globalization.CultureInfo]::InvariantCulture
+    if (-not [double]::TryParse($Num, $style, $inv, [ref]$n)) { return [long]0 }
     switch (($Unit -replace 'i?B?$', '').ToLower()) {
         'k' { return [long]($n * 1KB) }
         'm' { return [long]($n * 1MB) }
@@ -521,9 +669,15 @@ function ConvertFrom-RcloneSize([string]$Num, [string]$Unit) {
 }
 
 function Format-Bytes([long]$Bytes) {
-    if ($Bytes -ge 1GB) { return ('{0:N1} GB' -f ($Bytes / 1GB)) }
-    if ($Bytes -ge 1MB) { return ('{0:N0} MB' -f ($Bytes / 1MB)) }
-    if ($Bytes -ge 1KB) { return ('{0:N0} KB' -f ($Bytes / 1KB)) }
+    # PowerShell's -f operator formats numbers using the OS's regional
+    # settings, not the app's own selected language - on a Windows install
+    # set to a comma-decimal locale that silently produced "75,2 GB" even
+    # while the GUI itself was set to English. Force invariant (period-
+    # decimal) formatting so this never depends on Windows region.
+    $inv = [System.Globalization.CultureInfo]::InvariantCulture
+    if ($Bytes -ge 1GB) { return (($Bytes / 1GB).ToString('N1', $inv) + ' GB') }
+    if ($Bytes -ge 1MB) { return (($Bytes / 1MB).ToString('N0', $inv) + ' MB') }
+    if ($Bytes -ge 1KB) { return (($Bytes / 1KB).ToString('N0', $inv) + ' KB') }
     return "$Bytes B"
 }
 
@@ -739,9 +893,21 @@ function Get-CachedSongCatalog {
     # or @() if the browser has never been opened yet. For places that want
     # to show friendly song names (the main window's tracking summary) but
     # can't justify a live fetch just to render a label.
+    #
+    # NOTE: ConvertFrom-Json emits a JSON array as ONE non-enumerated
+    # pipeline object (a real PowerShell/ConvertFrom-Json quirk). Wrapping
+    # that directly in "return @(... | ConvertFrom-Json)" makes a caller who
+    # ALSO wraps the call in @() - the normal, defensive way to call any
+    # function that might return an array - get back a 1-element array
+    # containing the WHOLE real array as its single element, instead of the
+    # flat array. Assigning to a plain variable first, with no @() anywhere
+    # in the assignment, and returning that variable bare avoids it - proven
+    # correct for both "$x = Get-CachedSongCatalog" and the actual call site
+    # in use, "$x = @(Get-CachedSongCatalog)", across 0/1/N-item results.
     if (-not $script:SongCatalogCachePath -or -not (Test-Path -LiteralPath $script:SongCatalogCachePath)) { return @() }
     try {
-        return @(([System.IO.File]::ReadAllText($script:SongCatalogCachePath, [System.Text.Encoding]::UTF8)) | ConvertFrom-Json)
+        $rows = [System.IO.File]::ReadAllText($script:SongCatalogCachePath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        return $rows
     } catch {
         return @()
     }
@@ -854,6 +1020,26 @@ function Resolve-SongSelection {
         [Parameter(Mandatory = $true)]$Context,
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][System.Collections.Generic.HashSet[string]]$SelectedKeys
     )
+    # Share-only songs (IsUnknown - on the live share, absent from the
+    # community sheet) get merged into $Context.ByEdition/Rows by the
+    # picker's own unknown-song scan, so a checked share-only code counts
+    # toward "every code in this edition is checked" the same as a real
+    # catalog code does. That's a real bug if left alone: collapsing to
+    # 'ALL' (no SongFilters entry) only ever means "every song the CATALOG
+    # currently knows about" once reloaded later - Initialize-
+    # SongSelectionContext's own "no filter = every code in ByEdition"
+    # expansion is built fresh from the catalog fetch at THAT time, with no
+    # memory of a share-only extra that happened to be checked when this was
+    # saved. Confirmed as a real, reproducible loss: check every catalog
+    # song in an edition PLUS one share-only song, save, reload - the
+    # share-only pick silently vanishes. An edition with any checked
+    # share-only code must always keep an explicit filter list instead.
+    $unknownCodesByEdition = @{}
+    foreach ($r in $Context.Rows) {
+        if (-not $r.IsUnknown) { continue }
+        if (-not $unknownCodesByEdition.ContainsKey($r.Edition)) { $unknownCodesByEdition[$r.Edition] = New-Object System.Collections.Generic.HashSet[string] }
+        [void]$unknownCodesByEdition[$r.Edition].Add($r.Code)
+    }
     $resultMap = [ordered]@{}
     foreach ($ed in $Context.TrackedList) {
         if (-not ($Context.CatalogEditions -contains $ed)) {
@@ -864,7 +1050,8 @@ function Resolve-SongSelection {
         $allCodes = @($Context.ByEdition[$ed])
         $checkedCodes = @($allCodes | Where-Object { $SelectedKeys.Contains("$ed|$_") })
         if ($checkedCodes.Count -eq 0) { continue }
-        $resultMap[$ed] = if ($checkedCodes.Count -eq $allCodes.Count) { 'ALL' } else { $checkedCodes }
+        $hasCheckedUnknown = $unknownCodesByEdition.ContainsKey($ed) -and (@($checkedCodes | Where-Object { $unknownCodesByEdition[$ed].Contains($_) })).Count -gt 0
+        $resultMap[$ed] = if ($checkedCodes.Count -eq $allCodes.Count -and -not $hasCheckedUnknown) { 'ALL' } else { $checkedCodes }
     }
     if ($resultMap.Count -eq 0) { return $null }
     $finalEditions = @($resultMap.Keys | Sort-EditionNames)
@@ -1220,9 +1407,10 @@ function Get-BaseSyncExcludes {
 }
 
 Export-ModuleMember -Function `
-    Initialize-LegacyCore, Test-GameFolder, Resolve-GameFolder, `
+    Initialize-LegacyCore, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
     Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Get-LocalEditions, Get-LocalSongCount, `
+    Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
     Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `

@@ -82,7 +82,7 @@
 
   "maps.header": "Escolha as Músicas para Baixar",
   "maps.opt_everything": "[1] Tudo (todas as edições, mais as novas assim que saírem)",
-  "maps.opt_specific": "[2] Apenas edições específicas (ex.: só Just Dance 2019, ou algumas)",
+  "maps.opt_specific": "[2] Mapas / músicas específicos (edições inteiras ou escolher músicas individuais)",
   "maps.opt_mainmenu": "[3] Ir para o Menu Principal",
   "maps.go_back_list": "Voltar para a lista?",
   "maps.delete_or_keep": "Excluir os arquivos locais de '{edition}' também, ou apenas parar de rastreá-lo?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Tudo (todas as edições, mais as novas automaticamente)",
   "gui.rb_specific": "Apenas edições específicas",
   "gui.btn_select_maps_songs": "Selecionar mapas / músicas",
-  "gui.tracking": "Rastreando: {editions}",
+  "gui.tracking_summary": "Rastreando: {songs} música(s) em {editions} edição(ões)",
+  "gui.btn_view_tracked": "Ver rastreados",
   "gui.tracking_auto": "Rastreando: tudo",
   "gui.tracking_none": "Rastreando: nada selecionado ainda",
   "gui.btn_check": "Baixar / Verificar atualizações",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} de {total} músicas mostradas, {selected} selecionadas",
   "gui.songbrowser_scanning_share": "(ainda verificando o servidor por músicas extras que não estão na planilha...)",
   "gui.songbrowser_none_selected_body": "Nada está marcado, então nada seria rastreado a partir daqui. Marque alguns mapas/músicas, ou use \"Tudo\" em vez disso.",
-  "gui.songbrowser_edition_total_suffix": " ({count} músicas)"
+  "gui.songbrowser_edition_total_suffix": " ({count} músicas)",
+
+  "gui.trackedview_title": "Músicas rastreadas",
+  "gui.trackedview_status": "{shown} de {total} exibidas",
+  "gui.trackedview_search_hint": "Pesquisar por título, artista ou edição...",
+  "gui.trackedview_legend_green": "Baixada",
+  "gui.trackedview_legend_yellow": "Rastreada, ainda não baixada",
+  "gui.trackedview_legend_red": "Baixada, não rastreada",
+  "gui.trackedview_empty": "Nada rastreado ou baixado ainda.",
+  "gui.btn_close": "Fechar"
 }

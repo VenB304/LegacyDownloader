@@ -82,7 +82,7 @@
 
   "maps.header": "Elegir qué canciones descargar",
   "maps.opt_everything": "[1] Todo (todas las ediciones, más las nuevas según salgan)",
-  "maps.opt_specific": "[2] Solo ediciones concretas (p. ej. solo Just Dance 2019, o unas pocas)",
+  "maps.opt_specific": "[2] Mapas / canciones específicos (ediciones completas o elegir canciones individuales)",
   "maps.opt_mainmenu": "[3] Volver al menú principal",
   "maps.go_back_list": "¿Volver a la lista?",
   "maps.delete_or_keep": "¿Borrar también los archivos locales de «{edition}», o solo dejar de seguirla?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Todo (todas las ediciones, más las nuevas automáticamente)",
   "gui.rb_specific": "Solo ediciones concretas",
   "gui.btn_select_maps_songs": "Elegir mapas / canciones",
-  "gui.tracking": "Siguiendo: {editions}",
+  "gui.tracking_summary": "Siguiendo: {songs} canción(es) en {editions} edición(es)",
+  "gui.btn_view_tracked": "Ver seguidos",
   "gui.tracking_auto": "Siguiendo: todo",
   "gui.tracking_none": "Siguiendo: nada seleccionado todavía",
   "gui.btn_check": "Descargar / Buscar actualizaciones",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} de {total} canciones mostradas, {selected} seleccionadas",
   "gui.songbrowser_scanning_share": "(todavía comprobando el servidor por canciones extra que no están en la hoja...)",
   "gui.songbrowser_none_selected_body": "No hay nada marcado, así que no se seguiría nada desde aquí. Marca algunos mapas/canciones, o usa «Todo» en su lugar.",
-  "gui.songbrowser_edition_total_suffix": " ({count} canciones)"
+  "gui.songbrowser_edition_total_suffix": " ({count} canciones)",
+
+  "gui.trackedview_title": "Canciones seguidas",
+  "gui.trackedview_status": "{shown} de {total} mostradas",
+  "gui.trackedview_search_hint": "Buscar por título, artista o edición...",
+  "gui.trackedview_legend_green": "Descargada",
+  "gui.trackedview_legend_yellow": "Siguiendo, aún no descargada",
+  "gui.trackedview_legend_red": "Descargada, no seguida",
+  "gui.trackedview_empty": "Nada seguido ni descargado todavía.",
+  "gui.btn_close": "Cerrar"
 }

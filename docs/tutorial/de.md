@@ -4,7 +4,7 @@ Legacy Downloader lädt **Legacy Offline PC** und die Song-Pakete auf deinen
 Computer und hält sie aktuell. Du brauchst keine technischen Kenntnisse
 dafür — folge einfach den Bildern unten, der Reihe nach.
 
-Andere Sprachen: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
+Andere Sprachen: [English](en.md) · [Français](fr.md) · [Español](es.md) · [Filipino](fil.md) ·
 [Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) · [日本語](ja.md) ·
 [한국어](ko.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 

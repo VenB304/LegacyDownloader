@@ -4,7 +4,7 @@ Legacy Downloader загружает **Legacy Offline PC** и наборы пе�
 компьютер и поддерживает их в актуальном состоянии. Никаких технических
 знаний не требуется — просто следуйте картинкам ниже по порядку.
 
-Другие языки: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
+Другие языки: [English](en.md) · [Français](fr.md) · [Español](es.md) · [Filipino](fil.md) ·
 [Deutsch](de.md) · [Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) ·
 [日本語](ja.md) · [한국어](ko.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md)
 

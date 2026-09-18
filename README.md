@@ -5,7 +5,7 @@ and its song "editions" from the public ovosimpatico Nextcloud share, using
 [rclone](https://rclone.org/).
 
 Ships with a WinForms GUI (default) and a text-menu console front-end,
-both available in 12 languages and both able to pick individual songs
+both available in 13 languages and both able to pick individual songs
 within an edition — not just whole editions — with search and
 Difficulty/Effort filters, and surface songs that are on the live share
 but missing from the community sheet. Runs natively on Linux via
@@ -29,10 +29,11 @@ or Kinect DLL is never silently overwritten.
 **Just want to use it?** Grab the latest zip from the
 [Releases page](https://github.com/VenB304/LegacyDownloader/releases), extract it, and double-click
 `LegacyDownloader-GUI.bat`. A full step-by-step tutorial with screenshots is
-available in 12 languages:
+available in 13 languages:
 
 [English](docs/tutorial/en.md) · [Français](docs/tutorial/fr.md) ·
-[Español](docs/tutorial/es.md) · [Deutsch](docs/tutorial/de.md) ·
+[Español](docs/tutorial/es.md) · [Filipino](docs/tutorial/fil.md) ·
+[Deutsch](docs/tutorial/de.md) ·
 [Italiano](docs/tutorial/it.md) · [Português](docs/tutorial/pt.md) ·
 [Nederlands](docs/tutorial/nl.md) · [日本語](docs/tutorial/ja.md) ·
 [한국어](docs/tutorial/ko.md) · [简体中文](docs/tutorial/zh-Hans.md) ·
@@ -73,8 +74,8 @@ Pick a language from the dropdown in the top-right corner of the GUI, or via
 option `[4] Language` in the console menu. The choice is saved as `LANG=` in
 `config.txt` and auto-detected from your Windows UI language on first run.
 
-12 languages supported:
-English, Français, Deutsch, Español, Italiano, Português, Nederlands,
+13 languages supported:
+English, Français, Deutsch, Español, Filipino, Italiano, Português, Nederlands,
 日本語, 한국어, 简体中文, 繁體中文, Русский.
 
 > **Console font note:** the GUI renders every language correctly.
@@ -92,8 +93,8 @@ English, Français, Deutsch, Español, Italiano, Português, Nederlands,
 - `bin/LegacyDownloader.Core.psm1` — all pure logic (no `Write-Host` / `Read-Host`)
 - `bin/LegacyDownloader.Console.ps1` — text/menu front-end
 - `bin/LegacyDownloader.Gui.ps1` — WinForms GUI front-end
-- `bin/lang/*.json` — string tables for all 12 languages
-- `docs/tutorial/*.md` — end-user tutorials with screenshots, in all 12 languages
+- `bin/lang/*.json` — string tables for all 13 languages
+- `docs/tutorial/*.md` — end-user tutorials with screenshots, in all 13 languages
 - `bin/rclone.exe` *(gitignored — see below)*
 - `README.txt` — end-user instructions (ships inside the distributable bundle)
 - `LICENSE` — MIT license for this tool's own code (not the game content it downloads)

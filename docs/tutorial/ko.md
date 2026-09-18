@@ -4,7 +4,7 @@ Legacy Downloader는 **Legacy Offline PC**와 노래 팩을 컴퓨터에 받아�
 상태로 유지해 주는 프로그램입니다. 기술적인 지식은 전혀 필요 없습니다 — 아래
 이미지를 순서대로 따라 하기만 하면 됩니다.
 
-다른 언어: [English](en.md) · [Français](fr.md) · [Español](es.md) ·
+다른 언어: [English](en.md) · [Français](fr.md) · [Español](es.md) · [Filipino](fil.md) ·
 [Deutsch](de.md) · [Italiano](it.md) · [Português](pt.md) · [Nederlands](nl.md) ·
 [日本語](ja.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Русский](ru.md)
 

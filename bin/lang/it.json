@@ -82,7 +82,7 @@
 
   "maps.header": "Scegli le canzoni da scaricare",
   "maps.opt_everything": "[1] Tutto (tutte le edizioni, più le nuove non appena escono)",
-  "maps.opt_specific": "[2] Solo edizioni specifiche (es. solo Just Dance 2019, o alcune)",
+  "maps.opt_specific": "[2] Mappe / canzoni specifiche (intere edizioni o scegli singole canzoni)",
   "maps.opt_mainmenu": "[3] Torna al menu principale",
   "maps.go_back_list": "Tornare alla lista?",
   "maps.delete_or_keep": "Eliminare anche i file locali di '{edition}', o smettere solo di tenerlo tracciato?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Tutto (tutte le edizioni, più le nuove automaticamente)",
   "gui.rb_specific": "Solo edizioni specifiche",
   "gui.btn_select_maps_songs": "Seleziona mappe / canzoni",
-  "gui.tracking": "Traccio: {editions}",
+  "gui.tracking_summary": "Traccio: {songs} canzone/i in {editions} edizione/i",
+  "gui.btn_view_tracked": "Visualizza tracciati",
   "gui.tracking_auto": "Traccio: tutto",
   "gui.tracking_none": "Traccio: niente selezionato ancora",
   "gui.btn_check": "Scarica / Controlla aggiornamenti",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} di {total} canzoni mostrate, {selected} selezionate",
   "gui.songbrowser_scanning_share": "(sto ancora controllando sul server eventuali canzoni extra non presenti nel foglio...)",
   "gui.songbrowser_none_selected_body": "Non è selezionato nulla, quindi non verrebbe tracciato nulla da qui. Seleziona alcune mappe/canzoni, oppure usa \"Tutto\".",
-  "gui.songbrowser_edition_total_suffix": " ({count} canzoni)"
+  "gui.songbrowser_edition_total_suffix": " ({count} canzoni)",
+
+  "gui.trackedview_title": "Canzoni tracciate",
+  "gui.trackedview_status": "{shown} di {total} mostrate",
+  "gui.trackedview_search_hint": "Cerca per titolo, artista o edizione...",
+  "gui.trackedview_legend_green": "Scaricata",
+  "gui.trackedview_legend_yellow": "Tracciata, non ancora scaricata",
+  "gui.trackedview_legend_red": "Scaricata, non tracciata",
+  "gui.trackedview_empty": "Niente di tracciato o scaricato ancora.",
+  "gui.btn_close": "Chiudi"
 }

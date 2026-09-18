@@ -25,6 +25,8 @@ Import-Module (Join-Path $ScriptDir 'LegacyDownloader.Core.psm1') -Force -Disabl
 # Fills in module state and hands back every path / arg set the front-ends
 # need. Kept as plain script variables so the dot-sourced front-end sees them.
 $Core             = Initialize-LegacyCore -ScriptDir $ScriptDir
+$Version          = $Core.Version
+try { $Host.UI.RawUI.WindowTitle = "Legacy Downloader $Version" } catch { }
 $Rclone           = $Core.Rclone
 $ConfigPath       = $Core.ConfigPath
 $RcloneConfigPath = $Core.RcloneConfigPath

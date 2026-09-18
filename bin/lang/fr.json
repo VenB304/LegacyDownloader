@@ -82,7 +82,7 @@
 
   "maps.header": "Choisir les chansons à récupérer",
   "maps.opt_everything": "[1] Tout (toutes les éditions, ainsi que les nouvelles à leur sortie)",
-  "maps.opt_specific": "[2] Seulement certaines éditions (par ex. juste Just Dance 2019, ou quelques-unes)",
+  "maps.opt_specific": "[2] Cartes / chansons spécifiques (éditions entières ou choisir des chansons individuelles)",
   "maps.opt_mainmenu": "[3] Revenir au menu principal",
   "maps.go_back_list": "Revenir à la liste ?",
   "maps.delete_or_keep": "Supprimer aussi les fichiers locaux de « {edition} », ou juste arrêter de le suivre ?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Tout (toutes les éditions, plus les nouvelles automatiquement)",
   "gui.rb_specific": "Seulement certaines éditions",
   "gui.btn_select_maps_songs": "Sélectionner des cartes / chansons",
-  "gui.tracking": "Suivi : {editions}",
+  "gui.tracking_summary": "Suivi : {songs} chanson(s) dans {editions} édition(s)",
+  "gui.btn_view_tracked": "Voir le suivi",
   "gui.tracking_auto": "Suivi : tout",
   "gui.tracking_none": "Suivi : rien de sélectionné pour l'instant",
   "gui.btn_check": "Télécharger / Vérifier les mises à jour",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} sur {total} chansons affichées, {selected} sélectionnée(s)",
   "gui.songbrowser_scanning_share": "(vérification en cours sur le serveur pour des chansons supplémentaires absentes de la feuille...)",
   "gui.songbrowser_none_selected_body": "Rien n'est coché, donc rien ne serait suivi à partir d'ici. Cochez des cartes/chansons, ou utilisez « Tout » à la place.",
-  "gui.songbrowser_edition_total_suffix": " ({count} chansons)"
+  "gui.songbrowser_edition_total_suffix": " ({count} chansons)",
+
+  "gui.trackedview_title": "Chansons suivies",
+  "gui.trackedview_status": "{shown} sur {total} affichée(s)",
+  "gui.trackedview_search_hint": "Rechercher par titre, artiste ou édition...",
+  "gui.trackedview_legend_green": "Téléchargée",
+  "gui.trackedview_legend_yellow": "Suivie, pas encore téléchargée",
+  "gui.trackedview_legend_red": "Téléchargée, non suivie",
+  "gui.trackedview_empty": "Rien de suivi ni téléchargé pour l'instant.",
+  "gui.btn_close": "Fermer"
 }

@@ -82,7 +82,7 @@
 
   "maps.header": "Kies welke nummers je wilt",
   "maps.opt_everything": "[1] Alles (alle edities, plus nieuwe zodra ze uitkomen)",
-  "maps.opt_specific": "[2] Alleen specifieke edities (bijv. alleen Just Dance 2019, of een paar)",
+  "maps.opt_specific": "[2] Specifieke kaarten / nummers (hele edities of kies losse nummers)",
   "maps.opt_mainmenu": "[3] Terug naar het hoofdmenu",
   "maps.go_back_list": "Terug naar de lijst?",
   "maps.delete_or_keep": "De lokale bestanden van '{edition}' ook verwijderen, of er gewoon mee stoppen ze bij te houden?",
@@ -168,7 +168,8 @@
   "gui.rb_everything": "Alles (alle edities, plus nieuwe automatisch)",
   "gui.rb_specific": "Alleen specifieke edities",
   "gui.btn_select_maps_songs": "Kaarten / nummers selecteren",
-  "gui.tracking": "Bijhouden: {editions}",
+  "gui.tracking_summary": "Bijhouden: {songs} nummer(s) in {editions} editie(s)",
+  "gui.btn_view_tracked": "Bijgehouden bekijken",
   "gui.tracking_auto": "Bijhouden: alles",
   "gui.tracking_none": "Bijhouden: nog niets geselecteerd",
   "gui.btn_check": "Downloaden / Controleren op updates",
@@ -236,5 +237,14 @@
   "gui.songbrowser_status": "{shown} van {total} nummers getoond, {selected} geselecteerd",
   "gui.songbrowser_scanning_share": "(controleert de server nog op extra nummers die niet in het overzicht staan...)",
   "gui.songbrowser_none_selected_body": "Er is niets aangevinkt, dus er zou hier niets worden bijgehouden. Vink wat kaarten/nummers aan, of gebruik in plaats daarvan \"Alles\".",
-  "gui.songbrowser_edition_total_suffix": " ({count} nummers)"
+  "gui.songbrowser_edition_total_suffix": " ({count} nummers)",
+
+  "gui.trackedview_title": "Bijgehouden nummers",
+  "gui.trackedview_status": "{shown} van {total} getoond",
+  "gui.trackedview_search_hint": "Zoeken op titel, artiest of editie...",
+  "gui.trackedview_legend_green": "Gedownload",
+  "gui.trackedview_legend_yellow": "Bijgehouden, nog niet gedownload",
+  "gui.trackedview_legend_red": "Gedownload, niet bijgehouden",
+  "gui.trackedview_empty": "Nog niets bijgehouden of gedownload.",
+  "gui.btn_close": "Sluiten"
 }
