@@ -495,6 +495,13 @@ function Get-LocalSongMap([string]$GamePath) {
     # than from config's AUTO/specific-list flag, which can say "AUTO" for
     # a moment with nothing extra actually fetched (e.g. a user who flips
     # to Everything and immediately back to Specific).
+    #
+    # No game folder set yet (GamePath '') means "nothing downloaded" -
+    # same as the game folder not existing - but Join-Path's own -Path
+    # parameter rejects an empty string outright (a mandatory [string]
+    # binding quirk, confirmed directly rather than assumed), so that case
+    # has to be caught before ever reaching it.
+    if ([string]::IsNullOrEmpty($GamePath)) { return @{} }
     $mapsDir = Join-Path $GamePath 'maps'
     if (-not (Test-Path -LiteralPath $mapsDir)) { return @{} }
     $map = @{}
@@ -564,7 +571,13 @@ function Get-TrackedDownloadStatus {
     # being silently dropped, so "someone added their own maps by hand"
     # is visible here too, not just missing.
     param(
-        [Parameter(Mandatory = $true)][string]$GamePath,
+        # AllowEmptyString: a mandatory [string] parameter otherwise rejects
+        # an explicitly-passed '' at bind time (distinct from the usual
+        # missing-argument case) - a fresh install with no GamePath set yet
+        # is exactly that case, and every call below handles '' fine
+        # (Get-LocalSongMap Join-Path's it into a relative 'maps' that
+        # simply won't exist, returning an empty map, not a crash).
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GamePath,
         [Parameter(Mandatory = $true)][string]$Editions,
         [string]$SongFilters = '',
         [Parameter(Mandatory = $true)]$Catalog
