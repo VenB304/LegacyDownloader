@@ -601,7 +601,7 @@ function Get-TrackedDownloadStatus {
     [void]$unionKeys.UnionWith($downloadedKeys)
 
     $rows = New-Object System.Collections.Generic.List[object]
-    $editionSeen = @{}
+    $editionSeen = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($key in $unionKeys) {
         $sep = $key.IndexOf('|')
         $ed = $key.Substring(0, $sep)
@@ -616,7 +616,7 @@ function Get-TrackedDownloadStatus {
             [PSCustomObject]@{ Edition = $ed; Code = $code; Title = $null; Artist = $null; Difficulty = $null; Effort = $null; IsUnknown = $true; Status = $status }
         }
         $rows.Add($row)
-        if (-not $editionSeen.ContainsKey($ed)) { $editionSeen[$ed] = $true }
+        [void]$editionSeen.Add($ed)
     }
 
     # .ToArray(), not @($rows) - wrapping a List[object] containing
@@ -626,7 +626,7 @@ function Get-TrackedDownloadStatus {
     # .ToArray() sidesteps it cleanly.
     return @{
         Rows     = $rows.ToArray()
-        Editions = @(@($editionSeen.Keys) | Sort-EditionNames)
+        Editions = @(@($editionSeen) | Sort-EditionNames)
     }
 }
 
@@ -1546,6 +1546,18 @@ function Get-RequirementDefinitions {
     #   SilentArgs   - command-line args for an unattended install, or $null
     #     if the installer has no silent mode at all (both Kinect SDKs - by
     #     Microsoft's own design, EULA acceptance can't be scripted).
+    #   DetectMethod - which Get-RequirementsStatus strategy decides
+    #     Installed: 'DllsAndUninstallMatch' (dlls AND an Uninstall-hive
+    #     match), 'Vc2015' (dlls AND the fixed VS14 runtime key),
+    #     'DllsOnly' (no reliable registry marker), or 'UninstallMatch'
+    #     (Uninstall-hive match alone, no consumable DLL to check). A future
+    #     item that fits one of these can reuse it with no code change; a
+    #     genuinely new detection shape needs a new case AND a new value
+    #     here, so the two can't drift out of sync silently.
+    #   Severity     - 'Critical' surfaces as the Requirements button's red
+    #     state in the GUI (Refresh-RequirementsButton) - reserved for an
+    #     item with a real confirmed crash report behind it, not just
+    #     "missing is bad" (every missing item is already "bad").
     #   CheckDlls    - DLL(s) whose real presence in the correct system
     #     folder is checked alongside (VC++/DirectX) or instead of (none
     #     apply to the Kinect SDKs, which don't ship their own consumable
@@ -1561,6 +1573,7 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=26999'
             FetchUrl    = 'https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x86.exe'
             SilentArgs  = '/q /norestart'
+            DetectMethod = 'DllsAndUninstallMatch'; Severity = 'Normal'
             CheckDlls   = @('msvcp100.dll', 'msvcr100.dll')
             UninstallPatterns = @('Visual C\+\+ 2010', 'x86')
         }
@@ -1570,6 +1583,7 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=30679'
             FetchUrl    = 'https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x86.exe'
             SilentArgs  = '/install /quiet /norestart'
+            DetectMethod = 'DllsAndUninstallMatch'; Severity = 'Normal'
             CheckDlls   = @('msvcp110.dll', 'msvcr110.dll')
             UninstallPatterns = @('Visual C\+\+ 2012', 'x86')
         }
@@ -1591,6 +1605,7 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist'
             FetchUrl    = 'https://aka.ms/vc14/vc_redist.x86.exe'
             SilentArgs  = '/install /quiet /norestart'
+            DetectMethod = 'Vc2015'; Severity = 'Normal'
             CheckDlls   = @('msvcp140.dll', 'vcruntime140.dll')
             UninstallPatterns = @()   # detected via Test-Vc2015Installed instead
         }
@@ -1608,6 +1623,7 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=8109'
             FetchUrl    = $null
             SilentArgs  = '/silent'
+            DetectMethod = 'DllsOnly'; Severity = 'Normal'
             CheckDlls   = @('xinput1_3.dll')
             UninstallPatterns = @()   # legacy cab installer, no reliable registry marker - see Test-SystemDllPresent
         }
@@ -1617,6 +1633,10 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=40278'
             FetchUrl    = 'https://download.microsoft.com/download/e/1/d/e1dec243-0389-4a23-87bf-f47de869fc1a/KinectSDK-v1.8-Setup.exe'
             SilentArgs  = $null   # no silent install exists - Microsoft's own EULA-driven design
+            # Critical: a real Discord crash report is specifically behind
+            # "both Kinect SDKs missing" (see Refresh-RequirementsButton) -
+            # not a generic "missing is bad", every missing item is already bad.
+            DetectMethod = 'UninstallMatch'; Severity = 'Critical'
             CheckDlls   = @()
             UninstallPatterns = @('Kinect for Windows SDK', 'v?1\.8')
         }
@@ -1626,6 +1646,7 @@ function Get-RequirementDefinitions {
             OfficialUrl = 'https://www.microsoft.com/en-us/download/details.aspx?id=44561'
             FetchUrl    = 'https://download.microsoft.com/download/f/2/d/f2d1012e-3bc6-49c5-b8b3-5acff58af7b8/KinectSDK-v2.0_1409-Setup.exe'
             SilentArgs  = $null
+            DetectMethod = 'UninstallMatch'; Severity = 'Critical'
             CheckDlls   = @()
             UninstallPatterns = @('Kinect for Windows SDK', 'v?2\.0')
         }
@@ -1647,29 +1668,46 @@ function Test-SystemDllPresent([string]$DllName) {
     return (Test-Path -LiteralPath (Join-Path $sysDir $DllName))
 }
 
-function Test-UninstallDisplayNameMatch([string[]]$Patterns) {
-    # True if some entry in the registry's "installed programs" list
+function Get-InstalledDisplayNames {
+    # Every DisplayName in the registry's "installed programs" list
     # (Uninstall hive, both the native and the 32-bit/Wow6432Node view -
-    # these installers are all x86 even on a 64-bit OS) has a DisplayName
-    # matching every pattern in $Patterns (AND, not one brittle exact-order
-    # phrase - Microsoft's own exact DisplayName wording has varied release
-    # to release, e.g. "x86" vs "(x86)", so requiring the meaningful
-    # substrings independently is more robust than betting on one string).
-    if ($IsLinux -or $Patterns.Count -eq 0) { return $false }
+    # these installers are all x86 even on a 64-bit OS), walked ONCE. Both
+    # hives together hold every installed program on the machine, so this
+    # can be a genuinely slow enumeration - Get-RequirementsStatus used to
+    # call Test-UninstallDisplayNameMatch (which used to do this same walk
+    # itself) once per item, re-walking both hives from scratch 4 times
+    # (vc2010/vc2012/kinect18/kinect20) for one status check. Walking once
+    # and matching every item's patterns against the cached result instead
+    # measured close to a 4x cut in this function's share of the ~900ms a
+    # real Get-RequirementsStatus call took on a real dev machine.
+    if ($IsLinux) { return @() }
     $roots = @(
         'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall',
         'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
     )
+    $names = @()
     foreach ($root in $roots) {
         if (-not (Test-Path -LiteralPath $root)) { continue }
         foreach ($k in (Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue)) {
             $dn = $null
             try { $dn = (Get-ItemProperty -LiteralPath $k.PSPath -Name DisplayName -ErrorAction SilentlyContinue).DisplayName } catch { }
-            if (-not $dn) { continue }
-            $allMatch = $true
-            foreach ($p in $Patterns) { if ($dn -notmatch $p) { $allMatch = $false; break } }
-            if ($allMatch) { return $true }
+            if ($dn) { $names += $dn }
         }
+    }
+    return $names
+}
+
+function Test-UninstallDisplayNameMatch([string[]]$Patterns, [string[]]$DisplayNames) {
+    # True if some name in $DisplayNames (from Get-InstalledDisplayNames)
+    # matches every pattern in $Patterns (AND, not one brittle exact-order
+    # phrase - Microsoft's own exact DisplayName wording has varied release
+    # to release, e.g. "x86" vs "(x86)", so requiring the meaningful
+    # substrings independently is more robust than betting on one string).
+    if ($Patterns.Count -eq 0 -or $DisplayNames.Count -eq 0) { return $false }
+    foreach ($dn in $DisplayNames) {
+        $allMatch = $true
+        foreach ($p in $Patterns) { if ($dn -notmatch $p) { $allMatch = $false; break } }
+        if ($allMatch) { return $true }
     }
     return $false
 }
@@ -1704,19 +1742,29 @@ function Get-RequirementsStatus {
     param([string]$GamePath)
 
     $defs = Get-RequirementDefinitions
+    # Walked once for the whole batch, not once per item - see
+    # Get-InstalledDisplayNames for why that used to be a real cost.
+    $displayNames = Get-InstalledDisplayNames
     $out = @()
     foreach ($d in $defs) {
         $dllsOk = $true
         foreach ($dll in $d.CheckDlls) { if (-not (Test-SystemDllPresent $dll)) { $dllsOk = $false; break } }
 
-        $installed = switch ($d.Id) {
-            'vc2010'   { $dllsOk -and (Test-UninstallDisplayNameMatch $d.UninstallPatterns) }
-            'vc2012'   { $dllsOk -and (Test-UninstallDisplayNameMatch $d.UninstallPatterns) }
-            'vc2015'   { $dllsOk -and (Test-Vc2015Installed) }
-            'directx'  { $dllsOk }   # no reliable registry marker for a legacy cab installer - file presence is ground truth here
-            'kinect18' { Test-UninstallDisplayNameMatch $d.UninstallPatterns }
-            'kinect20' { Test-UninstallDisplayNameMatch $d.UninstallPatterns }
-            default    { $false }
+        # Dispatches on DetectMethod (a field on the definition), not on
+        # $d.Id - a future item that reuses one of these four shapes needs
+        # no change here at all, just the right DetectMethod value on its
+        # own definition. An unrecognized DetectMethod warns instead of
+        # silently reporting "not installed", so a typo'd or missing value
+        # on a new definition can't hide as a false negative.
+        $installed = switch ($d.DetectMethod) {
+            'DllsAndUninstallMatch' { $dllsOk -and (Test-UninstallDisplayNameMatch $d.UninstallPatterns $displayNames) }
+            'Vc2015'                { $dllsOk -and (Test-Vc2015Installed) }
+            'DllsOnly'              { $dllsOk }   # no reliable registry marker for a legacy cab installer - file presence is ground truth here
+            'UninstallMatch'        { Test-UninstallDisplayNameMatch $d.UninstallPatterns $displayNames }
+            default {
+                Write-Warning "Get-RequirementsStatus: requirement '$($d.Id)' has an unrecognized DetectMethod '$($d.DetectMethod)' - treating as not installed"
+                $false
+            }
         }
 
         $bundledPath = $null
@@ -1729,6 +1777,7 @@ function Get-RequirementsStatus {
             Id          = $d.Id
             Name        = $d.Name
             Installed   = [bool]$installed
+            Severity    = $d.Severity
             BundledPath = $bundledPath
             OfficialUrl = $d.OfficialUrl
             FetchUrl    = $d.FetchUrl
@@ -1924,6 +1973,62 @@ function Install-Requirement {
     }
 }
 
+function Invoke-RequirementInstall {
+    # The whole download -> install -> temp-cleanup -> re-check sequence for
+    # ONE requirement, as a single pure call with no UI - the console and
+    # GUI front-ends used to each reimplement this near-verbatim (right down
+    # to sharing the same "trust a fresh re-check" comment word for word),
+    # just to render the outcome differently. Both now call this and only
+    # own how each Outcome value is displayed.
+    #
+    # Returns @{ Outcome; OfficialUrl; ExitCode }. Outcome is one of:
+    #   'DownloadFailed'          - Get-RequirementInstaller couldn't produce
+    #     a runnable installer; OfficialUrl is set so the caller can show a
+    #     manual-download link instead of a dead end.
+    #   'InstalledRebootRequired' / 'Installed' - a FRESH re-check confirms
+    #     it's actually installed now. Trusted over the installer's own exit
+    #     code on purpose - not every installer here follows the same MSI
+    #     0/3010/1638 convention (DXSETUP.exe's exact convention is
+    #     unverified), so asking "is it actually installed now" is more
+    #     honest than trusting a guessed-at exit code.
+    #   'Cancelled' - the user declined/cancelled the installer itself.
+    #   'Failed'    - genuinely failed; ExitCode is set.
+    # -OnInstalling (optional): invoked with no args right after the fetch
+    # succeeds, before Install-Requirement runs - the one piece of real-time
+    # narration that can't just be read off the returned Outcome afterward,
+    # since Install-Requirement itself can block for a while (the Kinect
+    # SDKs run their own real installer UI with no silent mode at all). Lets
+    # each caller flip its own "Installing {name}..." message/label at the
+    # right moment instead of only finding out once this whole call returns.
+    param(
+        [Parameter(Mandatory = $true)]$Item,
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        [scriptblock]$ProgressCallback,
+        [scriptblock]$OnInstalling
+    )
+    $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
+    $fetch = Get-RequirementInstaller -Item $Item -DestDir $destDir -ProgressCallback $ProgressCallback
+    if (-not $fetch.Ok) {
+        return [PSCustomObject]@{ Outcome = 'DownloadFailed'; OfficialUrl = $fetch.OfficialUrl; ExitCode = $null }
+    }
+    if ($OnInstalling) { & $OnInstalling }
+
+    $res = Install-Requirement -Item $Item -Path $fetch.Path
+    if ($fetch.Downloaded) {
+        # Only ever the temp-folder copy just downloaded - $fetch.Path
+        # points straight at the game's own Support\ folder when it came
+        # from there instead, and that must never be touched.
+        Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
+    }
+
+    $nowInstalled = (@(Get-RequirementsStatus -GamePath $GamePath | Where-Object { $_.Id -eq $Item.Id }))[0].Installed
+    $outcome = if ($nowInstalled -and $res.RebootRequired) { 'InstalledRebootRequired' }
+        elseif ($nowInstalled) { 'Installed' }
+        elseif ($res.Cancelled) { 'Cancelled' }
+        else { 'Failed' }
+    return [PSCustomObject]@{ Outcome = $outcome; OfficialUrl = $Item.OfficialUrl; ExitCode = $res.ExitCode }
+}
+
 Export-ModuleMember -Function `
     Initialize-LegacyCore, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
@@ -1938,4 +2043,5 @@ Export-ModuleMember -Function `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
-    Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement
+    Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
+    Invoke-RequirementInstall

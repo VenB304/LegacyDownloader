@@ -71,6 +71,17 @@ function Pause-Exit([int]$Code) {
     exit $Code
 }
 
+function Exit-Console {
+    # The main menu's "quit" option - Linux (5 items) and Windows (6 items,
+    # Requirements bumps it down one slot) reach this via different case
+    # labels in the switch below, but it's the exact same farewell either
+    # way, so it's one function instead of two copies of the same 4 lines.
+    Write-Host ""
+    Write-Host (T 'menu.goodbye')
+    Start-Sleep -Seconds 1
+    exit 0
+}
+
 function Confirm-YesNo([string]$Prompt) {
     while ($true) {
         $ans = Read-Host (T 'common.yn_prompt' @{ prompt = $Prompt })
@@ -730,62 +741,43 @@ function Show-RequirementsWizard([string]$GamePath) {
     foreach ($item in $missing) {
         if (-not (Confirm-YesNo (T 'menu.requirements_install_prompt' @{ name = $item.Name }))) { continue }
         Write-Host (T 'menu.requirements_downloading' @{ name = $item.Name })
-        $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
         # A bundled copy resolves instantly inside Get-RequirementInstaller
         # with no callback invocations at all, and so does a missing
         # FetchUrl (directx has none - it's bundled-only) - only print an
         # in-place percent line for an item that's actually about to hit
         # the network, matching Get-RequirementInstaller's own "bundled,
         # then FetchUrl" gate.
-        if ((-not $item.BundledPath) -and $item.FetchUrl) {
-            # GetNewClosure() is required, not optional - a plain {}
-            # scriptblock resolves free variables like $item in the CALLER's
-            # scope at invocation time (Get-RequirementInstaller's own scope
-            # in the Core module), not the scope it was written in.
-            $progressCallback = {
-                param($pct, $received, $total)
-                $line = if ($pct -ge 0) {
-                    T 'menu.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
-                } else {
-                    T 'menu.requirements_downloading' @{ name = $item.Name }
-                }
-                # Pad to a fixed width and `r back to column 0 so a shorter
-                # line (e.g. 100% -> a later 9%) doesn't leave stray
-                # characters from the previous, longer line behind.
-                Write-Host -NoNewline ("`r  " + $line.PadRight(70))
-            }.GetNewClosure()
-            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
-            Write-Host ""
-        } else {
-            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
-        }
-        if (-not $fetch.Ok) {
-            Write-Host (T 'menu.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }) -ForegroundColor Yellow
+        $willDownload = (-not $item.BundledPath) -and $item.FetchUrl
+        # GetNewClosure() is required, not optional - a plain {} scriptblock
+        # resolves free variables like $item in the CALLER's scope at
+        # invocation time (Get-RequirementInstaller's own scope in the Core
+        # module), not the scope it was written in.
+        $progressCallback = {
+            param($pct, $received, $total)
+            $line = if ($pct -ge 0) {
+                T 'menu.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
+            } else {
+                T 'menu.requirements_downloading' @{ name = $item.Name }
+            }
+            # Pad to a fixed width and `r back to column 0 so a shorter
+            # line (e.g. 100% -> a later 9%) doesn't leave stray
+            # characters from the previous, longer line behind.
+            Write-Host -NoNewline ("`r  " + $line.PadRight(70))
+        }.GetNewClosure()
+        $onInstalling = { Write-Host (T 'menu.requirements_installing' @{ name = $item.Name }) }.GetNewClosure()
+
+        $result = Invoke-RequirementInstall -Item $item -GamePath $GamePath -ProgressCallback $progressCallback -OnInstalling $onInstalling
+        if ($willDownload) { Write-Host "" }
+
+        if ($result.Outcome -eq 'DownloadFailed') {
+            Write-Host (T 'menu.requirements_download_failed' @{ name = $item.Name; url = $result.OfficialUrl }) -ForegroundColor Yellow
             continue
         }
-        Write-Host (T 'menu.requirements_installing' @{ name = $item.Name })
-        $res = Install-Requirement -Item $item -Path $fetch.Path
-        if ($fetch.Downloaded) {
-            # Only the temp-folder copy just downloaded - never the
-            # bundled Support\ folder copy, which $fetch.Path points
-            # straight at when it came from there instead.
-            Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
-        }
-
-        # Trust a fresh real re-check over the installer's own exit code -
-        # not every installer here follows the same MSI 0/3010/1638
-        # convention (DXSETUP.exe's exact convention is unverified), so
-        # asking "is it actually installed now" is more honest than
-        # trusting a guessed-at exit code.
-        $nowInstalled = (@(Get-RequirementsStatus -GamePath $GamePath | Where-Object { $_.Id -eq $item.Id }))[0].Installed
-        if ($nowInstalled -and $res.RebootRequired) {
-            Write-Host (T 'menu.requirements_install_done_reboot' @{ name = $item.Name }) -ForegroundColor Green
-        } elseif ($nowInstalled) {
-            Write-Host (T 'menu.requirements_install_done' @{ name = $item.Name }) -ForegroundColor Green
-        } elseif ($res.Cancelled) {
-            Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow
-        } else {
-            Write-Host (T 'menu.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }) -ForegroundColor Red
+        switch ($result.Outcome) {
+            'InstalledRebootRequired' { Write-Host (T 'menu.requirements_install_done_reboot' @{ name = $item.Name }) -ForegroundColor Green }
+            'Installed'               { Write-Host (T 'menu.requirements_install_done' @{ name = $item.Name }) -ForegroundColor Green }
+            'Cancelled'               { Write-Host (T 'menu.requirements_install_cancelled' @{ name = $item.Name }) -ForegroundColor Yellow }
+            'Failed'                  { Write-Host (T 'menu.requirements_install_failed' @{ name = $item.Name; code = $result.ExitCode }) -ForegroundColor Red }
         }
     }
 
@@ -1112,22 +1104,14 @@ while ($true) {
             Pause-Brief -Seconds 1
         }
         '5' {
-            if ($IsLinux) {
-                Write-Host ""
-                Write-Host (T 'menu.goodbye')
-                Start-Sleep -Seconds 1
-                exit 0
-            }
+            if ($IsLinux) { Exit-Console }
             Show-RequirementsWizard -GamePath $cfg.GamePath
         }
         '6' {
             if ($IsLinux) {
                 Pause-Brief (T 'common.not_valid_option')
             } else {
-                Write-Host ""
-                Write-Host (T 'menu.goodbye')
-                Start-Sleep -Seconds 1
-                exit 0
+                Exit-Console
             }
         }
         default {

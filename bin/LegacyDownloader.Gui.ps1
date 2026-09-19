@@ -477,17 +477,22 @@ function Finish-Downloads {
     Ensure-FirstRunRequirementsChecked
 }
 
-# One-time-only requirements check for a brand-new install ('get' from
-# Run-SetupDialog - existing installs, which already have a config.txt,
-# never hit Run-SetupDialog at all and so never hit this either; they only
-# ever discover the feature through the main window's Requirements button).
-# Called from both places a fresh 'get' setup can finish: a real download
-# completing (Finish-Downloads) and the "nothing to download, already up to
-# date" early-out in On-PlanReady - the folder-already-has-the-game branch
-# of the first-run Add_Shown handler goes through On-Check, which can hit
-# either exit depending on what's actually on disk.
+# One-time-only requirements check for a brand-new setup - either mode from
+# Run-SetupDialog ('have': called directly at top level, right after the
+# dialog returns and before the main window exists; 'get': called from
+# whichever of the two places a fresh download can finish - a real download
+# completing (Finish-Downloads), or the "nothing to download, already up to
+# date" early-out in On-PlanReady, since the folder-already-has-the-game
+# branch of the first-run Add_Shown handler goes through On-Check, which can
+# hit either exit depending on what's actually on disk). Existing installs,
+# which already have a config.txt, never hit Run-SetupDialog at all and so
+# never hit this either - they only ever discover the feature through the
+# main window's Requirements button. Refresh-RequirementsButton is a no-op
+# before Build-MainForm has run ($script:BtnRequirements is still $null at
+# that point, for the 'have' call) - harmless, since Apply-I18n's own
+# startup call does the button's first real refresh moments later anyway.
 function Ensure-FirstRunRequirementsChecked {
-    if ($script:FirstRunMode -ne 'get' -or $script:ReqsFirstRunChecked) { return }
+    if ([string]::IsNullOrEmpty($script:FirstRunMode) -or $script:ReqsFirstRunChecked) { return }
     $script:ReqsFirstRunChecked = $true
     Show-RequirementsDialog -FirstRun
     Refresh-RequirementsButton
@@ -2775,16 +2780,30 @@ function Show-RequirementsDialog {
         $missingCount = @($script:ReqDialogItems | Where-Object { -not $_.Installed }).Count
         $lblStatus.Text = if ($missingCount -eq 0) { T 'gui.requirements_all_done' } else { '' }
     }
-    & $refresh
+    # Get-RequirementsStatus does real registry-hive walks + DLL-presence
+    # checks for all 6 items - measured ~850-1000ms on a real dev machine,
+    # not negligible. & $refresh used to run right here, before the dialog
+    # is ever shown, so clicking "Requirements" hung with nothing on screen
+    # for that whole time. Populate the grid with just the names up front
+    # instead (static, from Get-RequirementDefinitions - no scan needed) so
+    # the window can be sized and shown immediately, and defer the real
+    # & $refresh scan to Add_Shown below, where it runs a moment after the
+    # dialog is already on screen. Row COUNT and HEIGHT (all the pixel-math
+    # below needs) are identical either way, since & $refresh always
+    # Clears+re-Adds exactly one row per definition.
+    foreach ($d in (Get-RequirementDefinitions)) {
+        $idx = $grid.Rows.Add()
+        $grid.Rows[$idx].Cells[1].Value = $d.Name
+        $grid.Rows[$idx].Tag = $d.Id
+    }
 
     # Manual row/border/separator pixel math (RowTemplate.Height * count +
     # border + separator allowance) kept leaving a several-pixel sliver of
     # dead space below the last row - WinForms' actual rendered row bounds
     # don't line up exactly with that arithmetic. Measuring the REAL
     # rendered bottom of the last row directly (after the grid has a
-    # handle and real rows, which & $refresh just populated) and
-    # snug-fitting to that is exact regardless of what's actually eating
-    # the extra pixels.
+    # handle and real rows) and snug-fitting to that is exact regardless of
+    # what's actually eating the extra pixels.
     [void]$grid.Handle
     if ($grid.Rows.Count -gt 0) {
         $lastRowRect = $grid.GetRowDisplayRectangle($grid.Rows.Count - 1, $true)
@@ -2859,13 +2878,12 @@ function Show-RequirementsDialog {
                 $progressBar.Visible = $true
             }
             [System.Windows.Forms.Application]::DoEvents()
-            $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-            # GetNewClosure() is required here, not optional - without it this
-            # scriptblock loses $item/$lblStatus/$progressBar entirely once
-            # invoked from Get-RequirementInstaller's own scope in the Core
-            # module, since a plain {} scriptblock resolves free variables in
-            # the CALLER's scope at invocation time, not the scope it was
-            # written in.
+            # GetNewClosure() is required here, not optional - without it
+            # these scriptblocks lose $item/$lblStatus/$progressBar entirely
+            # once invoked from Invoke-RequirementInstall's own scope in the
+            # Core module, since a plain {} scriptblock resolves free
+            # variables in the CALLER's scope at invocation time, not the
+            # scope it was written in.
             $progressCallback = {
                 param($pct, $received, $total)
                 if ($pct -ge 0) {
@@ -2877,38 +2895,19 @@ function Show-RequirementsDialog {
                 }
                 [System.Windows.Forms.Application]::DoEvents()
             }.GetNewClosure()
-            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
-            $progressBar.Visible = $false
-            if (-not $fetch.Ok) {
-                $lblStatus.Text = T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }
-            } else {
+            $onInstalling = {
                 $lblStatus.Text = T 'gui.requirements_installing' @{ name = $item.Name }
                 [System.Windows.Forms.Application]::DoEvents()
-                $res = Install-Requirement -Item $item -Path $fetch.Path
-                if ($fetch.Downloaded) {
-                    # Only ever the temp-folder copy Get-RequirementInstaller
-                    # just downloaded - $fetch.Path points straight at the
-                    # game's own Support\ folder when it came from there
-                    # instead, and that must never be touched.
-                    Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
-                }
+            }.GetNewClosure()
 
-                # Trust a fresh real re-check over the installer's own exit
-                # code for the message shown - not every installer here
-                # follows the same MSI 0/3010/1638 exit-code convention
-                # (DXSETUP.exe in particular is a legacy cab installer, exact
-                # convention unverified), so asking "is it actually installed
-                # now" is more honest than trusting a guessed-at exit code.
-                $nowInstalled = (@(Get-RequirementsStatus -GamePath $gp | Where-Object { $_.Id -eq $item.Id }))[0].Installed
-                $lblStatus.Text = if ($nowInstalled -and $res.RebootRequired) {
-                    T 'gui.requirements_install_done_reboot' @{ name = $item.Name }
-                } elseif ($nowInstalled) {
-                    T 'gui.requirements_install_done' @{ name = $item.Name }
-                } elseif ($res.Cancelled) {
-                    T 'gui.requirements_install_cancelled' @{ name = $item.Name }
-                } else {
-                    T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }
-                }
+            $result = Invoke-RequirementInstall -Item $item -GamePath $gp -ProgressCallback $progressCallback -OnInstalling $onInstalling
+            $progressBar.Visible = $false
+            $lblStatus.Text = switch ($result.Outcome) {
+                'DownloadFailed'          { T 'gui.requirements_download_failed' @{ name = $item.Name; url = $result.OfficialUrl } }
+                'InstalledRebootRequired' { T 'gui.requirements_install_done_reboot' @{ name = $item.Name } }
+                'Installed'               { T 'gui.requirements_install_done' @{ name = $item.Name } }
+                'Cancelled'               { T 'gui.requirements_install_cancelled' @{ name = $item.Name } }
+                'Failed'                  { T 'gui.requirements_install_failed' @{ name = $item.Name; code = $result.ExitCode } }
             }
         } finally {
             $downloading = $false
@@ -2934,6 +2933,11 @@ function Show-RequirementsDialog {
     $f.ClientSize = New-Object System.Drawing.Size(480, $y)
     $f.CancelButton = $btnClose
     $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $progressBar, $btnRefresh, $btnClose))
+
+    # Runs the real (slow) scan right after the window actually appears -
+    # Shown fires for both .Show() (self-test) and .ShowDialog() (real use),
+    # and ShowDialog's own message loop pumps it same as any other event.
+    $f.Add_Shown({ param($s, $e) & $refresh })
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -3013,7 +3017,7 @@ function Refresh-Tracking {
     $script:BtnSelect.Enabled = (-not $script:Busy) -and $script:RbSpecific.Checked
 }
 
-function Apply-I18n {
+function Apply-I18n([switch]$SkipRequirementsScan) {
     $script:Form.Text         = (T 'gui.window_title') + ' ' + $Version
     $script:LblLang.Text      = T 'gui.lang_label'
     $script:GrpFolder.Text    = T 'gui.group_folder'
@@ -3031,20 +3035,32 @@ function Apply-I18n {
     $script:BtnViewTracked.Left = 480 - $btnViewTrackedWidth
     Refresh-FolderStatus
     Refresh-Tracking
-    Refresh-RequirementsButton
+    # The registry+DLL scan behind this can take the better part of a
+    # second (see Get-RequirementsStatus) and language can't possibly
+    # change install status - only the initial call (window construction)
+    # needs it; On-LangChanged passes -SkipRequirementsScan so switching
+    # languages doesn't re-run it just to leave the button exactly as it was.
+    if (-not $SkipRequirementsScan) { Refresh-RequirementsButton }
 }
 
 function Refresh-RequirementsButton {
     if ($null -eq $script:BtnRequirements) { return }
     $status = Get-RequirementsStatus -GamePath $script:Cfg.GamePath
     $missing = @($status | Where-Object { -not $_.Installed })
-    $bothKinectMissing = (@($status | Where-Object { $_.Id -in @('kinect18', 'kinect20') -and -not $_.Installed })).Count -eq 2
+    # Data-driven off each definition's Severity (Get-RequirementDefinitions)
+    # instead of hardcoding which IDs count as critical - today that's both
+    # Kinect SDKs (a real Discord crash report is specifically behind ALL of
+    # them being missing), but a future Severity='Critical' item is picked
+    # up here with no change needed.
+    $criticalTotal   = @($status | Where-Object { $_.Severity -eq 'Critical' }).Count
+    $criticalMissing = @($status | Where-Object { $_.Severity -eq 'Critical' -and -not $_.Installed }).Count
+    $allCriticalMissing = ($criticalTotal -gt 0) -and ($criticalMissing -eq $criticalTotal)
     # Both Kinect SDKs missing (or most items missing) is the failure mode
     # Ven has a direct real-world report of actually crashing the game, not
     # just a theoretical gap - that case gets red rather than yellow.
     $colors = if ($missing.Count -eq 0) {
         @{ Base = [System.Drawing.Color]::FromArgb(224, 247, 231); Hover = [System.Drawing.Color]::FromArgb(200, 235, 210); Down = [System.Drawing.Color]::FromArgb(180, 225, 195) }
-    } elseif ($bothKinectMissing -or $missing.Count -ge 4) {
+    } elseif ($allCriticalMissing -or $missing.Count -ge 4) {
         @{ Base = [System.Drawing.Color]::FromArgb(253, 226, 226); Hover = [System.Drawing.Color]::FromArgb(245, 200, 200); Down = [System.Drawing.Color]::FromArgb(235, 180, 180) }
     } else {
         @{ Base = [System.Drawing.Color]::FromArgb(255, 247, 219); Hover = [System.Drawing.Color]::FromArgb(250, 235, 180); Down = [System.Drawing.Color]::FromArgb(245, 225, 150) }
@@ -3231,7 +3247,7 @@ function On-LangChanged {
     $null = Initialize-Language -Code $code
     Save-Config -GamePath $script:Cfg.GamePath -Editions $script:Cfg.Editions -Lang $code
     $script:Cfg = Load-Config
-    Apply-I18n
+    Apply-I18n -SkipRequirementsScan
 }
 
 function Build-MainForm {
@@ -3455,13 +3471,11 @@ if (-not $env:LEGACY_GUI_SELFTEST -and [string]::IsNullOrWhiteSpace($script:Cfg.
     $script:FirstRunMode = Run-SetupDialog
     # 'have': nothing async follows (no base download to wait on, unlike
     # 'get' - see Ensure-FirstRunRequirementsChecked for that path), so the
-    # one-time check can just run right here, before the main window exists.
-    # $script:Form is still $null at this point - same as Run-SetupDialog's
-    # own ShowDialog() call just above, which has the same constraint.
-    if ($script:FirstRunMode -eq 'have') {
-        Show-RequirementsDialog -FirstRun
-        $script:ReqsFirstRunChecked = $true
-    }
+    # one-time check can just run right here, through the same shared guard
+    # 'get' uses, before the main window exists. $script:Form is still $null
+    # at this point - same as Run-SetupDialog's own ShowDialog() call just
+    # above, which has the same constraint.
+    if ($script:FirstRunMode -eq 'have') { Ensure-FirstRunRequirementsChecked }
 }
 
 Build-MainForm
