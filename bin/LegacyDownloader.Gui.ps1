@@ -29,6 +29,7 @@ $script:ScanJob   = $null                 # background job running Get-UpdatePla
 $script:ScanOut   = $null                 # temp file the job writes the plan to (Export-Clixml)
 $script:ScanIgnoredWrongLevel = $false
 $script:Job       = $null                 # current Start-RcloneCopy handle
+$script:CurrentSpec = $null               # the {Label;Source;Dest;Extra;Kind;Keep} queue entry $script:Job was started from
 $script:Queue     = @()                   # remaining {Label;Source;Dest;Extra}
 $script:LastObject = ''
 $script:FirstRunMode  = $null             # 'get' / 'have' when the setup dialog just ran
@@ -405,18 +406,28 @@ function Advance-Queue {
         $code = Complete-RcloneCopy -Job $script:Job
         if ($code -eq 0) {
             Append-Log ("$([char]0x2713) " + (T 'gui.progress_done_line' @{ label = $script:Job.Label }))
+            # The base job just wrote GamePath\Legacy.exe / Kinect*.dll / the
+            # bundle+patch ipks (minus whatever the preview's checklist said
+            # to keep) - record their new hashes now so the NEXT check can
+            # tell "untouched since we wrote it" apart from "user changed it".
+            if ($script:CurrentSpec -and $script:CurrentSpec.Kind -eq 'base') {
+                Update-ProtectedFileHashes -GamePath $script:Cfg.GamePath -KeepFiles $script:CurrentSpec.Keep
+            }
         } else {
             Append-Log ("$([char]0x2717) " + (T 'gui.progress_failed_line' @{ label = $script:Job.Label; code = $code }))
             $script:Job = $null
+            $script:CurrentSpec = $null
             $script:DlTimer.Stop()
             Set-Busy $false
             Warn-Box (T 'gui.failed_body' @{ code = $code }) (T 'gui.failed_title')
             return
         }
         $script:Job = $null
+        $script:CurrentSpec = $null
     }
     if ($script:Queue.Count -eq 0) { Finish-Downloads; return }
     $spec = $script:Queue[0]; $script:Queue.RemoveAt(0)
+    $script:CurrentSpec = $spec
     $script:LoggedObjects.Clear()
     $script:LblProg.Text = T 'gui.progress_preparing' @{ label = $spec.Label }
     Append-Log (T 'gui.progress_preparing' @{ label = $spec.Label })
@@ -491,7 +502,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         $ex = Get-BaseSyncExcludes -GamePath $gp -KeepFiles $KeepFiles
         $exArgs = @()
         foreach ($e in $ex) { $exArgs += @('--exclude', $e) }
-        $jobs += @{ Label = (T 'gui.job_base'); Source = ($script:Conn + 'LegacyPC - Game'); Dest = $gp; Extra = $exArgs }
+        $jobs += @{ Label = (T 'gui.job_base'); Source = ($script:Conn + 'LegacyPC - Game'); Dest = $gp; Extra = $exArgs; Kind = 'base'; Keep = $KeepFiles }
     }
 
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
@@ -599,6 +610,7 @@ function Show-PreviewDialog($Plan) {
     # returns @{ Proceed = $bool; Keep = @() }
     $out = @{ Proceed = $false; Keep = @() }
     $ba  = @($Plan.BaseAsk)
+    $baSuspected = @($Plan.BaseAskSuspected)
 
     $f = New-Object System.Windows.Forms.Form
     $f.Text = T 'gui.preview_title'
@@ -632,7 +644,17 @@ function Show-PreviewDialog($Plan) {
         $clb.BackColor = $script:ColorCard
         $clb.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
         $clb.SetBounds(14, $y, 468, ([Math]::Min(4, $ba.Count) * 20 + 8))
-        foreach ($x in $ba) { [void]$clb.Items.Add($x, $false) }   # unchecked = keep yours
+        # unchecked = keep yours, checked = take the update. Defaulted per item:
+        # a file with real evidence of a post-sync change (BaseAskSuspected -
+        # its hash used to match what we wrote, and no longer does) defaults
+        # to unchecked/protect, same as always. A file with NO such evidence
+        # (first time it's ever been checked under this logic, or a brand new
+        # local copy) defaults to checked/take-the-update - otherwise a user
+        # who never reads this list and just hits Enter would keep an old
+        # Legacy.exe/Kinect DLL/bundle+patch ipk forever on nothing more than
+        # "we've never asked about it before", which is the exact bug this
+        # whole mechanism exists to fix.
+        foreach ($x in $ba) { [void]$clb.Items.Add($x, ($baSuspected -notcontains $x)) }
         $y += $clb.Height + 12
         $f.Controls.Add($hint)
         $f.Controls.Add($clb)
@@ -3111,6 +3133,8 @@ function Start-FirstRunBaseDownload {
         Source = ($script:Conn + 'LegacyPC - Game')
         Dest   = $gp
         Extra  = $exArgs
+        Kind   = 'base'
+        Keep   = @()
     }
     $script:TxtLog.Clear()
     Append-Log (T 'gui.firstrun_base')

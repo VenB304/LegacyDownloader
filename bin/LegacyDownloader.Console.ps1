@@ -121,6 +121,11 @@ function Ensure-Directory([string]$Path) {
 }
 
 function Invoke-RcloneCopy([string]$Source, [string]$Dest, [string[]]$ExtraArgs = @()) {
+    # Returns rclone's exit code (0 = success). Invoke-BaseSync needs this to
+    # know whether it's actually safe to trust a protected file's post-copy
+    # hash as a new baseline - a caller that doesn't care must explicitly
+    # discard it (| Out-Null), or the bare exit code would otherwise leak
+    # onto the console as stray pipeline output.
     $savedBuffer = Enter-NoScrollBuffer
     try {
         $quotedSource = ConvertTo-QuotedArg $Source
@@ -131,7 +136,8 @@ function Invoke-RcloneCopy([string]$Source, [string]$Dest, [string[]]$ExtraArgs 
         # else or rclone splits it into two argv tokens.
         $quotedExtra  = $ExtraArgs | ForEach-Object { ConvertTo-QuotedArg $_ }
         $argLine = (@('copy', $quotedSource, $quotedDest) + $quotedCommonArgs + $quotedExtra) -join ' '
-        Start-Process -FilePath $Rclone -ArgumentList $argLine -NoNewWindow -Wait
+        $proc = Start-Process -FilePath $Rclone -ArgumentList $argLine -NoNewWindow -Wait -PassThru
+        return $proc.ExitCode
     } finally {
         Exit-NoScrollBuffer $savedBuffer
     }
@@ -148,7 +154,12 @@ function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
         $excludeArgs += @('--exclude', '/config.xml')
     }
     foreach ($e in $ExtraExcludes) { $excludeArgs += @('--exclude', $e) }
-    Invoke-RcloneCopy "$Conn`LegacyPC - Game" $GamePath $excludeArgs
+    $code = Invoke-RcloneCopy "$Conn`LegacyPC - Game" $GamePath $excludeArgs
+    # Only trust a protected file's post-copy hash as a new baseline when the
+    # copy actually succeeded - a failed/partial sync must not get recorded
+    # as "this is what we wrote", or a real update that never landed would
+    # look up-to-date to every future check.
+    if ($code -eq 0) { Update-ProtectedFileHashes -GamePath $GamePath -KeepFiles $ExtraExcludes }
     Write-Host ""
 }
 
@@ -163,7 +174,7 @@ function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$Song
     # Linux support): AUTO-mode downloads were unaffected (Invoke-AllMapsSync
     # only ever does Join-Path $GamePath 'maps', no embedded separator) but
     # downloading a SPECIFIC edition would silently write to the wrong path.
-    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongIncludeArgs $SongCodes)
+    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongIncludeArgs $SongCodes) | Out-Null
     Write-Host ""
 }
 
@@ -180,7 +191,7 @@ function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
         }
     }
     Write-Host (T 'sync.all_editions')
-    Invoke-RcloneCopy "$Conn`maps" $mapsDir
+    Invoke-RcloneCopy "$Conn`maps" $mapsDir | Out-Null
     Write-Host ""
 }
 

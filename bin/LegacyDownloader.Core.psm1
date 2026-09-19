@@ -1183,6 +1183,7 @@ function Get-UpdatePlan {
         MapsMissing   = $mapsMissing
         BaseNormal    = @()
         BaseAsk       = @()
+        BaseAskSuspected = @()
         KeptSettings  = $false
         BaseBytes     = [long]0
         Songs         = @()
@@ -1267,10 +1268,21 @@ function Get-UpdatePlan {
     #   ask    - files a player might have modded (confirm before overwriting)
     #   normal - plain content (update silently)
     #   config.xml - local settings: keep whatever's on disk unless missing
-    # "Moddable" = Legacy.exe or any Kinect*.dll (a patched exe or a swapped
-    # Kinect shim - the exact name of which varies - must survive an update).
+    # "Protected" = Legacy.exe, any Kinect*.dll, or the bundle/patch ipks (see
+    # Test-ProtectedBaseFile) - a patched exe, a swapped Kinect shim, or a
+    # modded bundle/patch must survive an update. Presence alone isn't enough
+    # to decide "ask": a returning user who never touched the file would be
+    # asked on every single release forever (this is what was silently
+    # freezing Legacy.exe/Kinect DLLs for non-modding users - the update
+    # never applied because the safe default is "keep mine", so a user who
+    # doesn't read the checklist never gets it). Instead compare the local
+    # file's hash against what Update-ProtectedFileHashes last recorded for
+    # it: a match means nothing has touched the file since WE wrote it, so
+    # it's safe to auto-update like any other base file; a mismatch (or no
+    # record yet) means it's genuinely unaccounted for, so ask like before.
     $haveSettings = Test-Path -LiteralPath ([System.IO.Path]::Combine($GamePath, 'config.xml'))
-    $baseAsk = @(); $baseNormal = @()
+    $protectedHashes = Get-ProtectedFileHashRecord $GamePath
+    $baseAsk = @(); $baseAskSuspected = @(); $baseNormal = @()
     foreach ($f in $base.Files) {
         $leaf = (Split-Path -Leaf $f).ToLower()
         if ($leaf -eq 'config.xml') {
@@ -1281,17 +1293,38 @@ function Get-UpdatePlan {
         # the user actually has a local copy. On a first install / empty folder
         # every base file "would copy", including legacy.exe and the Kinect DLLs -
         # those are just the initial download, not a modified copy to protect.
-        if (($leaf -eq 'legacy.exe') -or ($leaf -like 'kinect*.dll')) {
+        if (Test-ProtectedBaseFile $leaf) {
             $localCopy = [System.IO.Path]::Combine($GamePath, ($f -replace '/', '\'))
-            if (Test-Path -LiteralPath $localCopy) { $baseAsk += $f } else { $baseNormal += $f }
+            if (Test-Path -LiteralPath $localCopy) {
+                $localHash = Get-FileHashSafe $localCopy
+                $recorded  = if ($protectedHashes.ContainsKey($leaf)) { $protectedHashes[$leaf] } else { $null }
+                if ($recorded -and $localHash -and ($localHash -eq $recorded)) {
+                    $baseNormal += $f
+                } else {
+                    $baseAsk += $f
+                    # A recorded hash that exists but DOESN'T match is real evidence
+                    # something changed the file after this tool last wrote it - that's
+                    # a genuine suspected mod, not just "never been checked before".
+                    # BaseAskSuspected lets the GUI default the checklist to "protect"
+                    # only for that case, and to "take the update" everywhere else - so
+                    # an existing install's first check under this logic doesn't repeat
+                    # the exact bug this mechanism exists to fix (a user who never reads
+                    # the checklist staying frozen forever because the blanket default
+                    # used to be "keep").
+                    if ($recorded) { $baseAskSuspected += $f }
+                }
+            } else {
+                $baseNormal += $f
+            }
         } else {
             $baseNormal += $f
         }
     }
 
-    $plan.BaseNormal    = @($baseNormal)
-    $plan.BaseAsk       = @($baseAsk)
-    $plan.BaseBytes     = $base.Bytes
+    $plan.BaseNormal      = @($baseNormal)
+    $plan.BaseAsk         = @($baseAsk)
+    $plan.BaseAskSuspected = @($baseAskSuspected)
+    $plan.BaseBytes       = $base.Bytes
     $plan.Songs         = @($songs)
     $plan.SongFilesFlat = @($songFilesFlat)
     $plan.SongBytes     = $songBytes
@@ -1417,6 +1450,76 @@ function Get-BaseSyncExcludes {
     if (Test-Path -LiteralPath ([System.IO.Path]::Combine($GamePath, 'config.xml'))) { $ex += '/config.xml' }
     foreach ($f in $KeepFiles) { if ($f) { $ex += $f } }
     return $ex
+}
+
+# ----------------------------------------------------------------------------
+# Protected base files: Legacy.exe, the Kinect shim DLLs, and the bundle/patch
+# ipks all live at the base-game root and are the files a real Legacy PC mod
+# is most likely to replace. Get-UpdatePlan asks before overwriting one, but
+# only when the local copy's hash doesn't match what WE last wrote there
+# (see Update-ProtectedFileHashes) - that's what lets a non-modding user who
+# always answers "keep mine" without reading (the common case that was
+# quietly freezing Legacy.exe forever) start auto-updating again after the
+# first honest answer, while a genuinely modded file never matches and keeps
+# getting the protective prompt on every release.
+# ----------------------------------------------------------------------------
+
+function Test-ProtectedBaseFile([string]$Leaf) {
+    $l = $Leaf.ToLowerInvariant()
+    return ($l -in @('legacy.exe', 'bundle_pc.ipk', 'patch_pc.ipk')) -or ($l -like 'kinect*.dll')
+}
+
+function Get-FileHashSafe([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
+    try { return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash } catch { return $null }
+}
+
+function Get-ProtectedFileHashPath([string]$GamePath) {
+    return [System.IO.Path]::Combine($GamePath, '.legacydownloader-protected.json')
+}
+
+function Get-ProtectedFileHashRecord([string]$GamePath) {
+    # filename (lowercase) -> SHA256 of the copy this tool itself last wrote there.
+    $path = Get-ProtectedFileHashPath $GamePath
+    if (-not (Test-Path -LiteralPath $path)) { return @{} }
+    try {
+        $raw  = [System.IO.File]::ReadAllText($path, [System.Text.Encoding]::UTF8)
+        $json = $raw | ConvertFrom-Json
+        $h = @{}
+        if ($json) { foreach ($p in $json.PSObject.Properties) { $h[$p.Name] = [string]$p.Value } }
+        return $h
+    } catch {
+        return @{}
+    }
+}
+
+function Save-ProtectedFileHashRecord([string]$GamePath, [hashtable]$Record) {
+    try { $Record | ConvertTo-Json | Set-Content -LiteralPath (Get-ProtectedFileHashPath $GamePath) -Encoding UTF8 } catch { }
+}
+
+function Update-ProtectedFileHashes {
+    # Call right after a base-game sync actually writes to GamePath. Records
+    # the post-copy hash of every protected file that wasn't excluded (kept)
+    # this round, so the next Get-UpdatePlan can tell "untouched since we
+    # wrote it" (safe to auto-update next time) apart from "genuinely
+    # modified since" (ask again). A file the user chose to keep is left out
+    # on purpose - its record (if any) must not advance, or a later release
+    # would silently overwrite it the moment its declined hash happens to
+    # match a stale recorded baseline.
+    param(
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        [string[]]$KeepFiles = @()
+    )
+    $keepLeaves = @($KeepFiles | Where-Object { $_ } | ForEach-Object { (Split-Path -Leaf $_).ToLowerInvariant() })
+    $files = @(Get-ChildItem -LiteralPath $GamePath -File -ErrorAction SilentlyContinue |
+        Where-Object { (Test-ProtectedBaseFile $_.Name) -and ($keepLeaves -notcontains $_.Name.ToLowerInvariant()) })
+    if ($files.Count -eq 0) { return }
+    $record = Get-ProtectedFileHashRecord $GamePath
+    foreach ($f in $files) {
+        $hash = Get-FileHashSafe $f.FullName
+        if ($hash) { $record[$f.Name.ToLowerInvariant()] = $hash }
+    }
+    Save-ProtectedFileHashRecord $GamePath $record
 }
 
 # ----------------------------------------------------------------------------
@@ -1829,6 +1932,7 @@ Export-ModuleMember -Function `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
     Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `
+    Test-ProtectedBaseFile, Get-ProtectedFileHashRecord, Update-ProtectedFileHashes, `
     Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl, `
     Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
