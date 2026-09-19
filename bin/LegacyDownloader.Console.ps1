@@ -720,7 +720,33 @@ function Show-RequirementsWizard([string]$GamePath) {
         if (-not (Confirm-YesNo (T 'menu.requirements_install_prompt' @{ name = $item.Name }))) { continue }
         Write-Host (T 'menu.requirements_downloading' @{ name = $item.Name })
         $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+        # A bundled copy (or a missing FetchUrl) resolves instantly inside
+        # Get-RequirementInstaller with no callback invocations at all -
+        # only print an in-place percent line for an item that's actually
+        # about to hit the network, matching $item.BundledPath's own
+        # Test-Path check (see Get-RequirementsStatus).
+        if (-not $item.BundledPath) {
+            # GetNewClosure() is required, not optional - a plain {}
+            # scriptblock resolves free variables like $item in the CALLER's
+            # scope at invocation time (Get-RequirementInstaller's own scope
+            # in the Core module), not the scope it was written in.
+            $progressCallback = {
+                param($pct, $received, $total)
+                $line = if ($pct -ge 0) {
+                    T 'menu.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
+                } else {
+                    T 'menu.requirements_downloading' @{ name = $item.Name }
+                }
+                # Pad to a fixed width and `r back to column 0 so a shorter
+                # line (e.g. 100% -> a later 9%) doesn't leave stray
+                # characters from the previous, longer line behind.
+                Write-Host -NoNewline ("`r  " + $line.PadRight(70))
+            }.GetNewClosure()
+            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
+            Write-Host ""
+        } else {
+            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+        }
         if (-not $fetch.Ok) {
             Write-Host (T 'menu.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }) -ForegroundColor Yellow
             continue

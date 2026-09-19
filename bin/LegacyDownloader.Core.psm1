@@ -1629,9 +1629,18 @@ function Get-RequirementInstaller {
     # FetchUrl. NEVER falls back to any other host - on any failure returns
     # .Ok = $false with .OfficialUrl still set, so the caller can show a
     # manual-download link instead of a dead end.
+    #
+    # -ProgressCallback (optional): invoked as & $ProgressCallback $percent
+    # $bytesReceived $totalBytes while an actual network download is in
+    # progress (never for a bundled-copy or a failed-preflight return, since
+    # no bytes move in either case). $percent is -1 when the server didn't
+    # send a Content-Length, so the caller can fall back to an indeterminate
+    # display; otherwise it's throttled to fire only when the whole-number
+    # percentage actually changes, not on every buffer read.
     param(
         [Parameter(Mandatory = $true)]$Item,
-        [Parameter(Mandatory = $true)][string]$DestDir
+        [Parameter(Mandatory = $true)][string]$DestDir,
+        [scriptblock]$ProgressCallback
     )
     # .Downloaded distinguishes a real temp-folder download (safe for a
     # caller to delete once it's done with it) from the bundled path
@@ -1655,12 +1664,68 @@ function Get-RequirementInstaller {
     # folder copy is ever missing/corrupted), which would otherwise let
     # two different items collide on the same destination file.
     $dest = Join-Path $DestDir "$($Item.Id).exe"
+
+    if (-not $ProgressCallback) {
+        # No caller-supplied progress sink - keep the plain one-shot path
+        # (used by, e.g., the self-test harness) rather than paying for the
+        # manual stream copy below when nothing will read it.
+        try {
+            Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
+            if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
+            return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl; Downloaded = $true }
+        } catch {
+            Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+            return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
+        }
+    }
+
+    # Manual HttpWebRequest + buffered stream copy instead of Invoke-
+    # WebRequest -OutFile: that cmdlet has no per-byte hook at all in
+    # Windows PowerShell 5.1, so there's no way to report progress through
+    # it. HttpWebRequest is what Invoke-WebRequest itself uses internally
+    # here, so this doesn't change the real HTTP/TLS behavior - same
+    # ServicePointManager-level settings apply either way.
     try {
-        # 600s, not the original 180s - the largest of these (Kinect SDK
-        # 2.0) is ~275MB, which a 180s cap would fail on anything slower
-        # than a genuinely fast connection even when the transfer was
-        # otherwise working fine.
-        Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
+        $req = [System.Net.HttpWebRequest]::Create($Item.FetchUrl)
+        # Timeout covers waiting for the response headers; ReadWriteTimeout
+        # covers each individual stream Read() call - together a stalled
+        # connection is caught quickly instead of only at some overall
+        # wall-clock cap, unlike the single -TimeoutSec above. Same 600s
+        # ceiling either way, chosen for the ~275MB Kinect SDK 2.0 installer.
+        $req.Timeout = 600000
+        $req.ReadWriteTimeout = 600000
+        $resp = $req.GetResponse()
+        try {
+            $total = [long]$resp.ContentLength   # -1 when the server omits it
+            $inStream = $resp.GetResponseStream()
+            try {
+                $outStream = [System.IO.File]::Create($dest)
+                try {
+                    $buffer = New-Object byte[] 65536
+                    $received = [long]0
+                    $lastPct = -1
+                    while (($read = $inStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                        $outStream.Write($buffer, 0, $read)
+                        $received += $read
+                        if ($total -gt 0) {
+                            $pct = [int](($received * 100) / $total)
+                            if ($pct -ne $lastPct) {
+                                $lastPct = $pct
+                                & $ProgressCallback $pct $received $total
+                            }
+                        } else {
+                            & $ProgressCallback -1 $received $total
+                        }
+                    }
+                } finally {
+                    $outStream.Dispose()
+                }
+            } finally {
+                $inStream.Dispose()
+            }
+        } finally {
+            $resp.Dispose()
+        }
         if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
         return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl; Downloaded = $true }
     } catch {

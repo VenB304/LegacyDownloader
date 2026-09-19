@@ -2681,6 +2681,18 @@ function Show-RequirementsDialog {
     $lblStatus.ForeColor = $script:ColorMuted
     $y += $lblStatus.Height + 10
 
+    # Reserved space for the same reason $lblStatus's row is always
+    # reserved even when its text is blank - a bar that only appears while
+    # a download is running, without resizing this modal dialog around it,
+    # needs its row accounted for in the fixed layout up front. Same
+    # Style/MarqueeAnimationSpeed convention as the main window's $script:Bar.
+    $progressBar = New-Object System.Windows.Forms.ProgressBar
+    $progressBar.SetBounds(14, $y, 452, 18)
+    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+    $progressBar.MarqueeAnimationSpeed = 30
+    $progressBar.Visible = $false
+    $y += $progressBar.Height + 10
+
     # Manual re-check, for when automatic detection has a false negative
     # (something installed outside this app that the registry/DLL checks
     # don't happen to catch) - left-aligned, opposite Close, matching the
@@ -2792,9 +2804,37 @@ function Show-RequirementsDialog {
         $grid.Enabled = $false; $btnClose.Enabled = $false; $btnRefresh.Enabled = $false
 
         $lblStatus.Text = T 'gui.requirements_downloading' @{ name = $item.Name }
+        # A bundled copy (or a missing FetchUrl) resolves instantly inside
+        # Get-RequirementInstaller with no bytes moved - only show the bar
+        # for an item that's actually about to hit the network, matching
+        # $item.BundledPath's own Test-Path check (see Get-RequirementsStatus).
+        $willDownload = -not $item.BundledPath
+        if ($willDownload) {
+            $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+            $progressBar.Value = 0
+            $progressBar.Visible = $true
+        }
         [System.Windows.Forms.Application]::DoEvents()
         $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir
+        # GetNewClosure() is required here, not optional - without it this
+        # scriptblock loses $item/$lblStatus/$progressBar entirely once
+        # invoked from Get-RequirementInstaller's own scope in the Core
+        # module, since a plain {} scriptblock resolves free variables in
+        # the CALLER's scope at invocation time, not the scope it was
+        # written in.
+        $progressCallback = {
+            param($pct, $received, $total)
+            if ($pct -ge 0) {
+                $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+                $progressBar.Value = $pct
+                $lblStatus.Text = T 'gui.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
+            } else {
+                $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+            }
+            [System.Windows.Forms.Application]::DoEvents()
+        }.GetNewClosure()
+        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
+        $progressBar.Visible = $false
         if (-not $fetch.Ok) {
             $lblStatus.Text = T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }
         } else {
@@ -2846,7 +2886,7 @@ function Show-RequirementsDialog {
 
     $f.ClientSize = New-Object System.Drawing.Size(480, $y)
     $f.CancelButton = $btnClose
-    $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $btnRefresh, $btnClose))
+    $f.Controls.AddRange(@($lblIntro, $grid, $lblStatus, $progressBar, $btnRefresh, $btnClose))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -2862,6 +2902,17 @@ function Show-RequirementsDialog {
         [System.Windows.Forms.Application]::DoEvents()
         Write-Host "  after Refresh click: grid row count: $($grid.Rows.Count) (expect 6), btnRefresh.Enabled: $($btnRefresh.Enabled) (expect True)"
         if ($grid.Rows.Count -ne 6 -or -not $btnRefresh.Enabled) { Write-Host "  SELFTEST FAILURE: Refresh click left the dialog in a bad state" -ForegroundColor Red }
+        # Static geometry only, not a live download - this dev machine has
+        # every requirement installed already (see project notes), so a
+        # real CellContentClick on any row no-ops before ever reaching
+        # Get-RequirementInstaller. The live install->download->re-detect
+        # path stays a manual/real-user verification, same as before.
+        Write-Host "`n=== ProgressBar geometry ==="
+        Write-Host "  Visible=$($progressBar.Visible) (expect False, no download in progress)  Left=$($progressBar.Left) Width=$($progressBar.Width) (expect Left/Width to match grid: Left=$($grid.Left) Width=$($grid.Width))"
+        if ($progressBar.Visible) { Write-Host "  SELFTEST FAILURE: progress bar visible with no download in progress" -ForegroundColor Red }
+        if ($progressBar.Left -ne $grid.Left -or $progressBar.Width -ne $grid.Width) { Write-Host "  SELFTEST FAILURE: progress bar not aligned with the grid" -ForegroundColor Red }
+        if ($progressBar.Top -le $lblStatus.Bottom) { Write-Host "  SELFTEST FAILURE: progress bar overlaps the status label" -ForegroundColor Red }
+        if ($progressBar.Bottom -ge $btnRefresh.Top) { Write-Host "  SELFTEST FAILURE: progress bar overlaps the Refresh button" -ForegroundColor Red }
         Start-Sleep -Milliseconds 200
         $f.Dispose()
         return
