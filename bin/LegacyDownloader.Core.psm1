@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V9.1'
+$script:AppVersion = 'V9.2'
 
 function Get-AppVersion { return $script:AppVersion }
 
