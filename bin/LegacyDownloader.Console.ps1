@@ -720,12 +720,13 @@ function Show-RequirementsWizard([string]$GamePath) {
         if (-not (Confirm-YesNo (T 'menu.requirements_install_prompt' @{ name = $item.Name }))) { continue }
         Write-Host (T 'menu.requirements_downloading' @{ name = $item.Name })
         $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-        # A bundled copy (or a missing FetchUrl) resolves instantly inside
-        # Get-RequirementInstaller with no callback invocations at all -
-        # only print an in-place percent line for an item that's actually
-        # about to hit the network, matching $item.BundledPath's own
-        # Test-Path check (see Get-RequirementsStatus).
-        if (-not $item.BundledPath) {
+        # A bundled copy resolves instantly inside Get-RequirementInstaller
+        # with no callback invocations at all, and so does a missing
+        # FetchUrl (directx has none - it's bundled-only) - only print an
+        # in-place percent line for an item that's actually about to hit
+        # the network, matching Get-RequirementInstaller's own "bundled,
+        # then FetchUrl" gate.
+        if ((-not $item.BundledPath) -and $item.FetchUrl) {
             # GetNewClosure() is required, not optional - a plain {}
             # scriptblock resolves free variables like $item in the CALLER's
             # scope at invocation time (Get-RequirementInstaller's own scope

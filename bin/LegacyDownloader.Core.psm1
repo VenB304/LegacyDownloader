@@ -1633,10 +1633,13 @@ function Get-RequirementInstaller {
     # -ProgressCallback (optional): invoked as & $ProgressCallback $percent
     # $bytesReceived $totalBytes while an actual network download is in
     # progress (never for a bundled-copy or a failed-preflight return, since
-    # no bytes move in either case). $percent is -1 when the server didn't
-    # send a Content-Length, so the caller can fall back to an indeterminate
-    # display; otherwise it's throttled to fire only when the whole-number
-    # percentage actually changes, not on every buffer read.
+    # no bytes move in either case). $percent is always clamped to 0-100 (a
+    # misreporting server can't push a caller-side control like a WinForms
+    # ProgressBar out of its valid range), or -1 when the server didn't send
+    # a Content-Length, so the caller can fall back to an indeterminate
+    # display. The known-total case is throttled to fire only when the
+    # whole-number percentage actually changes; the unknown-total case is
+    # throttled to at most ~10/sec, since there's no percentage to gate on.
     param(
         [Parameter(Mandatory = $true)]$Item,
         [Parameter(Mandatory = $true)][string]$DestDir,
@@ -1665,35 +1668,35 @@ function Get-RequirementInstaller {
     # two different items collide on the same destination file.
     $dest = Join-Path $DestDir "$($Item.Id).exe"
 
-    if (-not $ProgressCallback) {
-        # No caller-supplied progress sink - keep the plain one-shot path
-        # (used by, e.g., the self-test harness) rather than paying for the
-        # manual stream copy below when nothing will read it.
-        try {
-            Invoke-WebRequest -Uri $Item.FetchUrl -OutFile $dest -UseBasicParsing -TimeoutSec 600 -ErrorAction Stop
-            if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
-            return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl; Downloaded = $true }
-        } catch {
-            Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
-            return [PSCustomObject]@{ Ok = $false; Path = $null; OfficialUrl = $Item.OfficialUrl; Downloaded = $false }
-        }
-    }
+    # A no-op default rather than a separate Invoke-WebRequest-only code
+    # path for callers that don't care about progress: two independently
+    # maintained HTTP download implementations (timeouts, empty-file check,
+    # cleanup-on-failure) were a real maintenance risk, and this one is what
+    # both real front-ends always use for anything that isn't a bundled
+    # copy.
+    if (-not $ProgressCallback) { $ProgressCallback = {} }
 
     # Manual HttpWebRequest + buffered stream copy instead of Invoke-
     # WebRequest -OutFile: that cmdlet has no per-byte hook at all in
     # Windows PowerShell 5.1, so there's no way to report progress through
     # it. HttpWebRequest is what Invoke-WebRequest itself uses internally
-    # here, so this doesn't change the real HTTP/TLS behavior - same
-    # ServicePointManager-level settings apply either way.
+    # here, so the TLS/ServicePointManager-level behavior is unchanged -
+    # only the User-Agent needed setting explicitly below, since
+    # HttpWebRequest (unlike Invoke-WebRequest) sends none by default.
     try {
         $req = [System.Net.HttpWebRequest]::Create($Item.FetchUrl)
+        $req.UserAgent = 'LegacyDownloader (+https://github.com/VenB304/LegacyDownloader)'
         # Timeout covers waiting for the response headers; ReadWriteTimeout
-        # covers each individual stream Read() call - together a stalled
-        # connection is caught quickly instead of only at some overall
-        # wall-clock cap, unlike the single -TimeoutSec above. Same 600s
-        # ceiling either way, chosen for the ~275MB Kinect SDK 2.0 installer.
+        # covers each individual stream Read() call, catching a truly
+        # stalled connection faster than waiting for one overall cap to
+        # expire. Neither one bounds the TOTAL transfer time by itself
+        # though (a connection that always delivers its next chunk just
+        # under the ReadWriteTimeout could run indefinitely), so $deadline
+        # below restores the original single 600s-for-the-whole-download
+        # guarantee on top of them.
         $req.Timeout = 600000
         $req.ReadWriteTimeout = 600000
+        $deadline = [DateTime]::UtcNow.AddMilliseconds(600000)
         $resp = $req.GetResponse()
         try {
             $total = [long]$resp.ContentLength   # -1 when the server omits it
@@ -1704,17 +1707,34 @@ function Get-RequirementInstaller {
                     $buffer = New-Object byte[] 65536
                     $received = [long]0
                     $lastPct = -1
+                    $lastTick = [Environment]::TickCount
                     while (($read = $inStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                        if ([DateTime]::UtcNow -gt $deadline) { throw "download exceeded the 600s time budget" }
                         $outStream.Write($buffer, 0, $read)
                         $received += $read
                         if ($total -gt 0) {
-                            $pct = [int](($received * 100) / $total)
+                            # Clamped even though a well-behaved server should
+                            # never report more bytes than its own declared
+                            # Content-Length - a stale/incorrect header on a
+                            # mirror is exactly the kind of thing this
+                            # shouldn't crash on, matching the same clamp the
+                            # rclone-based progress bar already applies.
+                            $pct = [Math]::Min(100, [Math]::Max(0, [int](($received * 100) / $total)))
                             if ($pct -ne $lastPct) {
                                 $lastPct = $pct
                                 & $ProgressCallback $pct $received $total
                             }
                         } else {
-                            & $ProgressCallback -1 $received $total
+                            # No percentage to throttle on when the total is
+                            # unknown - throttle by time instead, so a large
+                            # file served without Content-Length doesn't fire
+                            # a callback (and a GUI DoEvents() pump) on every
+                            # single 64KB read.
+                            $nowTick = [Environment]::TickCount
+                            if (($nowTick - $lastTick) -ge 100) {
+                                $lastTick = $nowTick
+                                & $ProgressCallback -1 $received $total
+                            }
                         }
                     }
                 } finally {

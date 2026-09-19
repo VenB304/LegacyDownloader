@@ -2596,6 +2596,20 @@ function Show-RequirementsDialog {
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $false
 
+    # Before the download-progress feature, a click's whole download+install
+    # sequence ran as one blocking call that never pumped Windows messages,
+    # so the title-bar Close (X) was unreachable until it finished. The
+    # progress callback below now calls DoEvents() on every tick, which DOES
+    # process a queued close - closing mid-download would tear the form down
+    # while Get-RequirementInstaller's read loop is still running against
+    # its controls. Block that instead of trying to make every downstream
+    # line defensive against a disposed control.
+    $downloading = $false
+    $f.Add_FormClosing({
+        param($s, $e)
+        if ($downloading) { $e.Cancel = $true }
+    })
+
     $introText = if ($FirstRun) { T 'gui.requirements_intro_firstrun' } else { T 'gui.requirements_intro' }
     $introSize = [System.Windows.Forms.TextRenderer]::MeasureText(
         $introText, $script:FontBase, (New-Object System.Drawing.Size(452, 0)),
@@ -2800,75 +2814,86 @@ function Show-RequirementsDialog {
         $item = $script:ReqDialogItems | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         if (-not $item -or $item.Installed) { return }
 
-        $f.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-        $grid.Enabled = $false; $btnClose.Enabled = $false; $btnRefresh.Enabled = $false
+        # $downloading gates $f's FormClosing handler above - the download
+        # loop below calls DoEvents() on every progress tick (unlike the old
+        # single blocking call), so the title-bar Close is reachable again
+        # mid-transfer; try/finally guarantees the flag (and the UI busy
+        # state) clears even if something in here throws unexpectedly.
+        $downloading = $true
+        try {
+            $f.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+            $grid.Enabled = $false; $btnClose.Enabled = $false; $btnRefresh.Enabled = $false
 
-        $lblStatus.Text = T 'gui.requirements_downloading' @{ name = $item.Name }
-        # A bundled copy (or a missing FetchUrl) resolves instantly inside
-        # Get-RequirementInstaller with no bytes moved - only show the bar
-        # for an item that's actually about to hit the network, matching
-        # $item.BundledPath's own Test-Path check (see Get-RequirementsStatus).
-        $willDownload = -not $item.BundledPath
-        if ($willDownload) {
-            $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
-            $progressBar.Value = 0
-            $progressBar.Visible = $true
-        }
-        [System.Windows.Forms.Application]::DoEvents()
-        $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
-        # GetNewClosure() is required here, not optional - without it this
-        # scriptblock loses $item/$lblStatus/$progressBar entirely once
-        # invoked from Get-RequirementInstaller's own scope in the Core
-        # module, since a plain {} scriptblock resolves free variables in
-        # the CALLER's scope at invocation time, not the scope it was
-        # written in.
-        $progressCallback = {
-            param($pct, $received, $total)
-            if ($pct -ge 0) {
-                $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
-                $progressBar.Value = $pct
-                $lblStatus.Text = T 'gui.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
-            } else {
+            $lblStatus.Text = T 'gui.requirements_downloading' @{ name = $item.Name }
+            # A bundled copy resolves instantly inside Get-RequirementInstaller
+            # with no bytes moved, and so does a missing FetchUrl (directx has
+            # none - it's bundled-only) - only show the bar for an item that's
+            # actually about to hit the network, matching Get-RequirementInstaller's
+            # own "bundled, then FetchUrl" gate.
+            $willDownload = (-not $item.BundledPath) -and $item.FetchUrl
+            if ($willDownload) {
                 $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+                $progressBar.Value = 0
+                $progressBar.Visible = $true
             }
             [System.Windows.Forms.Application]::DoEvents()
-        }.GetNewClosure()
-        $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
-        $progressBar.Visible = $false
-        if (-not $fetch.Ok) {
-            $lblStatus.Text = T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }
-        } else {
-            $lblStatus.Text = T 'gui.requirements_installing' @{ name = $item.Name }
-            [System.Windows.Forms.Application]::DoEvents()
-            $res = Install-Requirement -Item $item -Path $fetch.Path
-            if ($fetch.Downloaded) {
-                # Only ever the temp-folder copy Get-RequirementInstaller
-                # just downloaded - $fetch.Path points straight at the
-                # game's own Support\ folder when it came from there
-                # instead, and that must never be touched.
-                Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
-            }
-
-            # Trust a fresh real re-check over the installer's own exit
-            # code for the message shown - not every installer here
-            # follows the same MSI 0/3010/1638 exit-code convention
-            # (DXSETUP.exe in particular is a legacy cab installer, exact
-            # convention unverified), so asking "is it actually installed
-            # now" is more honest than trusting a guessed-at exit code.
-            $nowInstalled = (@(Get-RequirementsStatus -GamePath $gp | Where-Object { $_.Id -eq $item.Id }))[0].Installed
-            $lblStatus.Text = if ($nowInstalled -and $res.RebootRequired) {
-                T 'gui.requirements_install_done_reboot' @{ name = $item.Name }
-            } elseif ($nowInstalled) {
-                T 'gui.requirements_install_done' @{ name = $item.Name }
-            } elseif ($res.Cancelled) {
-                T 'gui.requirements_install_cancelled' @{ name = $item.Name }
+            $destDir = Join-Path $env:TEMP 'LegacyDownloaderRequirements'
+            # GetNewClosure() is required here, not optional - without it this
+            # scriptblock loses $item/$lblStatus/$progressBar entirely once
+            # invoked from Get-RequirementInstaller's own scope in the Core
+            # module, since a plain {} scriptblock resolves free variables in
+            # the CALLER's scope at invocation time, not the scope it was
+            # written in.
+            $progressCallback = {
+                param($pct, $received, $total)
+                if ($pct -ge 0) {
+                    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+                    $progressBar.Value = $pct
+                    $lblStatus.Text = T 'gui.requirements_downloading_pct' @{ name = $item.Name; pct = $pct }
+                } else {
+                    $progressBar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+                }
+                [System.Windows.Forms.Application]::DoEvents()
+            }.GetNewClosure()
+            $fetch = Get-RequirementInstaller -Item $item -DestDir $destDir -ProgressCallback $progressCallback
+            $progressBar.Visible = $false
+            if (-not $fetch.Ok) {
+                $lblStatus.Text = T 'gui.requirements_download_failed' @{ name = $item.Name; url = $fetch.OfficialUrl }
             } else {
-                T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }
-            }
-        }
+                $lblStatus.Text = T 'gui.requirements_installing' @{ name = $item.Name }
+                [System.Windows.Forms.Application]::DoEvents()
+                $res = Install-Requirement -Item $item -Path $fetch.Path
+                if ($fetch.Downloaded) {
+                    # Only ever the temp-folder copy Get-RequirementInstaller
+                    # just downloaded - $fetch.Path points straight at the
+                    # game's own Support\ folder when it came from there
+                    # instead, and that must never be touched.
+                    Remove-Item -LiteralPath $fetch.Path -Force -ErrorAction SilentlyContinue
+                }
 
-        $f.Cursor = [System.Windows.Forms.Cursors]::Default
-        $grid.Enabled = $true; $btnClose.Enabled = $true; $btnRefresh.Enabled = $true
+                # Trust a fresh real re-check over the installer's own exit
+                # code for the message shown - not every installer here
+                # follows the same MSI 0/3010/1638 exit-code convention
+                # (DXSETUP.exe in particular is a legacy cab installer, exact
+                # convention unverified), so asking "is it actually installed
+                # now" is more honest than trusting a guessed-at exit code.
+                $nowInstalled = (@(Get-RequirementsStatus -GamePath $gp | Where-Object { $_.Id -eq $item.Id }))[0].Installed
+                $lblStatus.Text = if ($nowInstalled -and $res.RebootRequired) {
+                    T 'gui.requirements_install_done_reboot' @{ name = $item.Name }
+                } elseif ($nowInstalled) {
+                    T 'gui.requirements_install_done' @{ name = $item.Name }
+                } elseif ($res.Cancelled) {
+                    T 'gui.requirements_install_cancelled' @{ name = $item.Name }
+                } else {
+                    T 'gui.requirements_install_failed' @{ name = $item.Name; code = $res.ExitCode }
+                }
+            }
+        } finally {
+            $downloading = $false
+            $f.Cursor = [System.Windows.Forms.Cursors]::Default
+            $grid.Enabled = $true; $btnClose.Enabled = $true; $btnRefresh.Enabled = $true
+            $progressBar.Visible = $false
+        }
         $savedStatus = $lblStatus.Text
         & $refresh
         if ($lblStatus.Text -eq (T 'gui.requirements_all_done') -or [string]::IsNullOrEmpty($lblStatus.Text)) {
