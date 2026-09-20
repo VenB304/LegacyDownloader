@@ -990,7 +990,13 @@ function Initialize-SongSelectionContext {
     # Resolve-SongSelection for how that's carried through untouched).
     param(
         [Parameter(Mandatory = $true)]$Catalog,
-        [Parameter(Mandatory = $true)][string]$CurrentEditions,
+        # AllowEmptyString: Get-LocalSongSelection returns Editions = '' for
+        # a fresh GamePath with zero local maps (not 'AUTO' - nothing is
+        # tracked yet), and a mandatory [string] parameter otherwise rejects
+        # that '' at bind time. '' -split ',' | Where { $_ -ne '' } already
+        # collapses to an empty $trackedList, so this is handled correctly
+        # below without further changes.
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$CurrentEditions,
         [string]$CurrentSongFilters = ''
     )
     $rows = @($Catalog | Sort-Object Edition, Title)
