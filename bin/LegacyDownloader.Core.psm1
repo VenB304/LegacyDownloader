@@ -319,6 +319,7 @@ function Load-Config {
     $shareUrl = ''
     $songFilters = ''
     $autoLaunch = $false
+    $autoCheck = $false
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -332,10 +333,11 @@ function Load-Config {
         if ($key -eq 'SHAREURL')    { $shareUrl = $value }
         if ($key -eq 'SONGFILTERS') { $songFilters = $value }
         if ($key -eq 'AUTOLAUNCH')  { $autoLaunch = ($value -eq 'true') }
+        if ($key -eq 'AUTOCHECK')   { $autoCheck = ($value -eq 'true') }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
-    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters; AutoLaunch = $autoLaunch }
+    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck }
 }
 
 function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [string]$SongFilters) {
@@ -353,6 +355,9 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [strin
     # silently dropping a hand-edited value on the next unrelated save.
     $AutoLaunchOut = Read-ConfigValue 'AUTOLAUNCH'
     if ($AutoLaunchOut -ne 'true') { $AutoLaunchOut = 'false' }
+    # AUTOCHECK, same story as AUTOLAUNCH - no UI yet, preserve hand-edits.
+    $AutoCheckOut = Read-ConfigValue 'AUTOCHECK'
+    if ($AutoCheckOut -ne 'true') { $AutoCheckOut = 'false' }
     # SONGFILTERS, like LANG, is only rewritten when a caller explicitly
     # passes it - an omitted argument preserves whatever's already saved
     # instead of silently clearing a user's per-song picks.
@@ -392,6 +397,12 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [strin
         "# prompt. Default false. A future Settings screen will make this"
         "# easier to toggle than hand-editing this file."
         "AUTOLAUNCH=$AutoLaunchOut"
+        ""
+        "# AUTOCHECK (advanced) - when true, automatically checks for updates"
+        "# as soon as the tool opens (an existing install only - never on a"
+        "# fresh first-run setup). Default false. A future Settings screen"
+        "# will make this easier to toggle than hand-editing this file."
+        "AUTOCHECK=$AutoCheckOut"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 

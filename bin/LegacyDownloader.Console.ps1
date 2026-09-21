@@ -110,6 +110,27 @@ function Show-LaunchPrompt([string]$GamePath, [bool]$AutoLaunch) {
     }
 }
 
+# Shared by the menu's own "Download / check" option and the AUTOCHECK
+# startup trigger, so the two don't duplicate the preview -> update ->
+# launch-prompt sequence. Runs a --dry-run preview, updates if the user
+# (or a real download) confirms one's needed, then offers Show-LaunchPrompt
+# either way - matching Show-UpdatePreview's own "nothing left" early-out
+# printing its own messaging, so only Dismissed (declined/net failure)
+# skips the launch offer entirely.
+function Invoke-CheckAndOfferLaunch {
+    param([string]$GamePath, [string]$Editions, [string]$SongFilters, [bool]$AutoLaunch)
+    $prev = Show-UpdatePreview -GamePath $GamePath -Editions $Editions -SongFilters $SongFilters
+    if ($prev.Proceed) {
+        Write-Host ""
+        Invoke-Update -GamePath $GamePath -Editions $Editions -BaseExcludes $prev.BaseExcludes -SongFilters $SongFilters -Confirmed
+        Write-Host ""
+        Write-Host (T 'menu.up_to_date_play')
+        Show-LaunchPrompt -GamePath $GamePath -AutoLaunch $AutoLaunch
+    } elseif (-not $prev.Dismissed) {
+        Show-LaunchPrompt -GamePath $GamePath -AutoLaunch $AutoLaunch
+    }
+}
+
 function Show-FolderPicker([string]$Description) {
     if ($IsLinux) {
         Write-Host ""
@@ -965,6 +986,10 @@ function Run-SetupWizard {
 # (LegacyDownloader.ps1) before this interface is loaded.
 
 $cfg = Load-Config
+# Captured before the first-run block below can reassign $cfg.GamePath -
+# AUTOCHECK must never fire on a fresh setup session, only an existing
+# install opening the tool for an unrelated reason.
+$isFirstRunSession = [string]::IsNullOrWhiteSpace($cfg.GamePath)
 
 if ([string]::IsNullOrWhiteSpace($cfg.GamePath)) {
     $pickedLang = Choose-Language $cfg.Lang
@@ -1032,6 +1057,17 @@ if (-not [string]::IsNullOrWhiteSpace($cfg.GamePath)) {
     }
 }
 
+# AUTOCHECK: an existing install (never a fresh first-run setup session -
+# see $isFirstRunSession above) opening the tool checks for updates
+# automatically, once per process start. Windows-only in practice -
+# Show-LaunchPrompt/Invoke-CheckAndOfferLaunch already gate the launch
+# offer behind -not $IsLinux, but the check itself still runs on Linux too.
+if (-not $isFirstRunSession -and $cfg.AutoCheck -and (Test-GameFolder $cfg.GamePath)) {
+    Write-Host ""
+    Invoke-CheckAndOfferLaunch -GamePath $cfg.GamePath -Editions $cfg.Editions -SongFilters $cfg.SongFilters -AutoLaunch $cfg.AutoLaunch
+    Pause-Continue
+}
+
 while ($true) {
     Clear-Host
     $langEntry = $AvailableLangs | Where-Object { $_.Code -eq $cfg.Lang } | Select-Object -First 1
@@ -1074,19 +1110,7 @@ while ($true) {
     switch ($choice) {
         '1' {
             Write-Host ""
-            $prev = Show-UpdatePreview -GamePath $cfg.GamePath -Editions $cfg.Editions -SongFilters $cfg.SongFilters
-            if ($prev.Proceed) {
-                Write-Host ""
-                Invoke-Update -GamePath $cfg.GamePath -Editions $cfg.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $cfg.SongFilters -Confirmed
-                Write-Host ""
-                Write-Host (T 'menu.up_to_date_play')
-                Show-LaunchPrompt -GamePath $cfg.GamePath -AutoLaunch $cfg.AutoLaunch
-            } elseif (-not $prev.Dismissed) {
-                # Show-UpdatePreview already printed its own "up to date"
-                # confirmation for the nothing-to-download case - just offer
-                # the launch prompt on top of it.
-                Show-LaunchPrompt -GamePath $cfg.GamePath -AutoLaunch $cfg.AutoLaunch
-            }
+            Invoke-CheckAndOfferLaunch -GamePath $cfg.GamePath -Editions $cfg.Editions -SongFilters $cfg.SongFilters -AutoLaunch $cfg.AutoLaunch
             Pause-Continue
         }
         '2' {

@@ -3524,6 +3524,18 @@ function Build-MainForm {
             $script:AutoRunDone = $true
             if ($script:FirstRunMode -eq 'get' -and -not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
                 if (Test-GameFolder $script:Cfg.GamePath) { On-Check } else { Start-FirstRunBaseDownload }
+                return
+            }
+            # AUTOCHECK: an existing install (no first-run mode at all, not
+            # a fresh 'have'/'get' setup session) opening the tool checks
+            # for updates automatically. A separate condition from the
+            # first-run trigger above, not merged into it - the two guards
+            # actively exclude each other's case (first-run cares about
+            # $FirstRunMode being 'get'; this explicitly requires it to be
+            # unset), so conflating them risks a double-trigger or the
+            # wrong one firing on a first-run session.
+            if ($script:Cfg.AutoCheck -and [string]::IsNullOrEmpty($script:FirstRunMode) -and (Test-GameFolder $script:Cfg.GamePath)) {
+                On-Check
             }
         })
 
