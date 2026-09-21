@@ -185,6 +185,7 @@
   "gui.btn_exit": "Afsluiten",
   "gui.btn_stop": "Stoppen",
   "gui.progress_scanning": "Controleren wat je al hebt (nog geen downloads)...",
+  "gui.scan_cancelled": "Controle geannuleerd.",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "{label} voorbereiden...",
   "gui.progress_done_line": "{label} - klaar",

@@ -185,6 +185,7 @@
   "gui.btn_exit": "Sair",
   "gui.btn_stop": "Parar",
   "gui.progress_scanning": "Verificando o que você já tem (nenhum download por enquanto)...",
+  "gui.scan_cancelled": "Verificação cancelada.",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "Preparando {label}...",
   "gui.progress_done_line": "{label} - concluído",

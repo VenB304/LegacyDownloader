@@ -185,6 +185,7 @@
   "gui.btn_exit": "終了",
   "gui.btn_stop": "停止",
   "gui.progress_scanning": "すでに持っているものを確認しています (まだダウンロードはしません)...",
+  "gui.scan_cancelled": "確認をキャンセルしました。",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "{label} を準備しています...",
   "gui.progress_done_line": "{label} - 完了",

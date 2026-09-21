@@ -185,6 +185,7 @@
   "gui.btn_exit": "Esci",
   "gui.btn_stop": "Ferma",
   "gui.progress_scanning": "Controllo di quello che hai già (nessun download per ora)...",
+  "gui.scan_cancelled": "Controllo annullato.",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "Preparazione di {label}...",
   "gui.progress_done_line": "{label} - completato",

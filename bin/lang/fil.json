@@ -185,6 +185,7 @@
   "gui.btn_exit": "Lumabas",
   "gui.btn_stop": "Ihinto",
   "gui.progress_scanning": "Sinusuri kung ano na ang mayroon ka (wala pang download)...",
+  "gui.scan_cancelled": "Kinansela ang pag-check.",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "Inihahanda ang {label}...",
   "gui.progress_done_line": "{label} - tapos na",

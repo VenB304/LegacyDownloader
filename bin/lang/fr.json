@@ -185,6 +185,7 @@
   "gui.btn_exit": "Quitter",
   "gui.btn_stop": "Arrêter",
   "gui.progress_scanning": "Vérification de ce que vous avez déjà (aucun téléchargement pour l'instant)...",
+  "gui.scan_cancelled": "Vérification annulée.",
   "gui.progress_downloading": "{label} - {pct} %   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "Préparation de {label}...",
   "gui.progress_done_line": "{label} - terminé",

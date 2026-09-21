@@ -185,6 +185,7 @@
   "gui.btn_exit": "Beenden",
   "gui.btn_stop": "Stopp",
   "gui.progress_scanning": "Prüfe, was bereits vorhanden ist (noch keine Downloads)...",
+  "gui.scan_cancelled": "Prüfung abgebrochen.",
   "gui.progress_downloading": "{label} - {pct} %   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "{label} wird vorbereitet...",
   "gui.progress_done_line": "{label} - fertig",

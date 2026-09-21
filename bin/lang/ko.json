@@ -185,6 +185,7 @@
   "gui.btn_exit": "종료",
   "gui.btn_stop": "중지",
   "gui.progress_scanning": "이미 가지고 있는 것을 확인하는 중 (아직 다운로드하지 않음)...",
+  "gui.scan_cancelled": "확인이 취소되었습니다.",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "{label} 준비 중...",
   "gui.progress_done_line": "{label} - 완료",

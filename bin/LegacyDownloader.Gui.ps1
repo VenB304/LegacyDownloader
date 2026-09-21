@@ -24,6 +24,7 @@ $script:Conn      = $Core.Conn
 $script:Cfg       = Load-Config
 $script:Langs     = @(Get-AvailableLanguages)
 $script:Busy      = $false
+$script:Scanning  = $false                # true only during the scan phase (not downloads) - lets BtnCheck double as a Cancel button
 $script:Ready     = $false                # true once the main form is built (guards init-time events)
 $script:ScanJob   = $null                 # background job running Get-UpdatePlan
 $script:ScanOut   = $null                 # temp file the job writes the plan to (Export-Clixml)
@@ -536,6 +537,16 @@ function Append-Log([string]$Line) {
 function Begin-Scan([bool]$IgnoreWrong) {
     $script:ScanIgnoredWrongLevel = $IgnoreWrong
     Set-Busy $true
+    # BtnCheck stays clickable during the scan (unlike every other control
+    # Set-Busy just disabled) and doubles as Cancel - the scan can take a
+    # while on a slow connection, and a user who realizes mid-scan they
+    # want to change their song selection first shouldn't have to sit
+    # through the whole thing first. Downloads deliberately don't get the
+    # same treatment - killing rclone mid-transfer is a different, riskier
+    # problem (partial files) than cancelling a read-only --dry-run scan.
+    $script:Scanning = $true
+    $script:BtnCheck.Enabled = $true
+    $script:BtnCheck.Text = T 'gui.btn_cancel'
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
     $script:LblProg.Text = T 'gui.progress_scanning'
     Append-Log (T 'gui.progress_scanning')
@@ -557,10 +568,40 @@ function Begin-Scan([bool]$IgnoreWrong) {
     $script:ScanTimer.Start()
 }
 
+# Shared by Poll-Scan's normal-completion path and Cancel-Scan's early-out -
+# restores BtnCheck to its ordinary state. Set-Busy handles .Enabled
+# separately; this only owns .Text and the Scanning flag, so the two never
+# fight over the same property.
+function End-ScanUi {
+    $script:Scanning = $false
+    $script:BtnCheck.Text = T 'gui.btn_check'
+}
+
+function Cancel-Scan {
+    if (-not $script:Scanning) { return }
+    $script:ScanTimer.Stop()
+    if ($script:ScanJob) {
+        try { Stop-Job $script:ScanJob -ErrorAction SilentlyContinue } catch { }
+        try { Remove-Job $script:ScanJob -Force -ErrorAction SilentlyContinue } catch { }
+        $script:ScanJob = $null
+    }
+    if ($script:ScanOut) {
+        Remove-Item -LiteralPath $script:ScanOut -Force -ErrorAction SilentlyContinue
+        $script:ScanOut = $null
+    }
+    End-ScanUi
+    Set-Busy $false
+    $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+    $script:Bar.Value = 0
+    $script:LblProg.Text = ''
+    Append-Log (T 'gui.scan_cancelled')
+}
+
 function Poll-Scan {
     if (-not $script:ScanJob) { return }
     if ($script:ScanJob.State -eq 'Running' -or $script:ScanJob.State -eq 'NotStarted') { return }
     $script:ScanTimer.Stop()
+    End-ScanUi
 
     $job = $script:ScanJob; $script:ScanJob = $null
     $errMsg = $null
@@ -3591,7 +3632,7 @@ function Build-MainForm {
 
     # Check for updates button (Primary CTA)
     $script:BtnCheck = New-Btn '' 12 258 496 38 $true
-    $script:BtnCheck.Add_Click({ param($s, $e) On-Check })
+    $script:BtnCheck.Add_Click({ param($s, $e) if ($script:Scanning) { Cancel-Scan } else { On-Check } })
 
     # Progress bar & Status
     $script:Bar = New-Object System.Windows.Forms.ProgressBar

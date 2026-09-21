@@ -185,6 +185,7 @@
   "gui.btn_exit": "結束",
   "gui.btn_stop": "停止",
   "gui.progress_scanning": "正在檢查您已有的內容（暫不下載）...",
+  "gui.scan_cancelled": "已取消檢查。",
   "gui.progress_downloading": "{label} - {pct}%   {speed}/s   ETA {eta}",
   "gui.progress_preparing": "正在準備 {label}...",
   "gui.progress_done_line": "{label} - 完成",

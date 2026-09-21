@@ -185,6 +185,7 @@
   "gui.btn_exit": "Выход",
   "gui.btn_stop": "Остановить",
   "gui.progress_scanning": "Проверка того, что у вас уже есть (загрузка пока не выполняется)...",
+  "gui.scan_cancelled": "Проверка отменена.",
   "gui.progress_downloading": "{label} — {pct}%   {speed}/с   ETA {eta}",
   "gui.progress_preparing": "Подготовка {label}...",
   "gui.progress_done_line": "{label} — готово",
