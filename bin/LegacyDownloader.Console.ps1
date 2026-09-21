@@ -91,6 +91,25 @@ function Confirm-YesNo([string]$Prompt) {
     }
 }
 
+# Offers to launch Legacy.exe right after a successful check/update -
+# Windows-only, gated the same way the Requirements menu item is (no real
+# "launch a Windows exe" story on a native Linux console session). If
+# AUTOLAUNCH is on, launches and exits immediately with no prompt - the
+# fully-automatic opt-in a future Settings screen will expose.
+function Show-LaunchPrompt([string]$GamePath, [bool]$AutoLaunch) {
+    if ($IsLinux) { return }
+    if ($AutoLaunch) {
+        if (-not (Start-LegacyExe $GamePath)) { Write-Host (T 'menu.launch_exe_missing') -ForegroundColor Yellow }
+        Exit-Console
+        return
+    }
+    $ans = Read-Host (T 'menu.launch_prompt')
+    if ($ans -match '^[Ll]') {
+        if (-not (Start-LegacyExe $GamePath)) { Write-Host (T 'menu.launch_exe_missing') -ForegroundColor Yellow; return }
+        Exit-Console
+    }
+}
+
 function Show-FolderPicker([string]$Description) {
     if ($IsLinux) {
         Write-Host ""
@@ -1061,6 +1080,12 @@ while ($true) {
                 Invoke-Update -GamePath $cfg.GamePath -Editions $cfg.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $cfg.SongFilters -Confirmed
                 Write-Host ""
                 Write-Host (T 'menu.up_to_date_play')
+                Show-LaunchPrompt -GamePath $cfg.GamePath -AutoLaunch $cfg.AutoLaunch
+            } elseif (-not $prev.Dismissed) {
+                # Show-UpdatePreview already printed its own "up to date"
+                # confirmation for the nothing-to-download case - just offer
+                # the launch prompt on top of it.
+                Show-LaunchPrompt -GamePath $cfg.GamePath -AutoLaunch $cfg.AutoLaunch
             }
             Pause-Continue
         }

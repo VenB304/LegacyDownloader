@@ -2,7 +2,6 @@
   "_meta.code": "it",
   "_meta.name": "Italian",
   "_meta.nativeName": "Italiano",
-
   "common.rule": "============================================",
   "common.press_enter": "Premi Invio per continuare",
   "common.press_enter_close": "Premi Invio per chiudere",
@@ -16,14 +15,11 @@
   "common.skipped": "Saltato.",
   "common.saved": "Salvato.",
   "common.updated": "Aggiornato.",
-
   "entry.rclone_missing": "ERRORE: rclone.exe non è presente in questa cartella. Scarica di nuovo il pacchetto.",
   "entry.rclone_broken": "ERRORE: rclone.exe è presente ma non si avvia.\nDi solito è l'antivirus che lo ha messo in quarantena (rclone viene a volte\nsegnalato come 'hacktool' perché lo usano anche gli attaccanti - è uno\nstrumento open source legittimo e molto diffuso). Controlla la quarantena\no la cronologia del tuo antivirus per rclone.exe, ripristinalo o\nautorizzalo, poi riavvia.",
   "entry.no_frontend": "ERRORE: nessuna interfaccia trovata (LegacyDownloader.Console.ps1 mancante).",
   "entry.gui_crashed": "Legacy Downloader ha riscontrato un problema e non può continuare:",
-
   "error.cant_create_folder": "Impossibile creare la cartella: {error}",
-
   "songs.difficulty.1": "Facile",
   "songs.difficulty.2": "Medio",
   "songs.difficulty.3": "Difficile",
@@ -34,7 +30,6 @@
   "songs.effort.3": "Intenso",
   "songs.effort.4": "Estremo",
   "songs.rating.unknown": "Non valutato",
-
   "sync.base": "Aggiornamento dei file base del gioco (exe, DLL, Support, .ipk)...",
   "sync.edition": "Aggiornamento dell'edizione {edition}...",
   "sync.maps_missing_warn": "AVVISO: il gioco è installato qui ma non c'è la cartella 'maps':",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "Continuando verrà scaricata l'INTERA libreria di canzoni (oltre 100 GB).",
   "sync.maps_confirm_whole": "Scaricare comunque l'intera libreria?",
   "sync.all_editions": "Aggiornamento di TUTTE le edizioni di canzoni - potrebbe richiedere molto tempo al primo avvio.",
-
   "preview.checking": "Controllo di quello che hai già (nessun download per ora)...",
   "preview.wrong_level_warn": "AVVISO: Legacy.exe non è nella tua cartella di gioco:",
   "preview.wrong_level_real": "L'installazione reale sembra trovarsi in:",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  (le tue impostazioni vengono conservate)",
   "preview.list_songs": "Canzoni:",
   "preview.choose_1_2_3": "Scegli 1, 2 o 3.",
-
   "maps.header": "Scegli le canzoni da scaricare",
   "maps.opt_everything": "[1] Tutto (tutte le edizioni, più le nuove non appena escono)",
   "maps.opt_specific": "[2] Mappe / canzoni specifiche (intere edizioni o scegli singole canzoni)",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "Eliminare anche i {count} file audio deselezionati per '{edition}', o smettere solo di tenerli tracciati?",
   "maps.songs_deleted": "Rimossi {count} file audio da {edition}.",
   "maps.cant_delete_songs": "Impossibile rimuovere alcuni file di {edition} - potrebbero essere in uso (es. il gioco è in esecuzione).",
-
   "songbrowser.loading": "Recupero dell'ultimo elenco canzoni dal foglio della community...",
   "songbrowser.load_failed": "Impossibile raggiungere l'elenco canzoni al momento (nessuna connessione, o il foglio non è raggiungibile). Riprova più tardi.",
   "songbrowser.help": "Digita per cercare. Invio: seleziona/deseleziona. F2 edizione / F3 difficoltà / F4 filtro impegno. Esc: annulla.",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "Non hai selezionato nessuna canzone - da qui non verrebbe tracciato nulla.",
   "songbrowser.count_suffix": " ({count} canzoni)",
   "songbrowser.tree_help": "Destra/Sinistra: espandi/comprimi. Invio: seleziona/deseleziona. Digita per cercare ovunque. F5 colonna di ordinamento / F6 direzione di ordinamento (nei risultati di ricerca).",
-
   "setup.welcome_header": "Benvenuto!",
   "setup.welcome_body": "Questo programma scarica Legacy Offline PC e le sue canzoni\nper te, e può controllare la presenza di nuove canzoni in seguito.\nNessuna digitazione di percorsi - si aprirà una finestra per\nscegliere una cartella con un clic, come qualsiasi altro programma.",
   "setup.opt_have": "[1] Ho già il gioco su questo PC",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "Scaricare il gioco in questa cartella adesso?",
   "setup.popup_pick_empty": "Si aprirà una finestra - scegli (o crea) una cartella vuota dove\nil gioco verrà installato. Clicca su 'Crea nuova cartella' se ne vuoi\nuna nuova, poi premi Seleziona cartella.",
   "setup.picker_new": "Scegli una cartella per Legacy Offline PC (o clicca su Crea nuova cartella)",
-
   "done.all_set": "Sei pronto!",
   "done.to_play": "Per giocare: apri Legacy.exe in {path}",
   "done.almost": "Quasi pronto",
   "done.not_downloaded": "Il gioco non è ancora stato scaricato in {path}.\nScegli 'Scarica / controlla nuove canzoni' dal menu quando\nsei pronto a scaricarlo.",
   "done.come_back": "Torna a eseguire questo programma quando vuoi per controllare le nuove canzoni.",
-
   "sanity.set_to": "La tua cartella di gioco è impostata su:",
   "sanity.exe_actually": "ma Legacy.exe si trova in realtà in:",
   "sanity.point_correct_q": "Puntare il downloader alla cartella corretta?",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  Cartella di gioco : {path}",
   "menu.editions": "  Edizioni    : {editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "Impossibile scaricare {name}. Scaricalo tu stesso da:\n{url}",
   "menu.requirements_all_done": "Tutto il necessario è installato.",
   "menu.requirements_some_missing": "Manca ancora qualcosa - puoi ricontrollare in qualsiasi momento dal menu principale.",
-  "menu.up_to_date_play": "Sei aggiornato! Apri Legacy.exe nella tua cartella di gioco per giocare.",
+  "menu.up_to_date_play": "Sei aggiornato!",
+  "menu.launch_prompt": "Premi L e poi Invio per avviare subito il gioco, oppure solo Invio per tornare al menu",
+  "menu.launch_exe_missing": "Legacy.exe non è stato trovato nella cartella di gioco. Aprilo manualmente dopo aver confermato la posizione.",
   "menu.songs_ready": "Quelle canzoni sono pronte - avvia Legacy.exe e sceglile\ndall'elenco delle canzoni come al solito.",
   "menu.popup_change_folder": "Si aprirà una finestra - trova e clicca sulla tua cartella\nLegacy Offline PC (quella con Legacy.exe), poi premi Seleziona cartella.\nClicca su Annulla in quella finestra se cambi idea.",
   "menu.picker_change": "Seleziona la tua cartella Legacy Offline PC (quella con Legacy.exe)",
   "menu.exe_not_found_use_anyway": "Legacy.exe non è stato trovato lì. Usare comunque questa cartella?",
   "menu.folder_no_game": "Non dimenticare di usare 'Scarica / controlla nuove canzoni' dopo -\nquesta cartella non contiene ancora il gioco.",
   "menu.goodbye": "Buon gioco! Torna quando vuoi per controllare le nuove canzoni.",
-
   "lang.header": "Lingua",
   "lang.current": "Attuale: {name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "Mantieni la lingua attuale",
   "lang.prompt": "Scegli una lingua (inserisci un numero)",
   "lang.changed": "Lingua impostata su {name}.",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "Lingua:",
   "gui.group_folder": "Cartella di gioco",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "Tutte le edizioni di canzoni",
   "gui.job_edition": "Edizione {edition}",
   "gui.done_title": "Completato",
-  "gui.done_body": "Sei aggiornato. Apri Legacy.exe nella tua cartella di gioco per giocare.",
+  "gui.done_body": "Sei aggiornato.",
   "gui.failed_title": "Problema di download",
   "gui.failed_body": "Qualcosa è andato storto durante il download (rclone exit {code}). Alcuni file potrebbero non essere stati aggiornati - esegui di nuovo \"Controlla aggiornamenti\".",
-  "gui.uptodate_title": "Aggiornato",
-  "gui.uptodate_body": "Tutto è già aggiornato.\nHai {editions} edizione/i e {songs} canzone/i.",
+  "gui.launch_title": "Pronto per giocare",
+  "gui.launch_headline": "Sei aggiornato!",
+  "gui.launch_body": "Vuoi avviare il gioco adesso? Legacy Downloader si chiuderà non appena lo farà.",
+  "gui.btn_launch_game": "Avvia gioco",
+  "gui.launch_exe_missing": "Legacy.exe non è stato trovato nella cartella di gioco. Aprilo manualmente dopo aver confermato la posizione.",
   "gui.netfail_title": "Nessuna connessione",
   "gui.netfail_body": "Impossibile raggiungere il server delle canzoni. Controlla la connessione Internet e riprova.",
   "gui.wronglevel_title": "Controlla la cartella di gioco",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "verrà sovrascritto",
   "gui.tutorial_link": "Serve aiuto? Apri il tutorial",
   "gui.tutorial_open_failed": "Impossibile aprire il browser. Copia questo link:\n{url}",
-
   "gui.songbrowser_title": "Seleziona mappe / canzoni",
   "gui.songbrowser_load_failed_body": "Impossibile raggiungere l'elenco canzoni al momento (nessuna connessione, o il foglio non è raggiungibile). Riprova più tardi.",
   "gui.songbrowser_editions_header": "Edizioni",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "(sto ancora controllando sul server eventuali canzoni extra non presenti nel foglio...)",
   "gui.songbrowser_none_selected_body": "Non è selezionato nulla, quindi non verrebbe tracciato nulla da qui. Seleziona alcune mappe/canzoni, oppure usa \"Tutto\".",
   "gui.songbrowser_edition_total_suffix": " ({count} canzoni)",
-
   "gui.trackedview_title": "Canzoni tracciate",
   "gui.trackedview_status": "{shown} di {total} mostrate",
   "gui.trackedview_search_hint": "Cerca per titolo, artista o edizione...",

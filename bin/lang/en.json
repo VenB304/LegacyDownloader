@@ -2,7 +2,6 @@
   "_meta.code": "en",
   "_meta.name": "English",
   "_meta.nativeName": "English",
-
   "common.rule": "============================================",
   "common.press_enter": "Press Enter to continue",
   "common.press_enter_close": "Press Enter to close",
@@ -16,14 +15,11 @@
   "common.skipped": "Skipped.",
   "common.saved": "Saved.",
   "common.updated": "Updated.",
-
   "entry.rclone_missing": "ERROR: rclone.exe is missing from this folder. Re-download the bundle.",
   "entry.rclone_broken": "ERROR: rclone.exe is here but won't run.\nThis is usually antivirus quarantining it (rclone is sometimes\nflagged as a 'hacktool' since attackers also use it - it's a\nlegitimate, widely-used open-source tool). Check your\nantivirus's quarantine/history for rclone.exe, restore or\nallow it, then run this again.",
   "entry.no_frontend": "ERROR: no front-end found (LegacyDownloader.Console.ps1 is missing).",
   "entry.gui_crashed": "Legacy Downloader ran into a problem and can't continue:",
-
   "error.cant_create_folder": "Couldn't create that folder: {error}",
-
   "songs.difficulty.1": "Easy",
   "songs.difficulty.2": "Medium",
   "songs.difficulty.3": "Hard",
@@ -34,7 +30,6 @@
   "songs.effort.3": "Intense",
   "songs.effort.4": "Extreme",
   "songs.rating.unknown": "Not rated",
-
   "sync.base": "Updating base game files (exe, DLLs, Support, .ipk)...",
   "sync.edition": "Updating edition {edition}...",
   "sync.maps_missing_warn": "WARNING: the game is installed here but there's no 'maps' folder:",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "Continuing will download the ENTIRE song library (100+ GB).",
   "sync.maps_confirm_whole": "Download the whole library anyway?",
   "sync.all_editions": "Updating ALL song editions - this may take a long time on first run.",
-
   "preview.checking": "Checking what you already have (no downloads yet)...",
   "preview.wrong_level_warn": "WARNING: Legacy.exe isn't in your game folder:",
   "preview.wrong_level_real": "The real install looks like it's at:",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  (keeping your settings)",
   "preview.list_songs": "Songs:",
   "preview.choose_1_2_3": "Please choose 1, 2 or 3.",
-
   "maps.header": "Choose Which Songs To Get",
   "maps.opt_everything": "[1] Everything (all editions, plus new ones as they come out)",
   "maps.opt_specific": "[2] Specific maps / songs (whole editions, or pick individual songs)",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "Remove the {count} song file(s) you unchecked for '{edition}' too, or just stop tracking them?",
   "maps.songs_deleted": "Removed {count} song file(s) from {edition}.",
   "maps.cant_delete_songs": "Couldn't remove some files for {edition} - they may be in use (e.g. the game is running).",
-
   "songbrowser.loading": "Fetching the latest song list from the community song sheet...",
   "songbrowser.load_failed": "Couldn't reach the song list right now (no internet, or the sheet is unreachable). Try again later.",
   "songbrowser.help": "Type to search. Enter: check/uncheck. F2 edition / F3 difficulty / F4 effort filter. Esc: cancel.",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "You haven't selected any songs - nothing would be tracked from here.",
   "songbrowser.count_suffix": " ({count} songs)",
   "songbrowser.tree_help": "Right/Left: expand/collapse. Enter: check/uncheck. Type to search across everything. F5 sort column / F6 sort direction (in search results).",
-
   "setup.welcome_header": "Welcome!",
   "setup.welcome_body": "This little program downloads Legacy Offline PC and its songs\nfor you, and can check for new songs later whenever you want.\nNo typing folder paths - a window will pop up so you can just\nclick to pick a folder, like any other program you install.",
   "setup.opt_have": "[1] I already have the game on this PC",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "Download the game into this folder now?",
   "setup.popup_pick_empty": "A window will pop up - pick (or create) an empty folder for\nthe game to live in. Click 'Make New Folder' if you want a\nfresh one, then press Select Folder.",
   "setup.picker_new": "Pick a folder for Legacy Offline PC (or click Make New Folder)",
-
   "done.all_set": "You're all set!",
   "done.to_play": "To play: open Legacy.exe in {path}",
   "done.almost": "Almost there",
   "done.not_downloaded": "The game hasn't actually been downloaded to {path} yet.\nPick 'Download / check for new songs' from the menu whenever\nyou're ready to grab it.",
   "done.come_back": "Come back and run this program anytime to check for new songs.",
-
   "sanity.set_to": "Your game folder is set to:",
   "sanity.exe_actually": "but Legacy.exe is actually in:",
   "sanity.point_correct_q": "Point the downloader at the correct folder?",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  Game folder : {path}",
   "menu.editions": "  Editions    : {editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "Couldn't download {name}. Get it yourself from:\n{url}",
   "menu.requirements_all_done": "Everything needed is installed.",
   "menu.requirements_some_missing": "Some items are still missing - you can check again anytime from the main menu.",
-  "menu.up_to_date_play": "You're up to date! Open Legacy.exe in your game folder to play.",
+  "menu.up_to_date_play": "You're up to date!",
+  "menu.launch_prompt": "Press L then Enter to launch the game now, or just press Enter to return to the menu",
+  "menu.launch_exe_missing": "Legacy.exe wasn't found in your game folder. Open it manually once you've confirmed the location.",
   "menu.songs_ready": "Those songs are ready - just launch Legacy.exe and pick them\nfrom the song list like normal.",
   "menu.popup_change_folder": "A window will pop up - find and click your Legacy Offline PC\nfolder (the one with Legacy.exe in it), then press Select Folder.\nClick Cancel in that window if you change your mind.",
   "menu.picker_change": "Select your Legacy Offline PC folder (the one with Legacy.exe in it)",
   "menu.exe_not_found_use_anyway": "Legacy.exe wasn't found there. Use this folder anyway?",
   "menu.folder_no_game": "Don't forget to use 'Download / check for new songs' next -\nthis folder doesn't have the game in it yet.",
   "menu.goodbye": "Enjoy the game! Come back anytime to check for new songs.",
-
   "lang.header": "Language",
   "lang.current": "Current: {name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "Keep current language",
   "lang.prompt": "Choose a language (enter a number)",
   "lang.changed": "Language set to {name}.",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "Language:",
   "gui.group_folder": "Game folder",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "All song editions",
   "gui.job_edition": "Edition {edition}",
   "gui.done_title": "Done",
-  "gui.done_body": "You're up to date. Open Legacy.exe in your game folder to play.",
+  "gui.done_body": "You're up to date.",
   "gui.failed_title": "Download problem",
   "gui.failed_body": "Something went wrong during the download (rclone exit {code}). Some files may not have been updated - run \"Check for updates\" again.",
-  "gui.uptodate_title": "Up to date",
-  "gui.uptodate_body": "Everything is already up to date.\nYou have {editions} edition(s) and {songs} song(s).",
+  "gui.launch_title": "Ready to Play",
+  "gui.launch_headline": "You're up to date!",
+  "gui.launch_body": "Want to launch the game now? Legacy Downloader will close once it does.",
+  "gui.btn_launch_game": "Launch Game",
+  "gui.launch_exe_missing": "Legacy.exe wasn't found in your game folder. Open it manually once you've confirmed the location.",
   "gui.netfail_title": "No connection",
   "gui.netfail_body": "Couldn't reach the song server. Check your internet connection and try again.",
   "gui.wronglevel_title": "Check the game folder",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "will overwrite",
   "gui.tutorial_link": "Need help? Open the tutorial",
   "gui.tutorial_open_failed": "Couldn't open your browser. Copy this link:\n{url}",
-
   "gui.songbrowser_title": "Select maps / songs",
   "gui.songbrowser_load_failed_body": "Couldn't reach the song list right now (no internet, or the sheet is unreachable). Try again later.",
   "gui.songbrowser_editions_header": "Editions",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "(still checking the share for extra songs not in the sheet...)",
   "gui.songbrowser_none_selected_body": "Nothing is checked, so nothing would be tracked from here. Check some maps/songs, or use \"Everything\" instead.",
   "gui.songbrowser_edition_total_suffix": " ({count} songs)",
-
   "gui.trackedview_title": "Tracked Songs",
   "gui.trackedview_status": "{shown} of {total} shown",
   "gui.trackedview_search_hint": "Search by title, artist, or edition...",
@@ -265,7 +254,6 @@
   "gui.trackedview_legend_red": "Downloaded, not tracked",
   "gui.trackedview_empty": "Nothing tracked or downloaded yet.",
   "gui.btn_close": "Close",
-
   "gui.btn_requirements": "Requirements",
   "gui.requirements_title": "Software Requirements",
   "gui.requirements_intro_firstrun": "Legacy needs a few extra pieces of software installed to run properly. Install what's missing below, or continue and sort it out later - you can always check again from the Requirements button on the main window.",

@@ -2,7 +2,6 @@
   "_meta.code": "pt",
   "_meta.name": "Portuguese",
   "_meta.nativeName": "Português",
-
   "common.rule": "============================================",
   "common.press_enter": "Pressione Enter para continuar",
   "common.press_enter_close": "Pressione Enter para fechar",
@@ -16,14 +15,11 @@
   "common.skipped": "Ignorado.",
   "common.saved": "Salvo.",
   "common.updated": "Atualizado.",
-
   "entry.rclone_missing": "ERRO: rclone.exe não foi encontrado nesta pasta. Baixe o pacote novamente.",
   "entry.rclone_broken": "ERRO: rclone.exe está aqui mas não executa.\nGeralmente é o antivírus que o colocou em quarentena (rclone às vezes é\nmarcado como 'hacktool' porque atacantes também o usam - é uma ferramenta\nopen source legítima e muito usada). Verifique a quarentena ou o histórico\ndo seu antivírus para rclone.exe, restaure ou permita-o e tente novamente.",
   "entry.no_frontend": "ERRO: nenhuma interface encontrada (LegacyDownloader.Console.ps1 está faltando).",
   "entry.gui_crashed": "O Legacy Downloader encontrou um problema e não pode continuar:",
-
   "error.cant_create_folder": "Não foi possível criar essa pasta: {error}",
-
   "songs.difficulty.1": "Fácil",
   "songs.difficulty.2": "Médio",
   "songs.difficulty.3": "Difícil",
@@ -34,7 +30,6 @@
   "songs.effort.3": "Intenso",
   "songs.effort.4": "Extremo",
   "songs.rating.unknown": "Sem avaliação",
-
   "sync.base": "Atualizando arquivos base do jogo (exe, DLLs, Support, .ipk)...",
   "sync.edition": "Atualizando edição {edition}...",
   "sync.maps_missing_warn": "AVISO: o jogo está instalado aqui mas não há pasta 'maps':",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "Continuar vai baixar TODA a biblioteca de músicas (mais de 100 GB).",
   "sync.maps_confirm_whole": "Baixar a biblioteca inteira mesmo assim?",
   "sync.all_editions": "Atualizando TODAS as edições de músicas - pode demorar bastante na primeira vez.",
-
   "preview.checking": "Verificando o que você já tem (nenhum download por enquanto)...",
   "preview.wrong_level_warn": "AVISO: Legacy.exe não está na sua pasta de jogo:",
   "preview.wrong_level_real": "A instalação real parece estar em:",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  (suas configurações serão mantidas)",
   "preview.list_songs": "Músicas:",
   "preview.choose_1_2_3": "Escolha 1, 2 ou 3.",
-
   "maps.header": "Escolha as Músicas para Baixar",
   "maps.opt_everything": "[1] Tudo (todas as edições, mais as novas assim que saírem)",
   "maps.opt_specific": "[2] Mapas / músicas específicos (edições inteiras ou escolher músicas individuais)",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "Excluir também os {count} arquivo(s) de música que você desmarcou para '{edition}', ou apenas parar de rastreá-los?",
   "maps.songs_deleted": "Removido(s) {count} arquivo(s) de música de {edition}.",
   "maps.cant_delete_songs": "Não foi possível remover alguns arquivos de {edition} - podem estar em uso (ex.: o jogo está aberto).",
-
   "songbrowser.loading": "Buscando a lista de músicas mais recente na planilha da comunidade...",
   "songbrowser.load_failed": "Não foi possível acessar a lista de músicas agora (sem internet, ou a planilha está inacessível). Tente novamente mais tarde.",
   "songbrowser.help": "Digite para pesquisar. Enter: marcar/desmarcar. F2 edição / F3 dificuldade / F4 filtro de esforço. Esc: cancelar.",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "Você não selecionou nenhuma música - nada seria rastreado a partir daqui.",
   "songbrowser.count_suffix": " ({count} músicas)",
   "songbrowser.tree_help": "Direita/Esquerda: expandir/recolher. Enter: marcar/desmarcar. Digite para pesquisar em tudo. F5 coluna de ordenação / F6 direção de ordenação (nos resultados da pesquisa).",
-
   "setup.welcome_header": "Bem-vindo!",
   "setup.welcome_body": "Este programa baixa Legacy Offline PC e suas músicas\npara você, e pode verificar por novas músicas mais tarde.\nSem digitar caminhos - uma janela vai aparecer para que você\npossa clicar e escolher uma pasta, como qualquer outro programa.",
   "setup.opt_have": "[1] Já tenho o jogo neste PC",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "Baixar o jogo para esta pasta agora?",
   "setup.popup_pick_empty": "Uma janela vai aparecer - escolha (ou crie) uma pasta vazia para\no jogo ficar. Clique em 'Nova Pasta' se quiser uma\nnova, depois pressione Selecionar Pasta.",
   "setup.picker_new": "Escolha uma pasta para Legacy Offline PC (ou clique em Nova Pasta)",
-
   "done.all_set": "Tudo pronto!",
   "done.to_play": "Para jogar: abra Legacy.exe em {path}",
   "done.almost": "Quase lá",
   "done.not_downloaded": "O jogo ainda não foi baixado para {path}.\nEscolha 'Baixar / verificar novas músicas' no menu quando\nestiver pronto para baixá-lo.",
   "done.come_back": "Volte e execute este programa quando quiser verificar novas músicas.",
-
   "sanity.set_to": "Sua pasta de jogo está definida como:",
   "sanity.exe_actually": "mas Legacy.exe está na verdade em:",
   "sanity.point_correct_q": "Apontar o downloader para a pasta correta?",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  Pasta do jogo : {path}",
   "menu.editions": "  Edições    : {editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "Não foi possível baixar {name}. Baixe você mesmo em:\n{url}",
   "menu.requirements_all_done": "Tudo o que é necessário está instalado.",
   "menu.requirements_some_missing": "Ainda falta algo - você pode verificar novamente a qualquer momento pelo menu principal.",
-  "menu.up_to_date_play": "Você está atualizado! Abra Legacy.exe na sua pasta do jogo para jogar.",
+  "menu.up_to_date_play": "Você está atualizado!",
+  "menu.launch_prompt": "Pressione L e depois Enter para iniciar o jogo agora, ou apenas Enter para voltar ao menu",
+  "menu.launch_exe_missing": "Legacy.exe não foi encontrado na sua pasta do jogo. Abra-o manualmente depois de confirmar o local.",
   "menu.songs_ready": "Essas músicas estão prontas - basta abrir Legacy.exe e escolhê-las\nna lista de músicas como de costume.",
   "menu.popup_change_folder": "Uma janela vai aparecer - encontre e clique na sua pasta Legacy Offline\nPC (aquela com Legacy.exe), depois pressione Selecionar Pasta.\nClique em Cancelar naquela janela se mudar de ideia.",
   "menu.picker_change": "Selecione sua pasta Legacy Offline PC (aquela com Legacy.exe)",
   "menu.exe_not_found_use_anyway": "Legacy.exe não foi encontrado lá. Usar esta pasta mesmo assim?",
   "menu.folder_no_game": "Não esqueça de usar 'Baixar / verificar novas músicas' depois -\nesta pasta ainda não tem o jogo.",
   "menu.goodbye": "Bom jogo! Volte quando quiser verificar novas músicas.",
-
   "lang.header": "Idioma",
   "lang.current": "Atual: {name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "Manter idioma atual",
   "lang.prompt": "Escolha um idioma (digite um número)",
   "lang.changed": "Idioma definido como {name}.",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "Idioma:",
   "gui.group_folder": "Pasta do jogo",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "Todas as edições de músicas",
   "gui.job_edition": "Edição {edition}",
   "gui.done_title": "Concluído",
-  "gui.done_body": "Você está atualizado. Abra Legacy.exe na sua pasta do jogo para jogar.",
+  "gui.done_body": "Você está atualizado.",
   "gui.failed_title": "Problema no download",
   "gui.failed_body": "Algo deu errado durante o download (rclone exit {code}). Alguns arquivos podem não ter sido atualizados - execute \"Verificar atualizações\" novamente.",
-  "gui.uptodate_title": "Atualizado",
-  "gui.uptodate_body": "Tudo já está atualizado.\nVocê tem {editions} edição(ões) e {songs} música(s).",
+  "gui.launch_title": "Pronto para jogar",
+  "gui.launch_headline": "Você está atualizado!",
+  "gui.launch_body": "Quer iniciar o jogo agora? O Legacy Downloader vai se fechar assim que iniciar.",
+  "gui.btn_launch_game": "Iniciar jogo",
+  "gui.launch_exe_missing": "Legacy.exe não foi encontrado na sua pasta do jogo. Abra-o manualmente depois de confirmar o local.",
   "gui.netfail_title": "Sem conexão",
   "gui.netfail_body": "Não foi possível alcançar o servidor de músicas. Verifique sua conexão e tente novamente.",
   "gui.wronglevel_title": "Verifique a pasta do jogo",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "será sobrescrito",
   "gui.tutorial_link": "Precisa de ajuda? Abrir o tutorial",
   "gui.tutorial_open_failed": "Não foi possível abrir seu navegador. Copie este link:\n{url}",
-
   "gui.songbrowser_title": "Selecionar mapas / músicas",
   "gui.songbrowser_load_failed_body": "Não foi possível acessar a lista de músicas agora (sem internet, ou a planilha está inacessível). Tente novamente mais tarde.",
   "gui.songbrowser_editions_header": "Edições",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "(ainda verificando o servidor por músicas extras que não estão na planilha...)",
   "gui.songbrowser_none_selected_body": "Nada está marcado, então nada seria rastreado a partir daqui. Marque alguns mapas/músicas, ou use \"Tudo\" em vez disso.",
   "gui.songbrowser_edition_total_suffix": " ({count} músicas)",
-
   "gui.trackedview_title": "Músicas rastreadas",
   "gui.trackedview_status": "{shown} de {total} exibidas",
   "gui.trackedview_search_hint": "Pesquisar por título, artista ou edição...",

@@ -2,7 +2,6 @@
   "_meta.code": "fr",
   "_meta.name": "French",
   "_meta.nativeName": "Français",
-
   "common.rule": "============================================",
   "common.press_enter": "Appuyez sur Entrée pour continuer",
   "common.press_enter_close": "Appuyez sur Entrée pour fermer",
@@ -16,14 +15,11 @@
   "common.skipped": "Ignoré.",
   "common.saved": "Enregistré.",
   "common.updated": "Mis à jour.",
-
   "entry.rclone_missing": "ERREUR : rclone.exe est introuvable dans ce dossier. Retéléchargez l'archive.",
   "entry.rclone_broken": "ERREUR : rclone.exe est présent mais ne démarre pas.\nEn général, c'est l'antivirus qui l'a mis en quarantaine (rclone est\nparfois signalé comme « hacktool » car des attaquants l'utilisent aussi\n- c'est un outil open source légitime et très répandu). Vérifiez la\nquarantaine ou l'historique de votre antivirus pour rclone.exe,\nrestaurez-le ou autorisez-le, puis relancez.",
   "entry.no_frontend": "ERREUR : aucune interface trouvée (LegacyDownloader.Console.ps1 est manquant).",
   "entry.gui_crashed": "Legacy Downloader a rencontré un problème et ne peut pas continuer :",
-
   "error.cant_create_folder": "Impossible de créer ce dossier : {error}",
-
   "songs.difficulty.1": "Facile",
   "songs.difficulty.2": "Moyen",
   "songs.difficulty.3": "Difficile",
@@ -34,7 +30,6 @@
   "songs.effort.3": "Intense",
   "songs.effort.4": "Extrême",
   "songs.rating.unknown": "Non noté",
-
   "sync.base": "Mise à jour des fichiers de base du jeu (exe, DLL, Support, .ipk)...",
   "sync.edition": "Mise à jour de l'édition {edition}...",
   "sync.maps_missing_warn": "AVERTISSEMENT : le jeu est installé ici mais il n'y a pas de dossier « maps » :",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "Continuer téléchargera TOUTE la bibliothèque de chansons (plus de 100 Go).",
   "sync.maps_confirm_whole": "Télécharger quand même toute la bibliothèque ?",
   "sync.all_editions": "Mise à jour de TOUTES les éditions de chansons - cela peut être long au premier lancement.",
-
   "preview.checking": "Vérification de ce que vous avez déjà (aucun téléchargement pour l'instant)...",
   "preview.wrong_level_warn": "AVERTISSEMENT : Legacy.exe n'est pas dans votre dossier de jeu :",
   "preview.wrong_level_real": "L'installation réelle semble se trouver ici :",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  (vos paramètres sont conservés)",
   "preview.list_songs": "Chansons :",
   "preview.choose_1_2_3": "Veuillez choisir 1, 2 ou 3.",
-
   "maps.header": "Choisir les chansons à récupérer",
   "maps.opt_everything": "[1] Tout (toutes les éditions, ainsi que les nouvelles à leur sortie)",
   "maps.opt_specific": "[2] Cartes / chansons spécifiques (éditions entières ou choisir des chansons individuelles)",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "Supprimer aussi les {count} fichier(s) de chanson décochés pour « {edition} », ou juste arrêter de les suivre ?",
   "maps.songs_deleted": "{count} fichier(s) de chanson supprimé(s) de {edition}.",
   "maps.cant_delete_songs": "Impossible de supprimer certains fichiers de {edition} - ils sont peut-être en cours d'utilisation (par ex. le jeu est ouvert).",
-
   "songbrowser.loading": "Récupération de la dernière liste de chansons depuis la feuille communautaire...",
   "songbrowser.load_failed": "Impossible de joindre la liste des chansons pour l'instant (pas d'internet, ou la feuille est inaccessible). Réessayez plus tard.",
   "songbrowser.help": "Tapez pour rechercher. Entrée : cocher/décocher. F2 édition / F3 difficulté / F4 filtre d'effort. Échap : annuler.",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "Vous n'avez sélectionné aucune chanson - rien ne serait suivi à partir d'ici.",
   "songbrowser.count_suffix": " ({count} chansons)",
   "songbrowser.tree_help": "Droite/Gauche : développer/réduire. Entrée : cocher/décocher. Tapez pour rechercher partout. F5 colonne de tri / F6 sens de tri (dans les résultats de recherche).",
-
   "setup.welcome_header": "Bienvenue !",
   "setup.welcome_body": "Ce petit programme télécharge Legacy Offline PC et ses chansons\npour vous, et peut vérifier plus tard s'il y a de nouvelles chansons.\nPas besoin de taper des chemins de dossier - une fenêtre s'ouvrira pour\nque vous puissiez simplement cliquer et choisir un dossier.",
   "setup.opt_have": "[1] J'ai déjà le jeu sur ce PC",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "Télécharger le jeu dans ce dossier maintenant ?",
   "setup.popup_pick_empty": "Une fenêtre va s'ouvrir - choisissez (ou créez) un dossier vide où\nle jeu sera installé. Cliquez sur « Créer un dossier » si vous en voulez\nun nouveau, puis appuyez sur Sélectionner un dossier.",
   "setup.picker_new": "Choisissez un dossier pour Legacy Offline PC (ou cliquez sur Créer un dossier)",
-
   "done.all_set": "Tout est prêt !",
   "done.to_play": "Pour jouer : ouvrez Legacy.exe dans {path}",
   "done.almost": "Presque terminé",
   "done.not_downloaded": "Le jeu n'a pas encore été téléchargé dans {path}.\nChoisissez « Télécharger / vérifier les nouvelles chansons » dans le menu\nquand vous serez prêt à le récupérer.",
   "done.come_back": "Revenez lancer ce programme quand vous voulez pour vérifier les nouvelles chansons.",
-
   "sanity.set_to": "Votre dossier de jeu est défini sur :",
   "sanity.exe_actually": "mais Legacy.exe se trouve en réalité dans :",
   "sanity.point_correct_q": "Faire pointer le téléchargeur vers le bon dossier ?",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  Dossier du jeu : {path}",
   "menu.editions": "  Éditions : {editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "Impossible de télécharger {name}. Téléchargez-le vous-même depuis :\n{url}",
   "menu.requirements_all_done": "Tout ce qui est nécessaire est installé.",
   "menu.requirements_some_missing": "Il manque encore des éléments - vous pouvez revérifier à tout moment depuis le menu principal.",
-  "menu.up_to_date_play": "Vous êtes à jour ! Ouvrez Legacy.exe dans votre dossier de jeu pour jouer.",
+  "menu.up_to_date_play": "Vous êtes à jour !",
+  "menu.launch_prompt": "Appuyez sur L puis Entrée pour lancer le jeu maintenant, ou juste Entrée pour revenir au menu",
+  "menu.launch_exe_missing": "Legacy.exe est introuvable dans votre dossier de jeu. Ouvrez-le manuellement une fois l'emplacement confirmé.",
   "menu.songs_ready": "Ces chansons sont prêtes - lancez simplement Legacy.exe et choisissez-les\ndans la liste des chansons comme d'habitude.",
   "menu.popup_change_folder": "Une fenêtre va s'ouvrir - trouvez et cliquez sur votre dossier Legacy Offline\nPC (celui qui contient Legacy.exe), puis appuyez sur Sélectionner un dossier.\nCliquez sur Annuler dans cette fenêtre si vous changez d'avis.",
   "menu.picker_change": "Sélectionnez votre dossier Legacy Offline PC (celui qui contient Legacy.exe)",
   "menu.exe_not_found_use_anyway": "Legacy.exe n'a pas été trouvé ici. Utiliser quand même ce dossier ?",
   "menu.folder_no_game": "N'oubliez pas d'utiliser « Télécharger / vérifier les nouvelles chansons » ensuite -\nce dossier ne contient pas encore le jeu.",
   "menu.goodbye": "Bon jeu ! Revenez quand vous voulez pour vérifier les nouvelles chansons.",
-
   "lang.header": "Langue",
   "lang.current": "Actuelle : {name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "Garder la langue actuelle",
   "lang.prompt": "Choisissez une langue (saisissez un numéro)",
   "lang.changed": "Langue définie sur {name}.",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "Langue :",
   "gui.group_folder": "Dossier du jeu",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "Toutes les éditions de chansons",
   "gui.job_edition": "Édition {edition}",
   "gui.done_title": "Terminé",
-  "gui.done_body": "Vous êtes à jour. Ouvrez Legacy.exe dans votre dossier de jeu pour jouer.",
+  "gui.done_body": "Vous êtes à jour.",
   "gui.failed_title": "Problème de téléchargement",
   "gui.failed_body": "Un problème est survenu pendant le téléchargement (rclone code {code}). Certains fichiers n'ont peut-être pas été mis à jour - relancez « Vérifier les mises à jour ».",
-  "gui.uptodate_title": "À jour",
-  "gui.uptodate_body": "Tout est déjà à jour.\nVous avez {editions} édition(s) et {songs} chanson(s).",
+  "gui.launch_title": "Prêt à jouer",
+  "gui.launch_headline": "Vous êtes à jour !",
+  "gui.launch_body": "Voulez-vous lancer le jeu maintenant ? Legacy Downloader se fermera une fois lancé.",
+  "gui.btn_launch_game": "Lancer le jeu",
+  "gui.launch_exe_missing": "Legacy.exe est introuvable dans votre dossier de jeu. Ouvrez-le manuellement une fois l'emplacement confirmé.",
   "gui.netfail_title": "Pas de connexion",
   "gui.netfail_body": "Impossible de joindre le serveur de chansons. Vérifiez votre connexion Internet et réessayez.",
   "gui.wronglevel_title": "Vérifiez le dossier du jeu",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "sera remplacé",
   "gui.tutorial_link": "Besoin d'aide ? Ouvrir le tutoriel",
   "gui.tutorial_open_failed": "Impossible d'ouvrir votre navigateur. Copiez ce lien :\n{url}",
-
   "gui.songbrowser_title": "Sélectionner des cartes / chansons",
   "gui.songbrowser_load_failed_body": "Impossible de joindre la liste des chansons pour l'instant (pas d'internet, ou la feuille est inaccessible). Réessayez plus tard.",
   "gui.songbrowser_editions_header": "Éditions",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "(vérification en cours sur le serveur pour des chansons supplémentaires absentes de la feuille...)",
   "gui.songbrowser_none_selected_body": "Rien n'est coché, donc rien ne serait suivi à partir d'ici. Cochez des cartes/chansons, ou utilisez « Tout » à la place.",
   "gui.songbrowser_edition_total_suffix": " ({count} chansons)",
-
   "gui.trackedview_title": "Chansons suivies",
   "gui.trackedview_status": "{shown} sur {total} affichée(s)",
   "gui.trackedview_search_hint": "Rechercher par titre, artiste ou édition...",

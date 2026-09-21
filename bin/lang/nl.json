@@ -2,7 +2,6 @@
   "_meta.code": "nl",
   "_meta.name": "Dutch",
   "_meta.nativeName": "Nederlands",
-
   "common.rule": "============================================",
   "common.press_enter": "Druk op Enter om door te gaan",
   "common.press_enter_close": "Druk op Enter om te sluiten",
@@ -16,14 +15,11 @@
   "common.skipped": "Overgeslagen.",
   "common.saved": "Opgeslagen.",
   "common.updated": "Bijgewerkt.",
-
   "entry.rclone_missing": "FOUT: rclone.exe ontbreekt in deze map. Download het pakket opnieuw.",
   "entry.rclone_broken": "FOUT: rclone.exe is aanwezig maar start niet.\nDit komt meestal doordat de antivirus het in quarantaine heeft geplaatst\n(rclone wordt soms als 'hacktool' gemarkeerd omdat aanvallers het ook\ngebruiken - het is een legitiem en veel gebruikt open-source programma).\nControleer de quarantaine of geschiedenis van je antivirus voor rclone.exe,\nherstel of sta het toe en probeer het opnieuw.",
   "entry.no_frontend": "FOUT: geen interface gevonden (LegacyDownloader.Console.ps1 ontbreekt).",
   "entry.gui_crashed": "Legacy Downloader is een probleem tegengekomen en kan niet doorgaan:",
-
   "error.cant_create_folder": "Kon die map niet aanmaken: {error}",
-
   "songs.difficulty.1": "Makkelijk",
   "songs.difficulty.2": "Gemiddeld",
   "songs.difficulty.3": "Moeilijk",
@@ -34,7 +30,6 @@
   "songs.effort.3": "Intensief",
   "songs.effort.4": "Extreem",
   "songs.rating.unknown": "Niet beoordeeld",
-
   "sync.base": "Basisbestanden van het spel bijwerken (exe, DLL's, Support, .ipk)...",
   "sync.edition": "Editie {edition} bijwerken...",
   "sync.maps_missing_warn": "WAARSCHUWING: het spel is hier geïnstalleerd maar er is geen 'maps'-map:",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "Doorgaan zal de VOLLEDIGE nummersbibliotheek downloaden (100+ GB).",
   "sync.maps_confirm_whole": "Toch de hele bibliotheek downloaden?",
   "sync.all_editions": "ALLE nummereditties bijwerken - dit kan bij de eerste keer lang duren.",
-
   "preview.checking": "Controleren wat je al hebt (nog geen downloads)...",
   "preview.wrong_level_warn": "WAARSCHUWING: Legacy.exe staat niet in je spelmap:",
   "preview.wrong_level_real": "De echte installatie lijkt hier te staan:",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  (je instellingen worden bewaard)",
   "preview.list_songs": "Nummers:",
   "preview.choose_1_2_3": "Kies 1, 2 of 3.",
-
   "maps.header": "Kies welke nummers je wilt",
   "maps.opt_everything": "[1] Alles (alle edities, plus nieuwe zodra ze uitkomen)",
   "maps.opt_specific": "[2] Specifieke kaarten / nummers (hele edities of kies losse nummers)",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "Ook de {count} nummerbestand(en) verwijderen die je hebt uitgevinkt voor '{edition}', of ze gewoon niet meer bijhouden?",
   "maps.songs_deleted": "{count} nummerbestand(en) verwijderd uit {edition}.",
   "maps.cant_delete_songs": "Kon sommige bestanden van {edition} niet verwijderen - ze zijn mogelijk in gebruik (bijv. het spel is open).",
-
   "songbrowser.loading": "De nieuwste nummerlijst wordt opgehaald van het communityoverzicht...",
   "songbrowser.load_failed": "Kan de nummerlijst nu niet bereiken (geen internet, of het overzicht is onbereikbaar). Probeer het later opnieuw.",
   "songbrowser.help": "Typ om te zoeken. Enter: aan-/uitvinken. F2 editie / F3 moeilijkheidsgraad / F4 inspanningsfilter. Esc: annuleren.",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "Je hebt geen nummers geselecteerd - er zou hier niets worden bijgehouden.",
   "songbrowser.count_suffix": " ({count} nummers)",
   "songbrowser.tree_help": "Rechts/Links: uitklappen/inklappen. Enter: aan-/uitvinken. Typ om overal te zoeken. F5 sorteerkolom / F6 sorteerrichting (in zoekresultaten).",
-
   "setup.welcome_header": "Welkom!",
   "setup.welcome_body": "Dit programma downloadt Legacy Offline PC en de nummers\nvoor je, en kan later controleren op nieuwe nummers.\nGeen mappad typen - er verschijnt een venster zodat je\ngewoon een map kunt kiezen door te klikken.",
   "setup.opt_have": "[1] Ik heb het spel al op deze pc",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "Het spel nu in deze map downloaden?",
   "setup.popup_pick_empty": "Er verschijnt een venster - kies (of maak) een lege map voor\nhet spel. Klik op 'Nieuwe map' als je een nieuwe wilt\naan, en druk dan op Map selecteren.",
   "setup.picker_new": "Kies een map voor Legacy Offline PC (of klik op Nieuwe map)",
-
   "done.all_set": "Je bent klaar!",
   "done.to_play": "Om te spelen: open Legacy.exe in {path}",
   "done.almost": "Bijna klaar",
   "done.not_downloaded": "Het spel is nog niet gedownload naar {path}.\nKies 'Downloaden / op nieuwe nummers controleren' in het menu\nwanneer je klaar bent om het te downloaden.",
   "done.come_back": "Kom terug en start dit programma om op nieuwe nummers te controleren.",
-
   "sanity.set_to": "Je spelmap is ingesteld op:",
   "sanity.exe_actually": "maar Legacy.exe staat eigenlijk in:",
   "sanity.point_correct_q": "De downloader naar de juiste map laten wijzen?",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  Spelmap    : {path}",
   "menu.editions": "  Edities    : {editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "Kon {name} niet downloaden. Download het zelf via:\n{url}",
   "menu.requirements_all_done": "Alles wat nodig is, is geïnstalleerd.",
   "menu.requirements_some_missing": "Er ontbreekt nog iets - je kunt dit altijd opnieuw controleren vanuit het hoofdmenu.",
-  "menu.up_to_date_play": "Je bent up-to-date! Open Legacy.exe in je spelmap om te spelen.",
+  "menu.up_to_date_play": "Je bent up-to-date!",
+  "menu.launch_prompt": "Druk op L en daarna Enter om het spel nu te starten, of gewoon Enter om terug te gaan naar het menu",
+  "menu.launch_exe_missing": "Legacy.exe is niet gevonden in je spelmap. Open het handmatig zodra je de locatie hebt bevestigd.",
   "menu.songs_ready": "Die nummers zijn klaar - start gewoon Legacy.exe en kies ze\nuit de nummerslijst zoals normaal.",
   "menu.popup_change_folder": "Er verschijnt een venster - zoek en klik op je Legacy Offline PC-map\n(die met Legacy.exe erin), en druk dan op Map selecteren.\nKlik op Annuleren in dat venster als je van gedachten verandert.",
   "menu.picker_change": "Selecteer je Legacy Offline PC-map (die met Legacy.exe erin)",
   "menu.exe_not_found_use_anyway": "Legacy.exe is daar niet gevonden. Deze map toch gebruiken?",
   "menu.folder_no_game": "Vergeet niet daarna 'Downloaden / op nieuwe nummers controleren' te gebruiken -\ndeze map heeft het spel er nog niet in.",
   "menu.goodbye": "Veel speelplezier! Kom terug om op nieuwe nummers te controleren.",
-
   "lang.header": "Taal",
   "lang.current": "Huidige: {name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "Huidige taal bewaren",
   "lang.prompt": "Kies een taal (voer een nummer in)",
   "lang.changed": "Taal ingesteld op {name}.",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "Taal:",
   "gui.group_folder": "Spelmap",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "Alle nummereditties",
   "gui.job_edition": "Editie {edition}",
   "gui.done_title": "Klaar",
-  "gui.done_body": "Je bent up-to-date. Open Legacy.exe in je spelmap om te spelen.",
+  "gui.done_body": "Je bent up-to-date.",
   "gui.failed_title": "Downloadprobleem",
   "gui.failed_body": "Er is iets misgegaan tijdens het downloaden (rclone exit {code}). Sommige bestanden zijn mogelijk niet bijgewerkt - voer \"Op updates controleren\" opnieuw uit.",
-  "gui.uptodate_title": "Up-to-date",
-  "gui.uptodate_body": "Alles is al up-to-date.\nJe hebt {editions} editie(s) en {songs} nummer(s).",
+  "gui.launch_title": "Klaar om te spelen",
+  "gui.launch_headline": "Je bent up-to-date!",
+  "gui.launch_body": "Wil je het spel nu starten? Legacy Downloader sluit zichzelf zodra dat gebeurt.",
+  "gui.btn_launch_game": "Spel starten",
+  "gui.launch_exe_missing": "Legacy.exe is niet gevonden in je spelmap. Open het handmatig zodra je de locatie hebt bevestigd.",
   "gui.netfail_title": "Geen verbinding",
   "gui.netfail_body": "Kan de nummerserver niet bereiken. Controleer je internetverbinding en probeer het opnieuw.",
   "gui.wronglevel_title": "Controleer de spelmap",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "wordt overschreven",
   "gui.tutorial_link": "Hulp nodig? Open de tutorial",
   "gui.tutorial_open_failed": "Kon je browser niet openen. Kopieer deze link:\n{url}",
-
   "gui.songbrowser_title": "Kaarten / nummers selecteren",
   "gui.songbrowser_load_failed_body": "Kan de nummerlijst nu niet bereiken (geen internet, of het overzicht is onbereikbaar). Probeer het later opnieuw.",
   "gui.songbrowser_editions_header": "Edities",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "(controleert de server nog op extra nummers die niet in het overzicht staan...)",
   "gui.songbrowser_none_selected_body": "Er is niets aangevinkt, dus er zou hier niets worden bijgehouden. Vink wat kaarten/nummers aan, of gebruik in plaats daarvan \"Alles\".",
   "gui.songbrowser_edition_total_suffix": " ({count} nummers)",
-
   "gui.trackedview_title": "Bijgehouden nummers",
   "gui.trackedview_status": "{shown} van {total} getoond",
   "gui.trackedview_search_hint": "Zoeken op titel, artiest of editie...",

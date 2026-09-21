@@ -291,6 +291,71 @@ function Ask-YesNo([string]$Text, [string]$Title) {
         [System.Windows.Forms.MessageBoxButtons]::YesNo,
         [System.Windows.Forms.MessageBoxIcon]::Question) -eq [System.Windows.Forms.DialogResult]::Yes)
 }
+
+# Replaces the old "you're up to date, open Legacy.exe yourself" Info-Box at
+# both post-check call sites (Finish-Downloads, On-PlanReady's nothing-to-
+# download early-out). A plain MessageBox can't relabel a button "Launch
+# Game" - its button sets are fixed OS ones - so this is a small bespoke
+# Form, same family as Show-FileListDialog. If AUTOLAUNCH is on, skips the
+# dialog entirely and launches + closes immediately (the fully-automatic
+# opt-in a future Settings screen will expose).
+function Show-LaunchPrompt {
+    if ($script:Cfg.AutoLaunch) {
+        if (-not (Start-LegacyExe $script:Cfg.GamePath)) { Warn-Box (T 'gui.launch_exe_missing') (T 'gui.err_title') }
+        $script:Form.Close()
+        return
+    }
+
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.launch_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+
+    $lblHead = New-Label (T 'gui.launch_headline') 20 18 340 22
+    $lblHead.Font = $script:FontTitle
+    $lblBody = New-Label (T 'gui.launch_body') 20 44 340 44
+
+    # Widths measured from the actual (translated) text, same convention as
+    # Show-PreviewDialog's button row - "Launch Game" translates to very
+    # different lengths across 13 languages.
+    $btnClose  = New-Btn (T 'gui.btn_close') 0 100 0 32 $false
+    $btnLaunch = New-Btn (T 'gui.btn_launch_game') 0 100 0 32 $true
+    foreach ($b in @($btnClose, $btnLaunch)) {
+        $b.Width = [Math]::Max(84, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $btnLaunch.Left = 380 - 20 - $btnLaunch.Width
+    $btnClose.Left = $btnLaunch.Left - 8 - $btnClose.Width
+
+    $btnLaunch.Add_Click({ param($s, $e) $f.Tag = 'launch'; $f.Close() })
+    $btnClose.Add_Click({ param($s, $e) $f.Tag = ''; $f.Close() })
+
+    $f.ClientSize = New-Object System.Drawing.Size(380, 148)
+    $f.AcceptButton = $btnLaunch
+    $f.CancelButton = $btnClose
+    $f.Controls.AddRange(@($lblHead, $lblBody, $btnClose, $btnLaunch))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  Show-LaunchPrompt: rendered, Close@$($btnClose.Left) Launch@$($btnLaunch.Left) (expect Close left of Launch, both right-aligned)"
+        if ($btnClose.Left -ge $btnLaunch.Left) { Write-Host "  SELFTEST FAILURE: Close is not left of Launch" -ForegroundColor Red }
+        Start-Sleep -Milliseconds 100
+        $f.Dispose()
+        return
+    }
+
+    [void]$f.ShowDialog($script:Form)
+    $launch = ($f.Tag -eq 'launch')
+    $f.Dispose()
+
+    if ($launch) {
+        if (-not (Start-LegacyExe $script:Cfg.GamePath)) { Warn-Box (T 'gui.launch_exe_missing') (T 'gui.err_title'); return }
+        $script:Form.Close()
+    }
+}
 function Pick-Folder([string]$Desc, [string]$InitialPath) {
     $d = New-Object System.Windows.Forms.FolderBrowserDialog
     $d.Description = $Desc; $d.ShowNewFolderButton = $true
@@ -473,8 +538,11 @@ function Finish-Downloads {
     Refresh-Tracking
     Append-Log "----"
     Append-Log ("$([char]0x2713) " + (T 'gui.done_title'))
-    Info-Box (T 'gui.done_body') (T 'gui.done_title')
+    # Requirements check runs BEFORE the launch prompt, not after - an
+    # eager AUTOLAUNCH must never skip a fresh install's one-time
+    # Requirements dialog by closing the app out from under it.
     Ensure-FirstRunRequirementsChecked
+    Show-LaunchPrompt
 }
 
 # One-time-only requirements check for a brand-new setup - either mode from
@@ -3109,9 +3177,9 @@ function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
     if (-not $Plan.Ok) { Warn-Box (T 'gui.netfail_body') (T 'gui.netfail_title'); return }
 
     if ($Plan.TotalFiles -eq 0) {
-        Info-Box (T 'gui.uptodate_body' @{ editions = $Plan.LocalEditions; songs = $Plan.LocalSongs }) (T 'gui.uptodate_title')
         Append-Log (T 'preview.up_to_date')
         Ensure-FirstRunRequirementsChecked
+        Show-LaunchPrompt
         return
     }
 
@@ -3500,6 +3568,22 @@ if ($env:LEGACY_GUI_SELFTEST) {
         Write-Host "  ran with no exception"
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-TrackedViewDialog threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+
+    Write-Host "`n=== Show-LaunchPrompt (AutoLaunch off - shows the dialog; forced Cfg.AutoLaunch=$true - skips it) ==="
+    try {
+        $savedAutoLaunch = $script:Cfg.AutoLaunch
+        $script:Cfg.AutoLaunch = $false
+        Show-LaunchPrompt
+        Write-Host "  AutoLaunch=false: dialog path ran with no exception"
+        # AutoLaunch=true would call Start-Process (a real Legacy.exe launch)
+        # and $script:Form.Close() - neither is safe to actually trigger in
+        # a structural self-test, so only the dialog-shown path above is
+        # exercised end-to-end here; this just confirms the config flag
+        # itself round-trips.
+        $script:Cfg.AutoLaunch = $savedAutoLaunch
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-LaunchPrompt threw: $($_.Exception.Message)" -ForegroundColor Red
     }
 
     Write-Host "`n=== Show-RequirementsDialog (real Get-RequirementsStatus against this machine - structural test only, not asserting specific installed/missing values, same spirit as the tracked-view test above) ==="

@@ -318,6 +318,7 @@ function Load-Config {
     $lang     = ''
     $shareUrl = ''
     $songFilters = ''
+    $autoLaunch = $false
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -330,10 +331,11 @@ function Load-Config {
         if ($key -eq 'LANG')        { $lang = $value }
         if ($key -eq 'SHAREURL')    { $shareUrl = $value }
         if ($key -eq 'SONGFILTERS') { $songFilters = $value }
+        if ($key -eq 'AUTOLAUNCH')  { $autoLaunch = ($value -eq 'true') }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
-    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters }
+    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters; AutoLaunch = $autoLaunch }
 }
 
 function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [string]$SongFilters) {
@@ -346,6 +348,11 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [strin
     }
     # SHAREURL is hand-edited only - never wipe an override the user added.
     $ShareUrl = Read-ConfigValue 'SHAREURL'
+    # AUTOLAUNCH, like SHAREURL, has no UI yet (a future Settings screen will
+    # add one) - always re-read and preserve whatever's on disk rather than
+    # silently dropping a hand-edited value on the next unrelated save.
+    $AutoLaunchOut = Read-ConfigValue 'AUTOLAUNCH'
+    if ($AutoLaunchOut -ne 'true') { $AutoLaunchOut = 'false' }
     # SONGFILTERS, like LANG, is only rewritten when a caller explicitly
     # passes it - an omitted argument preserves whatever's already saved
     # instead of silently clearing a user's per-song picks.
@@ -379,7 +386,24 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [strin
         "# edition:code1|code2;edition2:code3. An edition with no entry here"
         "# means 'every song in it'."
         "SONGFILTERS=$SongFiltersOut"
+        ""
+        "# AUTOLAUNCH (advanced) - when true, automatically launches Legacy.exe"
+        "# and closes this tool right after a successful check/update, with no"
+        "# prompt. Default false. A future Settings screen will make this"
+        "# easier to toggle than hand-editing this file."
+        "AUTOLAUNCH=$AutoLaunchOut"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
+}
+
+function Start-LegacyExe([string]$GamePath) {
+    # Launches Legacy.exe from the given game folder. Returns $true if the
+    # process was started, $false if the exe wasn't found there - callers
+    # decide how to tell the user (Write-Host vs. a MessageBox is a
+    # front-end concern, not Core's).
+    $exePath = Join-Path $GamePath 'Legacy.exe'
+    if (-not (Test-Path -LiteralPath $exePath)) { return $false }
+    Start-Process -FilePath $exePath | Out-Null
+    return $true
 }
 
 function Sort-EditionNames {
@@ -2050,4 +2074,4 @@ Export-ModuleMember -Function `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
-    Invoke-RequirementInstall
+    Invoke-RequirementInstall, Start-LegacyExe

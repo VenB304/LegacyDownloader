@@ -2,7 +2,6 @@
   "_meta.code": "zh-Hant",
   "_meta.name": "Chinese (Traditional)",
   "_meta.nativeName": "繁體中文",
-
   "common.rule": "============================================",
   "common.press_enter": "按 Enter 鍵繼續",
   "common.press_enter_close": "按 Enter 鍵關閉",
@@ -16,14 +15,11 @@
   "common.skipped": "已略過。",
   "common.saved": "已儲存。",
   "common.updated": "已更新。",
-
   "entry.rclone_missing": "錯誤：此資料夾中缺少 rclone.exe，請重新下載安裝包。",
   "entry.rclone_broken": "錯誤：rclone.exe 存在但無法執行。\n這通常是因為防毒軟體將其隔離（rclone 有時被標記為\n「hacktool」，因為攻擊者也會使用它——它是一個合法的、\n廣泛使用的開源工具）。請檢查防毒軟體的隔離區或\n歷程中的 rclone.exe，還原或允許它，然後再次執行。",
   "entry.no_frontend": "錯誤：找不到前端介面（LegacyDownloader.Console.ps1 遺失）。",
   "entry.gui_crashed": "Legacy Downloader 發生問題，無法繼續：",
-
   "error.cant_create_folder": "無法建立該資料夾：{error}",
-
   "songs.difficulty.1": "簡單",
   "songs.difficulty.2": "中等",
   "songs.difficulty.3": "困難",
@@ -34,7 +30,6 @@
   "songs.effort.3": "強烈",
   "songs.effort.4": "極限",
   "songs.rating.unknown": "未評級",
-
   "sync.base": "正在更新遊戲基礎檔案（exe、DLL、Support、.ipk）...",
   "sync.edition": "正在更新版本 {edition}...",
   "sync.maps_missing_warn": "警告：遊戲已安裝於此，但沒有「maps」資料夾：",
@@ -42,7 +37,6 @@
   "sync.maps_missing_size": "繼續將下載整個歌曲庫（超過 100GB）。",
   "sync.maps_confirm_whole": "仍要下載整個庫嗎？",
   "sync.all_editions": "正在更新所有歌曲版本——首次執行可能需要較長時間。",
-
   "preview.checking": "正在檢查您已有的內容（暫不下載）...",
   "preview.wrong_level_warn": "警告：Legacy.exe 不在您的遊戲資料夾中：",
   "preview.wrong_level_real": "實際安裝位置似乎在：",
@@ -79,7 +73,6 @@
   "preview.list_config": "  config.xml  （您的設定已保留）",
   "preview.list_songs": "歌曲：",
   "preview.choose_1_2_3": "請選擇 1、2 或 3。",
-
   "maps.header": "選擇要取得的歌曲",
   "maps.opt_everything": "[1] 全部（所有版本，以及新版本發布時自動取得）",
   "maps.opt_specific": "[2] 特定地圖 / 歌曲（整個版本，或選取單首歌曲）",
@@ -92,7 +85,6 @@
   "maps.delete_songs_or_keep": "是否同時刪除您在「{edition}」中取消勾選的 {count} 個歌曲檔案，還是只停止追蹤它們？",
   "maps.songs_deleted": "已從 {edition} 中刪除 {count} 個歌曲檔案。",
   "maps.cant_delete_songs": "無法刪除 {edition} 的部分檔案——可能正在使用中（如遊戲正在執行）。",
-
   "songbrowser.loading": "正在從社群歌曲表取得最新歌曲清單...",
   "songbrowser.load_failed": "目前無法連線歌曲清單（無網路，或表格無法存取）。請稍後重試。",
   "songbrowser.help": "輸入以搜尋。Enter：勾選/取消勾選。F2 版本 / F3 難度 / F4 強度篩選。Esc：取消。",
@@ -108,7 +100,6 @@
   "songbrowser.none_selected_warn": "您尚未選擇任何歌曲——此處不會追蹤任何內容。",
   "songbrowser.count_suffix": "（{count} 首歌曲）",
   "songbrowser.tree_help": "右/左：展開/摺疊。Enter：勾選/取消勾選。輸入可在所有內容中搜尋。F5 排序欄 / F6 排序方向（在搜尋結果中）。",
-
   "setup.welcome_header": "歡迎！",
   "setup.welcome_body": "這個小程式會為您下載 Legacy Offline PC 及其歌曲，\n並可在之後檢查新歌曲。\n無需輸入資料夾路徑——會彈出一個視窗，您只需\n點選選擇資料夾即可。",
   "setup.opt_have": "[1] 此電腦上已有遊戲",
@@ -120,17 +111,14 @@
   "setup.download_into_q": "現在將遊戲下載到此資料夾？",
   "setup.popup_pick_empty": "將彈出一個視窗——選擇（或建立）一個空資料夾\n用於存放遊戲。如果需要新資料夾，請點選「新增資料夾」，\n然後按「選取資料夾」。",
   "setup.picker_new": "為 Legacy Offline PC 選擇一個資料夾（或點選新增資料夾）",
-
   "done.all_set": "一切就緒！",
   "done.to_play": "遊玩：在 {path} 中開啟 Legacy.exe",
   "done.almost": "即將完成",
   "done.not_downloaded": "遊戲尚未下載到 {path}。\n準備好後，從選單中選擇「下載/檢查新歌曲」。",
   "done.come_back": "隨時回來執行此程式以檢查新歌曲。",
-
   "sanity.set_to": "您的遊戲資料夾設定為：",
   "sanity.exe_actually": "但 Legacy.exe 實際位於：",
   "sanity.point_correct_q": "將下載器指向正確的資料夾？",
-
   "menu.title": "Legacy Downloader",
   "menu.game_folder": "  遊戲資料夾：{path}",
   "menu.editions": "  版本：{editions}",
@@ -160,21 +148,21 @@
   "menu.requirements_download_failed": "無法下載 {name}。請自行從這裡下載:\n{url}",
   "menu.requirements_all_done": "所需的一切都已安裝。",
   "menu.requirements_some_missing": "還有項目缺少 - 你可以隨時在主選單中重新檢查。",
-  "menu.up_to_date_play": "已是最新狀態！在遊戲資料夾中開啟 Legacy.exe 即可遊玩。",
+  "menu.up_to_date_play": "已是最新狀態！",
+  "menu.launch_prompt": "按 L 再按 Enter 立即啟動遊戲，或直接按 Enter 返回選單",
+  "menu.launch_exe_missing": "在你的遊戲資料夾中找不到 Legacy.exe。請在確認位置後手動開啟。",
   "menu.songs_ready": "這些歌曲已準備好——只需啟動 Legacy.exe，\n像平常一樣從歌曲清單中選擇即可。",
   "menu.popup_change_folder": "將彈出一個視窗——找到並點選您的 Legacy Offline PC\n資料夾（包含 Legacy.exe 的資料夾），然後按「選取資料夾」。\n如果改變主意，請在該視窗中點選取消。",
   "menu.picker_change": "選擇您的 Legacy Offline PC 資料夾（包含 Legacy.exe 的資料夾）",
   "menu.exe_not_found_use_anyway": "在那裡未找到 Legacy.exe。仍要使用此資料夾嗎？",
   "menu.folder_no_game": "請記得之後使用「下載/檢查新歌曲」——\n此資料夾中尚無遊戲。",
   "menu.goodbye": "祝您遊玩愉快！隨時回來檢查新歌曲。",
-
   "lang.header": "語言",
   "lang.current": "目前：{name}",
   "lang.item": "  [{n}] {native}  ({english})",
   "lang.keep": "保持目前語言",
   "lang.prompt": "選擇一種語言（輸入數字）",
   "lang.changed": "語言已設定為 {name}。",
-
   "gui.window_title": "Legacy Downloader",
   "gui.lang_label": "語言：",
   "gui.group_folder": "遊戲資料夾",
@@ -204,11 +192,14 @@
   "gui.job_allsongs": "所有歌曲版本",
   "gui.job_edition": "版本 {edition}",
   "gui.done_title": "完成",
-  "gui.done_body": "已是最新狀態。在遊戲資料夾中開啟 Legacy.exe 即可遊玩。",
+  "gui.done_body": "已是最新狀態。",
   "gui.failed_title": "下載問題",
   "gui.failed_body": "下載過程中出現問題（rclone exit {code}）。部分檔案可能未更新——請再次執行「檢查更新」。",
-  "gui.uptodate_title": "已是最新",
-  "gui.uptodate_body": "所有內容均已是最新狀態。\n您有 {editions} 個版本和 {songs} 首歌曲。",
+  "gui.launch_title": "準備開始遊戲",
+  "gui.launch_headline": "已是最新狀態！",
+  "gui.launch_body": "要現在啟動遊戲嗎？啟動後 Legacy Downloader 將會關閉。",
+  "gui.btn_launch_game": "啟動遊戲",
+  "gui.launch_exe_missing": "在你的遊戲資料夾中找不到 Legacy.exe。請在確認位置後手動開啟。",
   "gui.netfail_title": "無網路連線",
   "gui.netfail_body": "無法連線至歌曲伺服器。請檢查網路連線後重試。",
   "gui.wronglevel_title": "檢查遊戲資料夾",
@@ -235,7 +226,6 @@
   "gui.list_tag_overwrite": "將被覆寫",
   "gui.tutorial_link": "需要幫助？開啟教學",
   "gui.tutorial_open_failed": "無法開啟瀏覽器，請複製以下連結：\n{url}",
-
   "gui.songbrowser_title": "選擇地圖 / 歌曲",
   "gui.songbrowser_load_failed_body": "目前無法連線歌曲清單（無網路，或表格無法存取）。請稍後重試。",
   "gui.songbrowser_editions_header": "版本",
@@ -256,7 +246,6 @@
   "gui.songbrowser_scanning_share": "（仍在伺服器上檢查表格中沒有的額外歌曲...）",
   "gui.songbrowser_none_selected_body": "未勾選任何內容，因此此處不會追蹤任何內容。請勾選一些地圖/歌曲，或改用「全部」。",
   "gui.songbrowser_edition_total_suffix": "（{count} 首歌曲）",
-
   "gui.trackedview_title": "已追蹤的歌曲",
   "gui.trackedview_status": "顯示 {total} 項中的 {shown} 項",
   "gui.trackedview_search_hint": "依標題、藝人或版本搜尋...",
