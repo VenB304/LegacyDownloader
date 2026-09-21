@@ -204,6 +204,7 @@ actualizaciones»** obtiene todo lo nuevo desde tu última visita.
   de recibir sus actualizaciones conservando lo que ya tienes.
 - **Cambiar de idioma**: el menú desplegable de la bandera, arriba a la
   derecha, en cualquier momento.
+- **Ajustar la configuración**: haz clic en **Configuración** en la ventana principal para el chequeo automático, el inicio automático, un límite de velocidad de descarga y una URL de share personalizada avanzada.
 
 ---
 
@@ -218,8 +219,9 @@ lugar. Mismas funciones, navegando con teclas numéricas:
 [2] Elegir qué canciones descargar
 [3] Cambiar la carpeta del juego
 [4] Idioma
-[5] Comprobar requisitos de software
-[6] Salir
+[5] Configuración
+[6] Comprobar requisitos de software
+[7] Salir
 ```
 
 > **Nota sobre la fuente:** la versión gráfica muestra todos los idiomas

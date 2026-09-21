@@ -205,6 +205,7 @@ Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
   sollen oder ob nur die Updates dafür gestoppt werden sollen, während du
   behältst, was du schon hast.
 - **Sprache ändern**: das Flaggen-Dropdown oben rechts, jederzeit.
+- **Einstellungen anpassen**: klicke auf **Einstellungen** im Hauptfenster für automatische Prüfung, automatisches Starten, ein Download-Geschwindigkeitslimit und eine erweiterte eigene Share-URL.
 
 ---
 
@@ -220,8 +221,9 @@ Zifferntasten:
 [2] Songs auswählen
 [3] Spielordner ändern
 [4] Sprache
-[5] Softwarevoraussetzungen prüfen
-[6] Beenden
+[5] Einstellungen
+[6] Softwarevoraussetzungen prüfen
+[7] Beenden
 ```
 
 > **Hinweis zur Schriftart:** Die grafische Version zeigt alle Sprachen

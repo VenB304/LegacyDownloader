@@ -131,6 +131,23 @@ function Invoke-CheckAndOfferLaunch {
     }
 }
 
+# Opens config.txt in whatever's associated with .txt (Notepad on a normal
+# Windows install) - the console's Settings entry point, deliberately not a
+# console-native settings UI. Windows' ShellExecute (what Start-Process uses
+# for a plain file path with no -FilePath pointing at an actual exe) is the
+# well-supported case; PowerShell Core on Linux (including a headless/SSH
+# session with no GUI editor at all) doesn't have the same guarantee, so a
+# failure here falls back to printing the path instead of silently doing
+# nothing. Returns $true/$false so the caller decides how to tell the user.
+function Open-ConfigInEditor {
+    try {
+        Start-Process -FilePath $ConfigPath -ErrorAction Stop | Out-Null
+        return $true
+    } catch {
+        return $false
+    }
+}
+
 function Show-FolderPicker([string]$Description) {
     if ($IsLinux) {
         Write-Host ""
@@ -994,19 +1011,19 @@ $isFirstRunSession = [string]::IsNullOrWhiteSpace($cfg.GamePath)
 if ([string]::IsNullOrWhiteSpace($cfg.GamePath)) {
     $pickedLang = Choose-Language $cfg.Lang
     if ($pickedLang -ne $cfg.Lang) {
-        Save-Config -GamePath $cfg.GamePath -Editions $cfg.Editions -Lang $pickedLang
+        Save-Config @{ Lang = $pickedLang }
         $cfg = Load-Config
     }
 
     Write-Host ""
     $gamePath = Run-SetupWizard
-    Save-Config -GamePath $gamePath -Editions $cfg.Editions
+    Save-Config @{ GamePath = $gamePath }
     $cfg = Load-Config
 
     Write-Host ""
     $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions -CurrentSongFilters $cfg.SongFilters
     if ($null -ne $mapsResult) {
-        Save-Config -GamePath $cfg.GamePath -Editions $mapsResult.Editions -SongFilters $mapsResult.SongFilters
+        Save-Config @{ Editions = $mapsResult.Editions; SongFilters = $mapsResult.SongFilters }
         $cfg = Load-Config
     }
 
@@ -1049,7 +1066,7 @@ if (-not [string]::IsNullOrWhiteSpace($cfg.GamePath)) {
         Write-Host "  $betterPath"
         Write-Host ""
         if (Confirm-YesNo (T 'sanity.point_correct_q')) {
-            Save-Config -GamePath $betterPath -Editions $cfg.Editions
+            Save-Config @{ GamePath = $betterPath }
             $cfg = Load-Config
             Write-Host (T 'common.updated') -ForegroundColor Green
             Start-Sleep -Seconds 1
@@ -1097,13 +1114,14 @@ while ($true) {
     Write-Host (T 'menu.opt_choose')
     Write-Host (T 'menu.opt_folder')
     Write-Host (T 'menu.opt_language')
+    Write-Host (T 'menu.opt_settings')
     if (-not $IsLinux) { Write-Host (T 'menu.opt_requirements') }
     # NOT "Write-Host (if (...) {...} else {...})" - a bare if/else isn't a
     # valid expression inside a call's argument parens in PS 5.1 outside an
     # assignment (this exact mistake broke the song picker once before in
     # this project - see 2026-09-14 project history). Assign first instead.
     $exitLine   = if ($IsLinux) { T 'menu.opt_exit' } else { T 'menu.opt_exit_reqs' }
-    $choosePrompt = if ($IsLinux) { T 'menu.choose_1_5' } else { T 'menu.choose_1_6' }
+    $choosePrompt = if ($IsLinux) { T 'menu.choose_1_6' } else { T 'menu.choose_1_7' }
     Write-Host $exitLine
     $choice = Read-Host $choosePrompt
 
@@ -1117,7 +1135,7 @@ while ($true) {
             Write-Host ""
             $mapsResult = Run-MapsWizard -GamePath $cfg.GamePath -CurrentEditions $cfg.Editions -CurrentSongFilters $cfg.SongFilters
             if ($null -ne $mapsResult) {
-                Save-Config -GamePath $cfg.GamePath -Editions $mapsResult.Editions -SongFilters $mapsResult.SongFilters
+                Save-Config @{ Editions = $mapsResult.Editions; SongFilters = $mapsResult.SongFilters }
                 $cfg = Load-Config
                 Write-Host ""
                 Write-Host (T 'menu.songs_ready')
@@ -1132,7 +1150,7 @@ while ($true) {
                 $ok = Test-GameFolder $path
                 if (-not $ok) { $ok = Confirm-YesNo (T 'menu.exe_not_found_use_anyway') }
                 if ($ok) {
-                    Save-Config -GamePath $path -Editions $cfg.Editions
+                    Save-Config @{ GamePath = $path }
                     $cfg = Load-Config
                     Write-Host (T 'common.saved')
                     if (-not (Test-GameFolder $path)) {
@@ -1147,16 +1165,25 @@ while ($true) {
         '4' {
             $pickedLang = Choose-Language $cfg.Lang
             if ($pickedLang -ne $cfg.Lang) {
-                Save-Config -GamePath $cfg.GamePath -Editions $cfg.Editions -Lang $pickedLang
+                Save-Config @{ Lang = $pickedLang }
                 $cfg = Load-Config
             }
             Pause-Brief -Seconds 1
         }
         '5' {
+            Write-Host ""
+            if (Open-ConfigInEditor) {
+                Write-Host (T 'menu.settings_opened')
+            } else {
+                Write-Host (T 'menu.settings_open_failed' @{ path = $ConfigPath }) -ForegroundColor Yellow
+            }
+            Pause-Continue
+        }
+        '6' {
             if ($IsLinux) { Exit-Console }
             Show-RequirementsWizard -GamePath $cfg.GamePath
         }
-        '6' {
+        '7' {
             if ($IsLinux) {
                 Pause-Brief (T 'common.not_valid_option')
             } else {

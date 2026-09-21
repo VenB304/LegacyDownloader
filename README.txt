@@ -75,8 +75,9 @@ In the console menu you'll see:
   [2] Choose which songs to get
   [3] Change game folder
   [4] Language
-  [5] Check software requirements
-  [6] Exit
+  [5] Settings
+  [6] Check software requirements
+  [7] Exit
 
 
 BEFORE IT DOWNLOADS ANYTHING
@@ -115,12 +116,30 @@ Legacy Offline PC itself needs a few Microsoft runtimes/drivers besides
 Windows itself: the Kinect for Windows SDK (1.8 and 2.0), Visual C++
 2010/2012/2015+ Redistributable, and the DirectX End-User Runtime.
 
-Click "Requirements" on the main window (or "[5] Check software
+Click "Requirements" on the main window (or "[6] Check software
 requirements" in the console menu) any time to see what's installed and
 install anything missing - each download comes straight from its own
 official Microsoft page, never anywhere else. You'll see this once
 automatically the very first time you set this tool up; after that it's
 only ever shown if you open it yourself. Windows only.
+
+
+SETTINGS
+--------
+
+Click "Settings" on the main window (or "[5] Settings" in the console
+menu, which opens config.txt in your default text editor instead of a
+window) for a few extra options:
+
+  - Automatically check for updates when the app opens
+  - Automatically launch the game and close once nothing more is needed
+  - Limit download speed (MB/s) - blank/0 means unlimited
+  - A custom share URL, if the default one ever needs to change - paste
+    either a Nextcloud share link (the friendly one Nextcloud itself
+    gives you) or the raw WebDAV link, either works
+
+Bandwidth limit and share URL changes take effect the next time you
+start the tool, not immediately.
 
 
 LANGUAGE

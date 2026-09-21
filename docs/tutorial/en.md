@@ -189,6 +189,7 @@ anything new since your last visit.
   delete those files too, or just stop getting updates for them while
   keeping what you already have.
 - **Change language**: the flag dropdown, top-right, any time.
+- **Adjust settings**: click **Settings** on the main window for auto-check, auto-launch, a download speed limit, and an advanced custom share URL.
 
 ---
 
@@ -203,8 +204,9 @@ navigated with number keys:
 [2] Choose which songs to get
 [3] Change game folder
 [4] Language
-[5] Check software requirements
-[6] Exit
+[5] Settings
+[6] Check software requirements
+[7] Exit
 ```
 
 > **Font note:** the graphical version displays every language correctly.

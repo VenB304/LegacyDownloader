@@ -356,6 +356,150 @@ function Show-LaunchPrompt {
         $script:Form.Close()
     }
 }
+
+function New-GroupBox([string]$Text, [int]$X, [int]$Y, [int]$W, [int]$H) {
+    $g = New-Object System.Windows.Forms.GroupBox
+    # A single '&' in a WinForms control's Text is swallowed as a mnemonic-
+    # key prefix (underlines the next character) instead of showing as a
+    # literal ampersand - "&&" is the escape for a literal one. Confirmed
+    # live: "Startup & Launch" rendered as "Startup  Launch" before this.
+    $g.Text = $Text -replace '&', '&&'
+    $g.Font = $script:FontBold
+    $g.ForeColor = [System.Drawing.Color]::FromArgb(30, 58, 110)
+    $g.SetBounds($X, $Y, $W, $H)
+    return $g
+}
+
+function New-Hint([string]$Text, [int]$X, [int]$Y, [int]$W) {
+    $l = New-Object System.Windows.Forms.Label
+    $l.Text = $Text
+    $l.Font = New-Object System.Drawing.Font($script:FontFamilyUI, 7.5)
+    $l.ForeColor = $script:ColorMuted
+    $l.SetBounds($X, $Y, $W, 16)
+    return $l
+}
+
+# BWLIMIT is stored in config.txt as a plain rclone --bwlimit value (e.g.
+# "5M") but shown/edited here as just the number of MB/s, matching the
+# mockup's plain numeric field + "MB/s" label. Strips a trailing M/m if
+# present; anything else unexpected (a differently-unit'd hand-edit) is
+# shown as-is rather than silently mangled.
+function Format-BwLimitForDisplay([string]$BwLimit) {
+    if ([string]::IsNullOrWhiteSpace($BwLimit)) { return '' }
+    if ($BwLimit -match '^(\d+)[Mm]$') { return $Matches[1] }
+    return $BwLimit
+}
+
+function Show-SettingsWindow {
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.settings_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+    $f.ClientSize = New-Object System.Drawing.Size(460, 404)
+
+    # --- Startup & Launch ---
+    # Checkbox height is 34 (not a single line's ~20) - WinForms CheckBox
+    # wraps its text to fit the control's width, but only shows as many
+    # lines as the control is tall enough for; a 20px box clipped the tail
+    # of the AutoLaunch text off entirely rather than wrapping it visibly
+    # (confirmed live via screenshot before this fix - "...nothing more is"
+    # with "needed" silently cut off).
+    $grpStartup = New-GroupBox (T 'gui.settings_group_startup') 16 16 428 118
+    $chkAutoCheck = New-Object System.Windows.Forms.CheckBox
+    $chkAutoCheck.Text = T 'gui.settings_autocheck'
+    $chkAutoCheck.Font = $script:FontBase
+    $chkAutoCheck.ForeColor = $script:ColorText
+    $chkAutoCheck.SetBounds(16, 18, 400, 34)
+    $chkAutoCheck.Checked = [bool]$script:Cfg.AutoCheck
+
+    $chkAutoLaunch = New-Object System.Windows.Forms.CheckBox
+    $chkAutoLaunch.Text = T 'gui.settings_autolaunch'
+    $chkAutoLaunch.Font = $script:FontBase
+    $chkAutoLaunch.ForeColor = $script:ColorText
+    $chkAutoLaunch.SetBounds(16, 54, 400, 34)
+    $chkAutoLaunch.Checked = [bool]$script:Cfg.AutoLaunch
+
+    $hintAutoLaunch = New-Hint (T 'gui.settings_autolaunch_hint') 34 90 380
+    $grpStartup.Controls.AddRange(@($chkAutoCheck, $chkAutoLaunch, $hintAutoLaunch))
+
+    # --- Downloads ---
+    $grpDownloads = New-GroupBox (T 'gui.settings_group_downloads') 16 146 428 70
+    $lblBwLimit = New-Label (T 'gui.settings_bwlimit_label') 16 22 190 22
+    $txtBwLimit = New-Object System.Windows.Forms.TextBox
+    $txtBwLimit.Font = $script:FontBase
+    $txtBwLimit.BackColor = [System.Drawing.Color]::White
+    $txtBwLimit.TextAlign = [System.Windows.Forms.HorizontalAlignment]::Right
+    $txtBwLimit.SetBounds(210, 20, 56, 22)
+    $txtBwLimit.Text = Format-BwLimitForDisplay $script:Cfg.BwLimit
+    $lblBwUnit = New-Label (T 'gui.settings_bwlimit_unit') 274 22 100 22
+    $hintBwLimit = New-Hint (T 'gui.settings_bwlimit_hint') 16 48 380
+    $grpDownloads.Controls.AddRange(@($lblBwLimit, $txtBwLimit, $lblBwUnit, $hintBwLimit))
+
+    # --- Advanced ---
+    $grpAdvanced = New-GroupBox (T 'gui.settings_group_advanced') 16 228 428 90
+    $lblShareUrl = New-Label (T 'gui.settings_shareurl_label') 16 18 396 18
+    $txtShareUrl = New-Object System.Windows.Forms.TextBox
+    $txtShareUrl.Font = $script:FontBase
+    $txtShareUrl.BackColor = [System.Drawing.Color]::White
+    $txtShareUrl.SetBounds(16, 38, 396, 24)
+    $txtShareUrl.Text = [string]$script:Cfg.ShareUrl
+    $hintShareUrl = New-Hint (T 'gui.settings_shareurl_hint') 16 66 396
+    $grpAdvanced.Controls.AddRange(@($lblShareUrl, $txtShareUrl, $hintShareUrl))
+
+    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 330 428
+
+    $btnSave   = New-Btn (T 'gui.btn_save') 0 360 0 30 $true
+    $btnCancel = New-Btn (T 'gui.btn_cancel') 0 360 0 30 $false
+    foreach ($b in @($btnSave, $btnCancel)) {
+        $b.Width = [Math]::Max(84, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $btnSave.Left = 460 - 16 - $btnSave.Width
+    $btnCancel.Left = $btnSave.Left - 8 - $btnCancel.Width
+
+    $btnSave.Add_Click({
+        param($s, $e)
+        $bwText = $txtBwLimit.Text.Trim()
+        $bwOut = ''
+        if ($bwText -ne '') {
+            if ($bwText -notmatch '^\d+$' -or [int]$bwText -eq 0) {
+                Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
+                return
+            }
+            $bwOut = "${bwText}M"
+        }
+        Save-Config @{
+            AutoCheck  = $chkAutoCheck.Checked
+            AutoLaunch = $chkAutoLaunch.Checked
+            BwLimit    = $bwOut
+            ShareUrl   = $txtShareUrl.Text.Trim()
+        }
+        $script:Cfg = Load-Config
+        $f.Tag = 'save'
+        $f.Close()
+    })
+    $btnCancel.Add_Click({ param($s, $e) $f.Tag = ''; $f.Close() })
+
+    $f.AcceptButton = $btnSave
+    $f.CancelButton = $btnCancel
+    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $hintRestart, $btnSave, $btnCancel))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  Show-SettingsWindow: rendered, Cancel@$($btnCancel.Left) Save@$($btnSave.Left) (expect Cancel left of Save)"
+        if ($btnCancel.Left -ge $btnSave.Left) { Write-Host "  SELFTEST FAILURE: Cancel is not left of Save" -ForegroundColor Red }
+        Start-Sleep -Milliseconds 100
+        $f.Dispose()
+        return
+    }
+
+    [void]$f.ShowDialog($script:Form)
+    $f.Dispose()
+}
+
 function Pick-Folder([string]$Desc, [string]$InitialPath) {
     $d = New-Object System.Windows.Forms.FolderBrowserDialog
     $d.Description = $Desc; $d.ShowNewFolderButton = $true
@@ -2184,7 +2328,7 @@ function Run-SetupDialog {
             $code = $script:Langs[$idx].Code
             if ($code -ne $script:Cfg.Lang) {
                 $null = Initialize-Language -Code $code
-                Save-Config -GamePath $script:Cfg.GamePath -Editions $script:Cfg.Editions -Lang $code
+                Save-Config @{ Lang = $code }
                 $script:Cfg = Load-Config
                 & $reapplySetupLang
             }
@@ -2216,7 +2360,7 @@ function Run-SetupDialog {
             Warn-Box (T 'error.cant_create_folder' @{ error = $_.Exception.Message }) (T 'gui.err_title'); return
         }
     }
-    Save-Config -GamePath $path -Editions $script:Cfg.Editions -Lang $script:Cfg.Lang
+    Save-Config @{ GamePath = $path }
     $script:Cfg = Load-Config
     return $mode   # 'have' or 'get' - the caller auto-starts a check after "get"
 }
@@ -3097,6 +3241,8 @@ function Apply-I18n([switch]$SkipRequirementsScan) {
     $script:BtnCheck.Text     = T 'gui.btn_check'
     $script:BtnExit.Text      = T 'gui.btn_exit'
     $script:BtnRequirements.Text = T 'gui.btn_requirements'
+    $script:BtnSettings.Text  = T 'gui.btn_settings'
+    $script:BtnSettings.Width = [Math]::Max(90, [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnSettings.Text, $script:BtnSettings.Font).Width + 24)
     $script:BtnViewTracked.Text = T 'gui.btn_view_tracked'
     $btnViewTrackedWidth = [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnViewTracked.Text, $script:BtnViewTracked.Font).Width + 24
     $script:BtnViewTracked.Width = $btnViewTrackedWidth
@@ -3164,7 +3310,7 @@ function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
             [System.Windows.Forms.MessageBoxButtons]::YesNoCancel,
             [System.Windows.Forms.MessageBoxIcon]::Warning)
         if ($r -eq [System.Windows.Forms.DialogResult]::Yes) {
-            Save-Config -GamePath $Plan.BetterPath -Editions $script:Cfg.Editions
+            Save-Config @{ GamePath = $Plan.BetterPath }
             $script:Cfg = Load-Config
             Refresh-FolderStatus
             return
@@ -3233,7 +3379,7 @@ function On-ChangeFolder {
     if (-not (Test-GameFolder $p)) {
         if (-not (Ask-YesNo (T 'menu.exe_not_found_use_anyway') (T 'gui.window_title'))) { return }
     }
-    Save-Config -GamePath $p -Editions $script:Cfg.Editions
+    Save-Config @{ GamePath = $p }
     $script:Cfg = Load-Config
     Refresh-FolderStatus
 }
@@ -3272,7 +3418,7 @@ function On-SongModeChanged {
     if (-not $script:Ready -or $script:Busy) { return }
     if ($script:RbEverything.Checked) {
         if ($script:Cfg.Editions.ToUpper() -ne 'AUTO') {
-            Save-Config -GamePath $script:Cfg.GamePath -Editions 'AUTO'
+            Save-Config @{ Editions = 'AUTO' }
             $script:Cfg = Load-Config
         }
         Refresh-Tracking
@@ -3288,7 +3434,7 @@ function On-SongModeChanged {
             return
         }
         Invoke-SongRemovalCleanup -OldEditionList @(Get-LocalEditions $script:Cfg.GamePath) -OldSongFilters '' -Res $res
-        Save-Config -GamePath $script:Cfg.GamePath -Editions $res.Editions -SongFilters $res.SongFilters
+        Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
         $script:Cfg = Load-Config
     }
     Refresh-Tracking
@@ -3300,7 +3446,7 @@ function On-SelectMapsSongs {
     if ($null -eq $res) { return }
     $oldEditionList = @(if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') { Get-LocalEditions $script:Cfg.GamePath } else { $script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
     Invoke-SongRemovalCleanup -OldEditionList $oldEditionList -OldSongFilters $script:Cfg.SongFilters -Res $res
-    Save-Config -GamePath $script:Cfg.GamePath -Editions $res.Editions -SongFilters $res.SongFilters
+    Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
     $script:Cfg = Load-Config
     $script:RbSpecific.Checked = $true
     Refresh-Tracking
@@ -3313,7 +3459,7 @@ function On-LangChanged {
     $code = $script:Langs[$i].Code
     if ($code -eq $script:Cfg.Lang) { return }
     $null = Initialize-Language -Code $code
-    Save-Config -GamePath $script:Cfg.GamePath -Editions $script:Cfg.Editions -Lang $code
+    Save-Config @{ Lang = $code }
     $script:Cfg = Load-Config
     Apply-I18n -SkipRequirementsScan
 }
@@ -3478,10 +3624,18 @@ function Build-MainForm {
     $script:BtnExit = New-Btn '' 418 496 90 28 $false
     $script:BtnExit.Add_Click({ param($s, $e) $script:Form.Close() })
 
+    # Settings button - free space on the left of the same bottom row (12
+    # to 318, ~306px, previously empty). Width remeasured from the actual
+    # translated text in Apply-I18n, same as every other button whose label
+    # varies a lot in length across the 13 languages - "Settings" is short
+    # in English but not everywhere.
+    $script:BtnSettings = New-Btn '' 12 496 90 28 $false
+    $script:BtnSettings.Add_Click({ param($s, $e) Show-SettingsWindow })
+
     $script:Form.Controls.AddRange(@(
             $script:LblLang, $script:CmbLang,
             $script:GrpFolder, $script:GrpSongs,
-            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnRequirements, $script:BtnExit
+            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnSettings, $script:BtnRequirements, $script:BtnExit
         ))
 
     $script:ScanTimer = New-Object System.Windows.Forms.Timer
@@ -3596,6 +3750,24 @@ if ($env:LEGACY_GUI_SELFTEST) {
         $script:Cfg.AutoLaunch = $savedAutoLaunch
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-LaunchPrompt threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+
+    Write-Host "`n=== BtnSettings gating ==="
+    Write-Host "  Left=$($script:BtnSettings.Left) Width=$($script:BtnSettings.Width) (expect nonzero width, positioned at the fixed left slot)"
+    if ($script:BtnSettings.Width -le 0) { Write-Host "  SELFTEST FAILURE: zero width" -ForegroundColor Red }
+
+    Write-Host "`n=== Show-SettingsWindow (structural render only - the Save button's own logic is covered by Core.psm1's Save-Config tests) ==="
+    try {
+        Show-SettingsWindow
+        Write-Host "  ran with no exception"
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-SettingsWindow threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+    Write-Host "`n=== Format-BwLimitForDisplay round trip ==="
+    foreach ($case in @(@{ In = '5M'; Expect = '5' }, @{ In = ''; Expect = '' }, @{ In = '800k'; Expect = '800k' })) {
+        $got = Format-BwLimitForDisplay $case.In
+        $ok = ($got -eq $case.Expect)
+        Write-Host "  '$($case.In)' -> '$got' (expect '$($case.Expect)') $(if (-not $ok) { '[SELFTEST FAILURE]' })"
     }
 
     Write-Host "`n=== Show-RequirementsDialog (real Get-RequirementsStatus against this machine - structural test only, not asserting specific installed/missing values, same spirit as the tracked-view test above) ==="

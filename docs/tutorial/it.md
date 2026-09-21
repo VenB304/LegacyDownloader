@@ -204,6 +204,7 @@ tua ultima visita.
   di riceverne gli aggiornamenti tenendo ciò che hai già.
 - **Cambiare lingua**: il menu a tendina della bandiera, in alto a destra,
   in qualsiasi momento.
+- **Regolare le impostazioni**: fai clic su **Impostazioni** nella finestra principale per il controllo automatico, l'avvio automatico, un limite di velocità di download e un URL di condivisione personalizzato avanzato.
 
 ---
 
@@ -219,8 +220,9 @@ con i tasti numerici:
 [2] Scegli le canzoni da scaricare
 [3] Cambia cartella di gioco
 [4] Lingua
-[5] Controlla i requisiti software
-[6] Esci
+[5] Impostazioni
+[6] Controlla i requisiti software
+[7] Esci
 ```
 
 > **Nota sul font:** la versione grafica mostra correttamente tutte le

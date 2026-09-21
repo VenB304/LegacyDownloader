@@ -202,6 +202,7 @@ updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
   hebt.
 - **Taal wijzigen**: de vlag-vervolgkeuzelijst, rechtsboven, op elk
   moment.
+- **Instellingen aanpassen**: klik op **Instellingen** in het hoofdvenster voor automatisch controleren, automatisch starten, een downloadsnelheidslimiet en een geavanceerde aangepaste share-URL.
 
 ---
 
@@ -217,8 +218,9 @@ cijfertoetsen:
 [2] Kiezen welke nummers je wilt
 [3] Spelmap wijzigen
 [4] Taal
-[5] Softwarevereisten controleren
-[6] Afsluiten
+[5] Instellingen
+[6] Softwarevereisten controleren
+[7] Afsluiten
 ```
 
 > **Opmerking over lettertype:** de grafische versie toont alle talen

@@ -83,13 +83,29 @@ own PE import table and real DLL/registry checks, not guessed:
 - DirectX End-User Runtime (June 2010) — narrowly for `XINPUT1_3.dll`,
   which Windows doesn't ship natively
 
-Click the **Requirements** button on the main window (or **[5] Check
+Click the **Requirements** button on the main window (or **[6] Check
 software requirements** in the console menu) any time to see what's
 installed and fetch/install anything missing — every download comes from
 its own official Microsoft page, never a third-party mirror. This is
 shown once automatically the first time you set up a brand-new install;
 existing installs only ever see it if you open it yourself. Windows only
 — not available when running on Linux.
+
+## Settings
+
+Click **Settings** on the main window (or **[5] Settings** in the console
+menu, which opens `config.txt` in your default text editor instead of a
+window) for a few extra options:
+
+- Automatically check for updates when the app opens
+- Automatically launch the game and close once nothing more is needed
+- Limit download speed (MB/s) — blank/0 means unlimited
+- A custom share URL, if the default one ever needs to change — paste
+  either a Nextcloud share link (the friendly one Nextcloud itself gives
+  you) or the raw WebDAV link, either works
+
+Bandwidth limit and share URL changes take effect the next time you start
+the tool, not immediately.
 
 ## Language
 

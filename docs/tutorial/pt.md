@@ -202,6 +202,7 @@ Verificar atualizações"** pega tudo que é novo desde sua última visita.
   receber atualizações para eles mantendo o que você já tem.
 - **Mudar idioma**: o menu suspenso da bandeira, no canto superior
   direito, a qualquer momento.
+- **Ajustar configurações**: clique em **Configurações** na janela principal para verificação automática, inicialização automática, um limite de velocidade de download e uma URL de compartilhamento personalizada avançada.
 
 ---
 
@@ -217,8 +218,9 @@ navegando com as teclas numéricas:
 [2] Escolher quais músicas baixar
 [3] Alterar pasta do jogo
 [4] Idioma
-[5] Verificar requisitos de software
-[6] Sair
+[5] Configurações
+[6] Verificar requisitos de software
+[7] Sair
 ```
 
 > **Nota sobre a fonte:** a versão gráfica exibe todos os idiomas

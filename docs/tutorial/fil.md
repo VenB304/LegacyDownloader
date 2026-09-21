@@ -206,6 +206,7 @@ noong huli mong pagbisita.
   o itigil na lang ang pagkuha ng update para sa mga ito habang itinatago
   ang mayroon ka na.
 - **Baguhin ang wika**: ang flag dropdown, sa kanang-itaas, anumang oras.
+- **Ayusin ang mga setting**: i-click ang **Mga Setting** sa main window para sa auto-check, auto-launch, limitasyon sa bilis ng download, at advanced na custom share URL.
 
 ---
 
@@ -221,8 +222,9 @@ gamit ang number keys:
 [2] Piliin kung aling mga kanta ang kukunin
 [3] Baguhin ang folder ng laro
 [4] Wika
-[5] Suriin ang mga kailangang software
-[6] Lumabas
+[5] Mga Setting
+[6] Suriin ang mga kailangang software
+[7] Lumabas
 ```
 
 > **Tala tungkol sa font:** ipinapakita nang tama ng graphical na bersyon

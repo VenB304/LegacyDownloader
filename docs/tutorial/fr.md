@@ -206,6 +206,7 @@ dernière visite.
   jour tout en gardant ce que vous avez déjà.
 - **Changer de langue** : le menu déroulant du drapeau, en haut à droite, à
   tout moment.
+- **Ajuster les paramètres** : cliquez sur **Paramètres** dans la fenêtre principale pour la vérification automatique, le lancement automatique, une limite de vitesse de téléchargement, et une URL de partage personnalisée avancée.
 
 ---
 
@@ -220,8 +221,9 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 [2] Choisir les chansons à récupérer
 [3] Changer le dossier du jeu
 [4] Langue
-[5] Vérifier les logiciels requis
-[6] Quitter
+[5] Paramètres
+[6] Vérifier les logiciels requis
+[7] Quitter
 ```
 
 > **Remarque sur la police :** la version graphique affiche correctement

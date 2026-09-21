@@ -69,6 +69,18 @@ function Get-ShareConn {
     param([string]$ShareUrl)
 
     $url = if ([string]::IsNullOrWhiteSpace($ShareUrl)) { $script:DefaultShareUrl } else { $ShareUrl.Trim() }
+
+    # Accept the friendlier public-share link Nextcloud's own UI actually
+    # hands users (https://host/s/TOKEN) - not just the raw WebDAV path the
+    # SHAREURL comment always documented - and rewrite it to the WebDAV form
+    # this connection string needs. Anything that doesn't match this shape
+    # (already WebDAV-style, or something else entirely) passes through
+    # unchanged, so the existing hand-edit power-user path still works.
+    $shareLink = [regex]::Match($url, '^(https?://[^/]+)/s/([^/?#]+)/?\s*$')
+    if ($shareLink.Success) {
+        $url = "$($shareLink.Groups[1].Value)/public.php/dav/files/$($shareLink.Groups[2].Value)/"
+    }
+
     if ($url -notmatch '/$') { $url += '/' }
 
     $token = ''
@@ -114,6 +126,14 @@ function Initialize-LegacyCore {
     $script:ShareUrl = Read-ConfigValue 'SHAREURL'
     $script:Conn     = Get-ShareConn $script:ShareUrl
 
+    # BWLIMIT, same early-read story as SHAREURL. Blank/'0' means unlimited -
+    # never pass --bwlimit=0 to rclone, which means "block all transfer", not
+    # "no limit". Baked into CommonArgs/GuiSyncArgs below once here, same as
+    # SHAREURL is baked into $script:Conn - a change made from the Settings
+    # window takes effect the next time the tool starts, not immediately.
+    $bwLimit = Read-ConfigValue 'BWLIMIT'
+    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -eq '0') { @() } else { @("--bwlimit=$bwLimit") }
+
     $script:RcloneConfigArgs = @('--config', $script:RcloneConfigPath)
 
     # --size-only: compare files by SIZE ONLY and ignore modification time.
@@ -135,12 +155,14 @@ function Initialize-LegacyCore {
     # which is far cheaper than detecting the filesystem type up front.
     $script:CommonArgs = @(
         '-P', '--transfers=4', '--checkers=8', '--stats=1s', '--local-no-sparse'
-    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
+    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $bwLimitArgs
 
     # Args for the pre-download "what would change" scan: no progress meter,
     # verbose so every already-current file is named, dry-run so nothing moves.
     # Plain text output on purpose - Parse-DryRun reads the human "Skipped
     # copy as --dry-run is set" lines, which --use-json-log would restructure.
+    # No --bwlimit here on purpose - a --dry-run scan never transfers a
+    # single byte, so a bandwidth cap has nothing to apply to.
     $script:ScanArgs = @(
         '--transfers=4', '--checkers=8', '--dry-run', '-v'
     ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
@@ -151,7 +173,7 @@ function Initialize-LegacyCore {
     # don't mix.
     $script:GuiSyncArgs = @(
         '-v', '--use-json-log', '--stats=1s', '--transfers=4', '--checkers=8', '--local-no-sparse'
-    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
+    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $bwLimitArgs
 
     return [PSCustomObject]@{
         ScriptDir        = $ScriptDir
@@ -311,7 +333,7 @@ function Read-ConfigValue([string]$Key) {
 
 function Load-Config {
     if (-not (Test-Path -LiteralPath $script:ConfigPath)) {
-        Save-Config -GamePath '' -Editions 'AUTO' -Lang (Resolve-DefaultLanguage)
+        Save-Config @{ GamePath = ''; Editions = 'AUTO'; Lang = (Resolve-DefaultLanguage) }
     }
     $gamePath = ''
     $editions = 'AUTO'
@@ -320,6 +342,7 @@ function Load-Config {
     $songFilters = ''
     $autoLaunch = $false
     $autoCheck = $false
+    $bwLimit = ''
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -334,38 +357,45 @@ function Load-Config {
         if ($key -eq 'SONGFILTERS') { $songFilters = $value }
         if ($key -eq 'AUTOLAUNCH')  { $autoLaunch = ($value -eq 'true') }
         if ($key -eq 'AUTOCHECK')   { $autoCheck = ($value -eq 'true') }
+        if ($key -eq 'BWLIMIT')     { $bwLimit = $value }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
-    return [PSCustomObject]@{ GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl; SongFilters = $songFilters; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck }
+    return [PSCustomObject]@{
+        GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl
+        SongFilters = $songFilters; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck; BwLimit = $bwLimit
+    }
 }
 
-function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [string]$SongFilters) {
-    # When no language is passed, keep whatever the file already has (so the
-    # existing two-argument callers don't wipe the LANG line); default 'en'.
-    if ([string]::IsNullOrWhiteSpace($Lang)) {
-        $Lang = 'en'
-        $existingLang = Read-ConfigValue 'LANG'
-        if ($existingLang) { $Lang = $existingLang }
+function Save-Config([hashtable]$Values = @{}) {
+    # Merges $Values (only the keys actually being changed) over whatever's
+    # currently on disk - one preserve-unless-specified rule instead of a
+    # pile of per-key special cases (the old positional-parameter version
+    # needed a separate ContainsKey/Read-ConfigValue trick for every value
+    # added after GamePath/Editions). Recognized keys: GamePath, Editions,
+    # Lang, ShareUrl, SongFilters, AutoLaunch, AutoCheck, BwLimit.
+    $current = if (Test-Path -LiteralPath $script:ConfigPath) { Load-Config } else { $null }
+    function Resolve-Field([string]$Key, $Default) {
+        if ($Values.ContainsKey($Key)) { return $Values[$Key] }
+        if ($null -ne $current) { return $current.$Key }
+        return $Default
     }
-    # SHAREURL is hand-edited only - never wipe an override the user added.
-    $ShareUrl = Read-ConfigValue 'SHAREURL'
-    # AUTOLAUNCH, like SHAREURL, has no UI yet (a future Settings screen will
-    # add one) - always re-read and preserve whatever's on disk rather than
-    # silently dropping a hand-edited value on the next unrelated save.
-    $AutoLaunchOut = Read-ConfigValue 'AUTOLAUNCH'
-    if ($AutoLaunchOut -ne 'true') { $AutoLaunchOut = 'false' }
-    # AUTOCHECK, same story as AUTOLAUNCH - no UI yet, preserve hand-edits.
-    $AutoCheckOut = Read-ConfigValue 'AUTOCHECK'
-    if ($AutoCheckOut -ne 'true') { $AutoCheckOut = 'false' }
-    # SONGFILTERS, like LANG, is only rewritten when a caller explicitly
-    # passes it - an omitted argument preserves whatever's already saved
-    # instead of silently clearing a user's per-song picks.
-    $SongFiltersOut = if ($PSBoundParameters.ContainsKey('SongFilters')) { $SongFilters } else { Read-ConfigValue 'SONGFILTERS' }
+    $GamePath    = Resolve-Field 'GamePath' ''
+    $Editions    = Resolve-Field 'Editions' 'AUTO'
+    $Lang        = Resolve-Field 'Lang' 'en'
+    $ShareUrl    = Resolve-Field 'ShareUrl' ''
+    $SongFilters = Resolve-Field 'SongFilters' ''
+    $AutoLaunch  = Resolve-Field 'AutoLaunch' $false
+    $AutoCheck   = Resolve-Field 'AutoCheck' $false
+    $BwLimit     = Resolve-Field 'BwLimit' ''
+    if ([string]::IsNullOrWhiteSpace($Lang)) { $Lang = 'en' }
+    $AutoLaunchOut = if ($AutoLaunch) { 'true' } else { 'false' }
+    $AutoCheckOut  = if ($AutoCheck)  { 'true' } else { 'false' }
     @(
         "# Legacy Downloader - configuration"
         "# You normally don't need to edit this by hand - use the program's"
-        "# menus (Change Game Path / Select Maps / Language) instead."
+        "# menus (Change Game Path / Select Maps / Language / Settings)"
+        "# instead."
         ""
         "GAMEPATH=$GamePath"
         ""
@@ -379,30 +409,36 @@ function Save-Config([string]$GamePath, [string]$Editions, [string]$Lang, [strin
         "# the Language menu."
         "LANG=$Lang"
         ""
-        "# SHAREURL (advanced) - the rclone WebDAV link the tool downloads"
-        "# from. Leave it commented out to use the built-in default. If the"
-        "# share ever moves and no new build is available, paste the new"
-        "# public WebDAV link here, e.g.:"
-        "#   SHAREURL=https://cloud.example.com/public.php/dav/files/TOKEN/"
+        "# SHAREURL (advanced, also settable from Settings) - where the tool"
+        "# downloads from. Accepts either a Nextcloud share link copied"
+        "# straight from its own UI (https://host/s/TOKEN) or the raw WebDAV"
+        "# link - either works. Leave it commented out to use the built-in"
+        "# default. If the share ever moves and no new build is available,"
+        "# paste the new link here, e.g.:"
+        "#   SHAREURL=https://cloud.example.com/s/TOKEN"
         $(if ($ShareUrl) { "SHAREURL=$ShareUrl" } else { "#SHAREURL=" })
         ""
         "# SONGFILTERS (set from the Search songs... screen) - only editions"
         "# with fewer than all their songs selected appear here, as"
         "# edition:code1|code2;edition2:code3. An edition with no entry here"
         "# means 'every song in it'."
-        "SONGFILTERS=$SongFiltersOut"
+        "SONGFILTERS=$SongFilters"
         ""
-        "# AUTOLAUNCH (advanced) - when true, automatically launches Legacy.exe"
-        "# and closes this tool right after a successful check/update, with no"
-        "# prompt. Default false. A future Settings screen will make this"
-        "# easier to toggle than hand-editing this file."
+        "# AUTOLAUNCH (also settable from Settings) - when true, automatically"
+        "# launches Legacy.exe and closes this tool right after a successful"
+        "# check/update, with no prompt. Default false."
         "AUTOLAUNCH=$AutoLaunchOut"
         ""
-        "# AUTOCHECK (advanced) - when true, automatically checks for updates"
-        "# as soon as the tool opens (an existing install only - never on a"
-        "# fresh first-run setup). Default false. A future Settings screen"
-        "# will make this easier to toggle than hand-editing this file."
+        "# AUTOCHECK (also settable from Settings) - when true, automatically"
+        "# checks for updates as soon as the tool opens (an existing install"
+        "# only - never on a fresh first-run setup). Default false."
         "AUTOCHECK=$AutoCheckOut"
+        ""
+        "# BWLIMIT (also settable from Settings) - caps rclone's download"
+        "# speed, in rclone's own bandwidth syntax (e.g. 5M = 5 MB/s, 800k ="
+        "# 800 KB/s). Blank/absent means unlimited. Takes effect the next"
+        "# time the tool starts."
+        "BWLIMIT=$BwLimit"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
