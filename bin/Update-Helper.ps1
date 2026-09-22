@@ -44,8 +44,14 @@ function Test-VersionsEqual([string]$A, [string]$B) {
     # 'V10.0' as different releases and abort/roll back a perfectly good
     # update over a formatting difference alone. $null-safe: either side
     # being $null (Get-StagedVersion couldn't read a version line at all)
-    # is never "equal", regardless of formatting.
-    if ($null -eq $A -or $null -eq $B) { return $false }
+    # is never "equal", regardless of formatting. IsNullOrEmpty, not a bare
+    # $null check - a [string]-typed parameter silently coerces an
+    # explicitly-passed $null argument to "" in Windows PowerShell 5.1
+    # (confirmed live), so $A/$B are never actually $null by the time this
+    # line runs even when the caller passed real $null - a plain
+    # "$null -eq $A" check would be dead code that looks like it guards
+    # against exactly the case it doesn't actually catch.
+    if ([string]::IsNullOrEmpty($A) -or [string]::IsNullOrEmpty($B)) { return $false }
     $pa = ($A -replace '^[vV]', '') -split '\.'
     $pb = ($B -replace '^[vV]', '') -split '\.'
     $n = [Math]::Max($pa.Count, $pb.Count)
@@ -175,8 +181,18 @@ try {
     $oldLogs = Join-Path $oldBin 'logs'
     if (Test-Path -LiteralPath $oldLogs) {
         Write-Log "Carrying bin\logs\ over from the old bin\"
-        try { Copy-Item -LiteralPath $oldLogs -Destination (Join-Path $liveBin 'logs') -Recurse -Force -ErrorAction Stop }
-        catch { Write-Log "Non-fatal: couldn't carry bin\logs\ over: $($_.Exception.Message)" }
+        $newLogs = Join-Path $liveBin 'logs'
+        # Same wildcard-into-a-pre-created-destination pattern as the
+        # staged-bin copy above, for the same reason: Copy-Item nests the
+        # source AS A CHILD if the destination already exists, rather than
+        # merging into it - not expected to fire in practice (the release
+        # zip never ships bin\logs\, and nothing writes to it between the
+        # swap and this point), but costs nothing to guard against since
+        # the pattern is already established two steps up.
+        try {
+            if (-not (Test-Path -LiteralPath $newLogs)) { New-Item -ItemType Directory -Path $newLogs -Force | Out-Null }
+            Copy-Item -Path (Join-Path $oldLogs '*') -Destination $newLogs -Recurse -Force -ErrorAction Stop
+        } catch { Write-Log "Non-fatal: couldn't carry bin\logs\ over: $($_.Exception.Message)" }
     }
 
     # Root-level launchers/README - safe to overwrite directly by this

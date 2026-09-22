@@ -702,7 +702,7 @@ function Show-SettingsWindow {
                     return
                 }
                 $bwOut = "${bwText}M"
-            } elseif ($bwText -match '^\d+[KkMmGg]$') {
+            } elseif ($bwText -match '^(\d+)[KkMmGg]$') {
                 # Already valid rclone bandwidth syntax (e.g. a hand-edited
                 # config.txt's "800k", which config.txt's own comment
                 # explicitly documents as supported) - pass through as-is
@@ -712,6 +712,17 @@ function Show-SettingsWindow {
                 # change something unrelated (AutoLaunch, say) with an
                 # existing non-M BWLIMIT already in config.txt blocked
                 # saving ANY change in the whole dialog.
+                #
+                # Still needs its own zero check ("0M"/"0k"/"0G" all mean
+                # zero bytes/s to rclone, i.e. block everything, the exact
+                # thing this field's docstring already warns never to pass
+                # as --bwlimit) - the numeric-only branch above checks this
+                # for its own case, but this branch is a separate code path
+                # that doesn't automatically inherit that check.
+                if ([int]$Matches[1] -eq 0) {
+                    Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
+                    return
+                }
                 $bwOut = $bwText
             } else {
                 Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')

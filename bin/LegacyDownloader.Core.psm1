@@ -230,7 +230,13 @@ function Initialize-LegacyCore {
     # case) - forcing single-stream unconditionally would cost real transfer
     # speed on a fast connection for no reason when there's no cap to honor.
     $bwLimit = Read-ConfigValue 'BWLIMIT'
-    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -eq '0') { @() } else { @("--bwlimit=$bwLimit", '--multi-thread-streams=0') }
+    # A zero value means "unlimited" regardless of unit suffix - '0M'/'0K'/
+    # '0G' all mean zero bytes/s to rclone (block everything) just as much
+    # as bare '0' does. The Settings window's own Save validation now
+    # rejects a zero-with-suffix input too, but this still needs the same
+    # check independently since config.txt can be hand-edited straight
+    # past that GUI validation entirely.
+    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -match '^0+[KkMmGg]?$') { @() } else { @("--bwlimit=$bwLimit", '--multi-thread-streams=0') }
 
     $script:RcloneConfigArgs = @('--config', $script:RcloneConfigPath)
 
