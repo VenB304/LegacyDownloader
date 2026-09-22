@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Cole seu link de compartilhamento do Nextcloud — deixe em branco para usar o padrão.",
   "gui.settings_group_advanced": "Avançado",
   "gui.settings_restart_hint": "Mudanças no limite de banda e na URL de compartilhamento têm efeito na próxima vez que a ferramenta for iniciada.",
+  "gui.settings_log_hint": "Um log detalhado de solução de problemas é sempre salvo em bin\\logs\\.",
   "gui.btn_save": "Salvar",
   "gui.update_confirm_title": "Atualização disponível",
   "gui.update_confirm_headline": "Atualização disponível",

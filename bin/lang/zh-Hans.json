@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "粘贴你的 Nextcloud 分享链接 — 留空则使用默认链接。",
   "gui.settings_group_advanced": "高级",
   "gui.settings_restart_hint": "带宽限制和分享链接的更改将在工具下次启动时生效。",
+  "gui.settings_log_hint": "详细的故障排查日志始终会保存到 bin\\logs\\。",
   "gui.btn_save": "保存",
   "gui.update_confirm_title": "有可用更新",
   "gui.update_confirm_headline": "有可用更新",

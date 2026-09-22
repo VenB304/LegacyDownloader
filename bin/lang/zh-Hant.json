@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "貼上你的 Nextcloud 分享連結 — 留空則使用預設連結。",
   "gui.settings_group_advanced": "進階",
   "gui.settings_restart_hint": "頻寬限制和分享連結的變更將在工具下次啟動時生效。",
+  "gui.settings_log_hint": "詳細的疑難排解記錄一律會儲存在 bin\\logs\\。",
   "gui.btn_save": "儲存",
   "gui.update_confirm_title": "有可用更新",
   "gui.update_confirm_headline": "有可用更新",

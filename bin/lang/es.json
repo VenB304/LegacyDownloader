@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Pega tu enlace de share de Nextcloud — déjalo en blanco para usar el predeterminado.",
   "gui.settings_group_advanced": "Avanzado",
   "gui.settings_restart_hint": "Los cambios en el límite de velocidad y la URL de share se aplican la próxima vez que se inicie la herramienta.",
+  "gui.settings_log_hint": "Siempre se guarda un registro detallado de solución de problemas en bin\\logs\\.",
   "gui.btn_save": "Guardar",
   "gui.update_confirm_title": "Actualización disponible",
   "gui.update_confirm_headline": "Actualización disponible",

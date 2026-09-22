@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Plak je Nextcloud-share-link — laat leeg om de standaard te gebruiken.",
   "gui.settings_group_advanced": "Geavanceerd",
   "gui.settings_restart_hint": "Wijzigingen in de bandbreedtelimiet en share-URL worden pas van kracht de volgende keer dat de tool start.",
+  "gui.settings_log_hint": "Een gedetailleerd probleemoplossingslogboek wordt altijd opgeslagen in bin\\logs\\.",
   "gui.btn_save": "Opslaan",
   "gui.update_confirm_title": "Update beschikbaar",
   "gui.update_confirm_headline": "Update beschikbaar",

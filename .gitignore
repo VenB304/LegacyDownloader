@@ -8,6 +8,10 @@ update-helper.log
 bin_old_*/
 bin_new_*/
 
+# Always-on troubleshooting log (bin\logs\) - per-install runtime output,
+# never tracked or shipped in a release zip
+bin/logs/
+
 # Third-party binary - download from https://rclone.org/downloads/ (Windows amd64)
 rclone.exe
 

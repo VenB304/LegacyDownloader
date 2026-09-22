@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Paste your Nextcloud share link. Leave blank to use the default.",
   "gui.settings_group_advanced": "Advanced",
   "gui.settings_restart_hint": "Bandwidth limit and share URL changes take effect the next time the tool starts.",
+  "gui.settings_log_hint": "A detailed troubleshooting log is always saved to bin\\logs\\.",
   "gui.btn_save": "Save",
   "gui.update_confirm_title": "Update Available",
   "gui.update_confirm_headline": "Update available",

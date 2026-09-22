@@ -245,6 +245,97 @@ function New-Btn([string]$Text, [int]$X, [int]$Y, [int]$W, [int]$H = 28, [bool]$
     return $b
 }
 
+function Get-AppIcon {
+    # Loaded once and cached, then wired onto every Form's title bar below.
+    # Fails soft ($null) if bin\LegacyDownloader.ico is somehow missing -
+    # a missing icon should never be a reason the app won't start.
+    if ($script:AppIconCached) { return $script:AppIconObj }
+    $script:AppIconCached = $true
+    $iconPath = Join-Path $script:AppDir 'LegacyDownloader.ico'
+    if (Test-Path -LiteralPath $iconPath) {
+        try { $script:AppIconObj = New-Object System.Drawing.Icon($iconPath) } catch { $script:AppIconObj = $null }
+    }
+    return $script:AppIconObj
+}
+
+function Set-FormIcon([System.Windows.Forms.Form]$Target) {
+    $icon = Get-AppIcon
+    if ($null -ne $icon) { $Target.Icon = $icon }
+}
+
+function New-DialogIcon([string]$Kind) {
+    # 40x40 icon circle for the two dialogs that use one (Quick Launch's
+    # checkmark, the update-confirm dialog's down-arrow) - same procedural-
+    # drawing approach as New-StatusIcon's 16x16 requirements dots, scaled
+    # up, matching the approved mockup exactly (checkmark #dcfce7/#16a34a,
+    # download #dbeafe/#1262c8). Cached per Kind.
+    if ($null -eq $script:DialogIcons) { $script:DialogIcons = @{} }
+    if ($script:DialogIcons.ContainsKey($Kind)) { return $script:DialogIcons[$Kind] }
+
+    $bg = if ($Kind -eq 'check') { [System.Drawing.Color]::FromArgb(220, 252, 231) } else { [System.Drawing.Color]::FromArgb(219, 234, 254) }
+    $stroke = if ($Kind -eq 'check') { [System.Drawing.Color]::FromArgb(22, 163, 74) } else { [System.Drawing.Color]::FromArgb(18, 98, 200) }
+
+    $bmp = New-Object System.Drawing.Bitmap(40, 40)
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $g.Clear([System.Drawing.Color]::Transparent)
+    $brush = New-Object System.Drawing.SolidBrush($bg)
+    $g.FillEllipse($brush, 0, 0, 39, 39)
+    $brush.Dispose()
+    $pen = New-Object System.Drawing.Pen($stroke, 2.5)
+    $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+    if ($Kind -eq 'check') {
+        $g.DrawLines($pen, @(
+            (New-Object System.Drawing.PointF(14.2, 20.8)),
+            (New-Object System.Drawing.PointF(18.3, 25.0)),
+            (New-Object System.Drawing.PointF(25.8, 15.8))))
+    } else {
+        $g.DrawLine($pen, 20, 14.2, 20, 24.2)
+        $g.DrawLines($pen, @(
+            (New-Object System.Drawing.PointF(15.0, 19.2)),
+            (New-Object System.Drawing.PointF(20.0, 24.2)),
+            (New-Object System.Drawing.PointF(25.0, 19.2))))
+    }
+    $pen.Dispose(); $g.Dispose()
+    $script:DialogIcons[$Kind] = $bmp
+    return $bmp
+}
+
+function New-DialogIconBox([string]$Kind, [int]$X, [int]$Y) {
+    $pb = New-Object System.Windows.Forms.PictureBox
+    $pb.Image = New-DialogIcon $Kind
+    $pb.SetBounds($X, $Y, 40, 40)
+    return $pb
+}
+
+function New-SmallDownloadIcon {
+    # 13x13 bare down-arrow (no circle backdrop) for BtnUpdateAvailable's own
+    # label - same shape as New-DialogIcon's 'download' variant, scaled down
+    # and colored to match the button's own text (21,128,61), matching the
+    # mockup's in-button icon exactly. Cached (only one caller today, but a
+    # single-entry cache costs nothing and matches New-StatusIcon's pattern).
+    if ($script:SmallDownloadIconCached) { return $script:SmallDownloadIconObj }
+    $script:SmallDownloadIconCached = $true
+    $bmp = New-Object System.Drawing.Bitmap(13, 13)
+    $g = [System.Drawing.Graphics]::FromImage($bmp)
+    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
+    $g.Clear([System.Drawing.Color]::Transparent)
+    $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(21, 128, 61), 1.6)
+    $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+    $g.DrawLine($pen, 6.5, 2.7, 6.5, 9.2)
+    $g.DrawLines($pen, @(
+        (New-Object System.Drawing.PointF(3.25, 5.96)),
+        (New-Object System.Drawing.PointF(6.5, 9.2)),
+        (New-Object System.Drawing.PointF(9.75, 5.96))))
+    $pen.Dispose(); $g.Dispose()
+    $script:SmallDownloadIconObj = $bmp
+    return $bmp
+}
+
 function New-FilterDropdown([string[]]$Labels) {
     # A checkbox-per-row popup for "pick any of these" filtering, built from
     # ToolStripMenuItems in a ContextMenuStrip - the same control type the
@@ -313,11 +404,13 @@ function Show-LaunchPrompt {
     $f.BackColor = $script:ColorBg
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
-    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
 
-    $lblHead = New-Label (T 'gui.launch_headline') 20 18 340 22
+    $iconBox = New-DialogIconBox 'check' 20 18
+    $lblHead = New-Label (T 'gui.launch_headline') 72 18 288 22
     $lblHead.Font = $script:FontTitle
-    $lblBody = New-Label (T 'gui.launch_body') 20 44 340 44
+    $lblBody = New-Label (T 'gui.launch_body') 72 44 288 44
 
     # Widths measured from the actual (translated) text, same convention as
     # Show-PreviewDialog's button row - "Launch Game" translates to very
@@ -336,7 +429,7 @@ function Show-LaunchPrompt {
     $f.ClientSize = New-Object System.Drawing.Size(380, 148)
     $f.AcceptButton = $btnLaunch
     $f.CancelButton = $btnClose
-    $f.Controls.AddRange(@($lblHead, $lblBody, $btnClose, $btnLaunch))
+    $f.Controls.AddRange(@($iconBox, $lblHead, $lblBody, $btnClose, $btnLaunch))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -403,12 +496,14 @@ function Show-UpdateConfirmDialog($UpdateInfo) {
     $f.BackColor = $script:ColorBg
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
-    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
     $f.ClientSize = New-Object System.Drawing.Size(380, 150)
 
-    $lblHead = New-Label (T 'gui.update_confirm_headline') 20 18 340 22
+    $iconBox = New-DialogIconBox 'download' 20 18
+    $lblHead = New-Label (T 'gui.update_confirm_headline') 72 18 288 22
     $lblHead.Font = $script:FontTitle
-    $lblBody = New-Label (T 'gui.update_confirm_body') 20 44 340 40
+    $lblBody = New-Label (T 'gui.update_confirm_body') 72 44 288 40
     $lblVersion = New-Hint (T 'gui.update_confirm_version' @{ current = $UpdateInfo.CurrentVersion; latest = $UpdateInfo.LatestVersion }) 20 88 340
 
     $btnUpdate = New-Btn (T 'gui.btn_update_now') 0 108 0 32 $true
@@ -424,7 +519,7 @@ function Show-UpdateConfirmDialog($UpdateInfo) {
 
     $f.AcceptButton = $btnUpdate
     $f.CancelButton = $btnLater
-    $f.Controls.AddRange(@($lblHead, $lblBody, $lblVersion, $btnLater, $btnUpdate))
+    $f.Controls.AddRange(@($iconBox, $lblHead, $lblBody, $lblVersion, $btnLater, $btnUpdate))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -466,7 +561,7 @@ function Refresh-UpdateStatusButton {
         return
     }
     $script:BtnUpdateAvailable.Text = T 'gui.update_status_button' @{ version = $script:PendingUpdate.LatestVersion }
-    $script:BtnUpdateAvailable.Width = [Math]::Max(140, [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnUpdateAvailable.Text, $script:BtnUpdateAvailable.Font).Width + 30)
+    $script:BtnUpdateAvailable.Width = [Math]::Max(140, [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnUpdateAvailable.Text, $script:BtnUpdateAvailable.Font).Width + 50)
     $script:BtnUpdateAvailable.Left = $script:BtnSettings.Right + 8
     $script:BtnUpdateAvailable.Visible = $true
 }
@@ -500,7 +595,8 @@ function Show-SettingsWindow {
     $f.BackColor = $script:ColorBg
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
-    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
     $f.ClientSize = New-Object System.Drawing.Size(460, 490)
 
     # --- Startup & Launch ---
@@ -570,7 +666,11 @@ function Show-SettingsWindow {
     $chkCheckAppUpdates.Checked = [bool]$script:Cfg.CheckAppUpdates
     $grpUpdates.Controls.AddRange(@($lblCurrentVersion, $btnCheckNow, $chkCheckAppUpdates))
 
-    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 416 428
+    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 400 428
+    # Own row, stacked above the buttons - not a Settings toggle (see the
+    # plan's "Always-on troubleshooting log" section: there's nothing to
+    # configure, it's just always on), just letting the user know it exists.
+    $hintLog = New-Hint (T 'gui.settings_log_hint') 16 418 428
 
     $btnSave   = New-Btn (T 'gui.btn_save') 0 446 0 30 $true
     $btnCancel = New-Btn (T 'gui.btn_cancel') 0 446 0 30 $false
@@ -606,7 +706,7 @@ function Show-SettingsWindow {
 
     $f.AcceptButton = $btnSave
     $f.CancelButton = $btnCancel
-    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $grpUpdates, $hintRestart, $btnSave, $btnCancel))
+    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $grpUpdates, $hintRestart, $hintLog, $btnSave, $btnCancel))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -949,6 +1049,7 @@ function Show-FileListDialog($Plan, $KeepFiles) {
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.ClientSize = New-Object System.Drawing.Size(480, 480)
     $f.MinimizeBox = $false; $f.MaximizeBox = $true
+    Set-FormIcon $f
 
     $tb = New-Object System.Windows.Forms.TextBox
     $tb.Multiline = $true; $tb.ReadOnly = $true
@@ -998,6 +1099,7 @@ function Show-PreviewDialog($Plan) {
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
 
     $summary = New-Object System.Windows.Forms.TextBox
     $summary.Multiline = $true; $summary.ReadOnly = $true
@@ -1117,7 +1219,7 @@ function Show-SongBrowserDialog {
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $true
-    $f.ShowIcon = $false
+    Set-FormIcon $f
     $f.ClientSize = New-Object System.Drawing.Size(1000, 620)
     $f.MinimumSize = New-Object System.Drawing.Size(860, 460)
 
@@ -2409,6 +2511,7 @@ function Run-SetupDialog {
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
     $f.ClientSize = New-Object System.Drawing.Size(460, 260)
     $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
 
     # Top right language selector
     $lblLang = New-Label (T 'gui.lang_label') 200 14 70 24
@@ -2578,7 +2681,7 @@ function Show-TrackedViewDialog {
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $true
-    $f.ShowIcon = $false
+    Set-FormIcon $f
     $f.ClientSize = New-Object System.Drawing.Size(1000, 648)
     $f.MinimumSize = New-Object System.Drawing.Size(860, 480)
 
@@ -2996,6 +3099,7 @@ function Show-RequirementsDialog {
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
 
     # Before the download-progress feature, a click's whole download+install
     # sequence ran as one blocking call that never pumped Windows messages,
@@ -3635,6 +3739,7 @@ function Build-MainForm {
     $script:Form.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
     $script:Form.ClientSize = New-Object System.Drawing.Size(520, 536)
     $script:Form.MaximizeBox = $false
+    Set-FormIcon $script:Form
 
     # Top bar: Language label & Owner-Draw ComboBox
     $script:LblLang = New-Label '' 260 14 70 24
@@ -3767,7 +3872,7 @@ function Build-MainForm {
     # Activity Log
     $script:TxtLog = New-Object System.Windows.Forms.TextBox
     $script:TxtLog.Multiline = $true; $script:TxtLog.ReadOnly = $true
-    $script:TxtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
+    $script:TxtLog.ScrollBars = [System.Windows.Forms.ScrollBars]::None
     $script:TxtLog.SetBounds(12, 348, 496, 140)
     $script:TxtLog.Font = $script:FontMono
     $script:TxtLog.BackColor = $script:ColorCard
@@ -3810,6 +3915,11 @@ function Build-MainForm {
     $script:BtnUpdateAvailable.FlatAppearance.BorderSize = 1
     $script:BtnUpdateAvailable.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(201, 245, 217)
     $script:BtnUpdateAvailable.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $script:BtnUpdateAvailable.Image = New-SmallDownloadIcon
+    $script:BtnUpdateAvailable.ImageAlign = [System.Drawing.ContentAlignment]::MiddleLeft
+    $script:BtnUpdateAvailable.TextImageRelation = [System.Windows.Forms.TextImageRelation]::ImageBeforeText
+    $script:BtnUpdateAvailable.TextAlign = [System.Drawing.ContentAlignment]::MiddleCenter
+    $script:BtnUpdateAvailable.Padding = New-Object System.Windows.Forms.Padding(6, 0, 0, 0)
     $script:BtnUpdateAvailable.SetBounds(120, 496, 160, 28)
     $script:BtnUpdateAvailable.Visible = $false
     $script:BtnUpdateAvailable.Add_Click({
@@ -3914,6 +4024,11 @@ if ($env:LEGACY_GUI_SELFTEST) {
     }
     Write-Host "=== main form control tree ==="
     Dump-Ctl $script:Form 0
+    if ($null -eq $script:Form.Icon) {
+        Write-Host "  SELFTEST FAILURE: main form Icon not set (bin\LegacyDownloader.ico missing or failed to load)" -ForegroundColor Red
+    } else {
+        Write-Host "  main form Icon set: $($script:Form.Icon.Width)x$($script:Form.Icon.Height) (expect non-null)"
+    }
     Write-Host "`n=== i18n sanity (a few keys) ==="
     foreach ($k in @('gui.btn_check', 'gui.rb_everything', 'gui.folder_ok', 'gui.progress_downloading')) {
         Write-Host ("  {0} => {1}" -f $k, (T $k @{ songs = 1; label = 'x'; pct = 1; speed = '1 KB'; eta = '1s' }))

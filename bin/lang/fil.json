@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "I-paste ang link ng Nextcloud share mo — iwanang blangko para gamitin ang default.",
   "gui.settings_group_advanced": "Advanced",
   "gui.settings_restart_hint": "Magkakaroon ng epekto ang mga pagbabago sa bandwidth limit at share URL sa susunod na pagbukas ng tool.",
+  "gui.settings_log_hint": "Palaging nase-save ang detalyadong troubleshooting log sa bin\\logs\\.",
   "gui.btn_save": "I-save",
   "gui.update_confirm_title": "May Bagong Update",
   "gui.update_confirm_headline": "May bagong update",

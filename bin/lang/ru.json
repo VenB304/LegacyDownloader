@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Вставьте вашу ссылку на общий доступ Nextcloud — оставьте пустым, чтобы использовать значение по умолчанию.",
   "gui.settings_group_advanced": "Дополнительно",
   "gui.settings_restart_hint": "Изменения ограничения скорости и URL общего доступа вступят в силу при следующем запуске программы.",
+  "gui.settings_log_hint": "Подробный журнал устранения неполадок всегда сохраняется в bin\\logs\\.",
   "gui.btn_save": "Сохранить",
   "gui.update_confirm_title": "Доступно обновление",
   "gui.update_confirm_headline": "Доступно обновление",

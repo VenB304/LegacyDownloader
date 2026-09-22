@@ -224,6 +224,7 @@
   "gui.settings_shareurl_hint": "Füge deinen Nextcloud-Share-Link ein — leer lassen, um den Standard zu verwenden.",
   "gui.settings_group_advanced": "Erweitert",
   "gui.settings_restart_hint": "Änderungen an Bandbreitenbegrenzung und Share-URL werden erst beim nächsten Start des Tools wirksam.",
+  "gui.settings_log_hint": "Ein detailliertes Fehlerdiagnose-Protokoll wird immer in bin\\logs\\ gespeichert.",
   "gui.btn_save": "Speichern",
   "gui.update_confirm_title": "Update verfügbar",
   "gui.update_confirm_headline": "Update verfügbar",

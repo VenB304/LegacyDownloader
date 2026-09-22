@@ -161,6 +161,8 @@ function Initialize-LegacyCore {
     [CmdletBinding()]
     param([Parameter(Mandatory = $true)][string]$ScriptDir)
 
+    $script:AppDir = $ScriptDir
+
     if ($IsLinux) {
         $cmd = Get-Command rclone -ErrorAction SilentlyContinue
         $script:Rclone = if ($cmd) { $cmd.Source } else { 'rclone' }
@@ -198,8 +200,22 @@ function Initialize-LegacyCore {
     # "no limit". Baked into CommonArgs/GuiSyncArgs below once here, same as
     # SHAREURL is baked into $script:Conn - a change made from the Settings
     # window takes effect the next time the tool starts, not immediately.
+    #
+    # --multi-thread-streams=0 is bundled in alongside --bwlimit, and ONLY
+    # when a real limit is set: live-tested (2026-09-22) against the actual
+    # base-game files, --bwlimit alone does NOT cap a file at/above rclone's
+    # multi-thread-cutoff (default 250MiB - bundle_pc.ipk is ~900MB,
+    # patch_pc.ipk ~277MB, both routinely hit by a base-game sync) - a real
+    # --bwlimit=1M copy of patch_pc.ipk measured ~17 MiB/s, completely
+    # unthrottled, while the exact same copy with --multi-thread-streams=0
+    # added measured ~0.8 MiB/s, right at the configured cap. Root cause:
+    # rclone's multi-thread chunked-download mode doesn't respect the global
+    # limiter the same way a normal single-stream transfer does. Scoped to
+    # only fire when BWLIMIT is actually set (not the unlimited/default
+    # case) - forcing single-stream unconditionally would cost real transfer
+    # speed on a fast connection for no reason when there's no cap to honor.
     $bwLimit = Read-ConfigValue 'BWLIMIT'
-    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -eq '0') { @() } else { @("--bwlimit=$bwLimit") }
+    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -eq '0') { @() } else { @("--bwlimit=$bwLimit", '--multi-thread-streams=0') }
 
     $script:RcloneConfigArgs = @('--config', $script:RcloneConfigPath)
 
@@ -850,7 +866,77 @@ function ConvertTo-QuotedArg([string]$Value) {
     return '"' + $escaped + '"'
 }
 
-function Invoke-RcloneCapture([string[]]$RcloneArgs) {
+# ----------------------------------------------------------------------------
+# Always-on troubleshooting log (bin\logs\) - no setting to turn it off (see
+# the V10 plan's "Always-on troubleshooting log" section: a log a user has to
+# remember to enable before the bug happens is much less useful than one
+# that's just always there). One shared write+rotate helper for every rclone-
+# invoking call site, so file-writing/rotation logic lives in exactly one
+# place rather than being reimplemented per call site:
+#   - Invoke-RcloneCapture (the dry-run scan, shared by both front-ends) and
+#     Complete-RcloneCopy (the GUI's real transfers) already fully capture
+#     rclone's output headlessly - they just hand it to Save-RcloneLogLines.
+#   - The console's real transfer (Invoke-RcloneCopy in the console
+#     front-end) streams live via -P and can't be redirected without killing
+#     that live terminal progress meter, so it instead has rclone write
+#     straight to a New-RcloneLogPath file via --log-file, verified live
+#     (2026-09-22) to coexist with -P without disrupting the progress
+#     display or losing per-file detail (a real "Copied (new)" line showed
+#     up in the log file while -P kept animating normally on stdout).
+# ----------------------------------------------------------------------------
+
+function Get-RcloneLogDir {
+    # Created lazily. Fails soft (returns $null) if it can't be created (e.g.
+    # a read-only install location) - a missing log directory should never
+    # be the reason a real download can't proceed.
+    $dir = Join-Path $script:AppDir 'logs'
+    if (-not (Test-Path -LiteralPath $dir)) {
+        try { New-Item -ItemType Directory -Path $dir -Force -ErrorAction Stop | Out-Null } catch { return $null }
+    }
+    return $dir
+}
+
+function New-RcloneLogPath([string]$Label) {
+    $dir = Get-RcloneLogDir
+    if ($null -eq $dir) { return $null }
+    $safeLabel = ($Label -replace '[^A-Za-z0-9_-]+', '_').Trim('_')
+    if ([string]::IsNullOrWhiteSpace($safeLabel)) { $safeLabel = 'run' }
+    # HHmmss (not just HH:mm) plus the caller's Label keeps concurrent GUI
+    # queue entries (base + several editions, each started within the same
+    # second) from colliding on one filename.
+    $stamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+    return Join-Path $dir "$stamp`_$safeLabel.log"
+}
+
+function Invoke-RcloneLogRotation {
+    # Keep only the newest N run logs. Unlike an opt-in toggle, this log has
+    # no way to turn it off, so EVERY run adds a file - the cap has to ship
+    # in the same commit as the logging itself or a machine that's run this
+    # tool for months grows an unbounded bin\logs\. Count-based (not a byte
+    # budget): simpler to verify deterministically by forcing N+few runs and
+    # confirming the oldest ones are actually gone.
+    param([int]$KeepCount = 30)
+    $dir = Get-RcloneLogDir
+    if ($null -eq $dir) { return }
+    $files = @(Get-ChildItem -LiteralPath $dir -Filter '*.log' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending)
+    if ($files.Count -le $KeepCount) { return }
+    foreach ($f in ($files | Select-Object -Skip $KeepCount)) {
+        Remove-Item -LiteralPath $f.FullName -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Save-RcloneLogLines([string]$Label, [string[]]$Lines) {
+    # For the headless-capture call sites (the dry-run scan, the GUI's real
+    # transfers) - already-captured output gets written out + rotated in one
+    # call. A no-op on empty/unwritable input, never throws.
+    if ($null -eq $Lines -or $Lines.Count -eq 0) { return }
+    $path = New-RcloneLogPath $Label
+    if ($null -eq $path) { return }
+    try { [System.IO.File]::WriteAllLines($path, $Lines, [System.Text.Encoding]::UTF8) } catch { return }
+    Invoke-RcloneLogRotation
+}
+
+function Invoke-RcloneCapture([string[]]$RcloneArgs, [string]$Label = 'scan') {
     # Run rclone and hand back stdout+stderr as an array of lines, WITHOUT
     # letting rclone's stderr NOTICE output trip $ErrorActionPreference='Stop'
     # (that promotion happens before any 2>$null redirect - see the 2026-08
@@ -867,6 +953,7 @@ function Invoke-RcloneCapture([string[]]$RcloneArgs) {
         $lines += @(Get-Content -LiteralPath $errFile -ErrorAction SilentlyContinue)
         $code = 0
         try { $code = [int]$proc.ExitCode } catch { $code = -1 }
+        Save-RcloneLogLines -Label $Label -Lines $lines
         return [PSCustomObject]@{ ExitCode = $code; Lines = $lines }
     } finally {
         Remove-Item -LiteralPath $outFile, $errFile -Force -ErrorAction SilentlyContinue
@@ -1418,7 +1505,7 @@ function Get-UpdatePlan {
     if ($wrongLevel -and -not $IgnoreWrongLevel) { return $plan }
 
     # ---- base game ----
-    $baseRun = Invoke-RcloneCapture (@('copy', "$script:Conn`LegacyPC - Game", $GamePath, '--exclude', 'maps/**') + $script:ScanArgs)
+    $baseRun = Invoke-RcloneCapture (@('copy', "$script:Conn`LegacyPC - Game", $GamePath, '--exclude', 'maps/**') + $script:ScanArgs) -Label 'scan-base'
     if ($baseRun.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
     $base = Parse-DryRun $baseRun.Lines
 
@@ -1428,7 +1515,7 @@ function Get-UpdatePlan {
     $songs         = @()
 
     if ($Editions.ToUpper() -eq 'AUTO') {
-        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + $script:ScanArgs)
+        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + $script:ScanArgs) -Label 'scan-allmaps'
         if ($mapRun.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
         $m = Parse-DryRun $mapRun.Lines
         $songBytes = $m.Bytes
@@ -1469,7 +1556,7 @@ function Get-UpdatePlan {
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) {
             $includeArgs = Get-SongIncludeArgs (Get-EffectiveSongs $ed $SongFilters)
-            $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs)
+            $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs) -Label "scan-edition-$ed"
             if ($r.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
             $p = Parse-DryRun $r.Lines
             $songBytes += $p.Bytes
@@ -1653,10 +1740,17 @@ function Read-RcloneStats {
 }
 
 function Complete-RcloneCopy {
-    # Tidy up a finished job: return its exit code and delete the temp files.
+    # Tidy up a finished job: persist its JSON log (already fully captured in
+    # ErrFile by Start-RcloneCopy's redirect - no extra rclone args needed
+    # here, GuiSyncArgs already carries -v) to bin\logs\, then return its exit
+    # code and delete the temp files.
     param([Parameter(Mandatory = $true)]$Job)
     $code = -1
     try { $code = [int]$Job.Process.ExitCode } catch { $code = -1 }
+    try {
+        $lines = @(Get-Content -LiteralPath $Job.ErrFile -ErrorAction SilentlyContinue)
+        Save-RcloneLogLines -Label $Job.Label -Lines $lines
+    } catch { }
     Remove-Item -LiteralPath $Job.OutFile, $Job.ErrFile -Force -ErrorAction SilentlyContinue
     return $code
 }
@@ -2266,5 +2360,6 @@ Export-ModuleMember -Function `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
     Invoke-RequirementInstall, Start-LegacyExe, `
     Compare-AppVersions, Get-LatestReleaseInfo, Test-AppUpdateAvailable, `
-    Invoke-AppUpdateDownloadAndStage, Start-AppUpdateHelper
+    Invoke-AppUpdateDownloadAndStage, Start-AppUpdateHelper, `
+    Get-RcloneLogDir, New-RcloneLogPath, Invoke-RcloneLogRotation, Save-RcloneLogLines
 
