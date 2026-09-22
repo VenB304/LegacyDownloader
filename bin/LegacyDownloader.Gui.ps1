@@ -538,19 +538,66 @@ function Show-UpdateConfirmDialog($UpdateInfo) {
 }
 
 function Invoke-AppUpdateNow($UpdateInfo) {
-    # Deliberately synchronous (no background job like the scan/download
-    # queues get) - this is a rare, already-confirmed action that ends
-    # with the app closing anyway, so a brief wait-cursor freeze during the
-    # ~29MB download is an acceptable simplification rather than building
-    # a whole second async-job pattern just for this one action.
-    $script:Form.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $UpdateInfo.DownloadUrl -ExpectedVersion $UpdateInfo.LatestVersion
-    $script:Form.Cursor = [System.Windows.Forms.Cursors]::Default
+    # A real live test (2026-09-23, driven by Ven through the actual UI,
+    # not self-test) found the old wait-cursor-only version actually put
+    # the main window into Windows' "Not Responding" state during the
+    # download - looks exactly like a crash, not a working update.
+    # Invoke-WebRequest -OutFile has no message-pump hook at all in
+    # Windows PowerShell 5.1, so nothing served the window's message queue
+    # for the whole transfer. Fixed two ways together, per Ven's own
+    # suggestion: the download itself now streams through a progress
+    # callback (Invoke-AppUpdateDownloadAndStage, same proven pattern as
+    # the requirements checker's own downloads) that pumps DoEvents() on
+    # every tick, AND the main window hides immediately instead of sitting
+    # there mid-update - it has nothing useful left to show and is about
+    # to close for real either way once the update completes.
+    $script:Form.Hide()
+
+    $prog = New-Object System.Windows.Forms.Form
+    $prog.Text = T 'gui.update_progress_title'
+    $prog.Font = $script:FontBase
+    $prog.BackColor = $script:ColorBg
+    $prog.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $prog.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterScreen
+    $prog.MinimizeBox = $false; $prog.MaximizeBox = $false; $prog.ControlBox = $false
+    Set-FormIcon $prog
+    $prog.ClientSize = New-Object System.Drawing.Size(360, 100)
+
+    $lblStatus = New-Label (T 'gui.update_progress_downloading') 20 20 320 22
+    $bar = New-Object System.Windows.Forms.ProgressBar
+    $bar.SetBounds(20, 50, 320, 20)
+    $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+    $prog.Controls.AddRange(@($lblStatus, $bar))
+    $prog.Show()
+    [System.Windows.Forms.Application]::DoEvents()
+
+    # GetNewClosure() is required, not optional - same reasoning as the
+    # requirements checker's own callback: without it, this scriptblock
+    # loses $bar/$lblStatus entirely once invoked from
+    # Invoke-AppUpdateDownloadAndStage's own scope in the Core module.
+    $progressCallback = {
+        param($pct, $received, $total)
+        if ($pct -ge 0) {
+            $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+            $bar.Value = $pct
+            $lblStatus.Text = T 'gui.update_progress_downloading_pct' @{ pct = $pct }
+        } else {
+            $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+        }
+        [System.Windows.Forms.Application]::DoEvents()
+    }.GetNewClosure()
+
+    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $UpdateInfo.DownloadUrl -ExpectedVersion $UpdateInfo.LatestVersion -ProgressCallback $progressCallback
+
     if (-not $staged.Ok) {
+        $prog.Close(); $prog.Dispose()
+        $script:Form.Show()
         Warn-Box (T 'gui.update_download_failed' @{ error = $staged.ErrMsg }) (T 'gui.err_title')
         return
     }
+
     Start-AppUpdateHelper -InstallDir $script:AppInstallDir -StagingDir $staged.StagingDir -ExpectedVersion $UpdateInfo.LatestVersion -RelaunchTarget 'gui'
+    $prog.Close(); $prog.Dispose()
     $script:Form.Close()
 }
 

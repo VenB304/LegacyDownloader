@@ -563,7 +563,7 @@ function Save-Config([hashtable]$Values = @{}) {
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
-function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion) {
+function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion, [scriptblock]$ProgressCallback) {
     # Downloads the release zip to $env:TEMP and extracts it to a staging
     # folder OUTSIDE the live install - never directly into the running
     # bin\. Sanity-checks the staged copy's own $script:AppVersion line
@@ -571,10 +571,55 @@ function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$Expecte
     # corrupt download or a mismatched/renamed asset. Returns
     # @{ Ok; StagingDir; ErrMsg } - StagingDir is $null on failure, and any
     # partial staging directory is cleaned up before returning.
+    #
+    # -ProgressCallback (optional, same shape as Get-RequirementInstaller's:
+    # invoked as & $ProgressCallback $percent $bytesReceived $totalBytes,
+    # -1 percent when the server sent no Content-Length): a real live test
+    # (2026-09-23) confirmed the previous plain `Invoke-WebRequest -OutFile`
+    # blocked the GUI's message pump for the whole download with no way to
+    # service it, long enough for Windows to mark the main window "Not
+    # Responding" - looks like a crash, not a working update. Manual
+    # HttpWebRequest + buffered stream copy instead, same reasoning and
+    # same pattern already proven for the requirements checker's own
+    # downloads: Invoke-WebRequest has no per-byte hook at all in Windows
+    # PowerShell 5.1, so there's no way to report progress (or let a caller
+    # pump DoEvents()) through it.
     $tempZip = Join-Path $env:TEMP ("LegacyDownloaderUpdate_" + [guid]::NewGuid().ToString('N') + ".zip")
     $stagingDir = Join-Path $env:TEMP ("legacydownloader_update_" + [guid]::NewGuid().ToString('N'))
+    if (-not $ProgressCallback) { $ProgressCallback = {} }
     try {
-        Invoke-WebRequest -Uri $DownloadUrl -OutFile $tempZip -UseBasicParsing -ErrorAction Stop
+        $req = [System.Net.HttpWebRequest]::Create($DownloadUrl)
+        $req.UserAgent = 'LegacyDownloader (+https://github.com/VenB304/LegacyDownloader)'
+        $req.Timeout = 600000
+        $req.ReadWriteTimeout = 600000
+        $deadline = [DateTime]::UtcNow.AddMilliseconds(600000)
+        $resp = $req.GetResponse()
+        try {
+            $total = [long]$resp.ContentLength
+            $inStream = $resp.GetResponseStream()
+            try {
+                $outStream = [System.IO.File]::Create($tempZip)
+                try {
+                    $buffer = New-Object byte[] 65536
+                    $received = [long]0
+                    $lastPct = -1
+                    $lastTick = [Environment]::TickCount
+                    while (($read = $inStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                        if ([DateTime]::UtcNow -gt $deadline) { throw "download exceeded the 600s time budget" }
+                        $outStream.Write($buffer, 0, $read)
+                        $received += $read
+                        if ($total -gt 0) {
+                            $pct = [Math]::Min(100, [Math]::Max(0, [int](($received * 100) / $total)))
+                            if ($pct -ne $lastPct) { $lastPct = $pct; & $ProgressCallback $pct $received $total }
+                        } else {
+                            $nowTick = [Environment]::TickCount
+                            if (($nowTick - $lastTick) -ge 100) { $lastTick = $nowTick; & $ProgressCallback -1 $received $total }
+                        }
+                    }
+                } finally { $outStream.Dispose() }
+            } finally { $inStream.Dispose() }
+        } finally { $resp.Dispose() }
+        if (-not (Test-Path -LiteralPath $tempZip) -or (Get-Item -LiteralPath $tempZip).Length -eq 0) { throw "empty download" }
         Expand-Archive -LiteralPath $tempZip -DestinationPath $stagingDir -Force -ErrorAction Stop
         $stagedCore = Join-Path $stagingDir 'bin\LegacyDownloader.Core.psm1'
         if (-not (Test-Path -LiteralPath $stagedCore)) {
