@@ -37,6 +37,27 @@ function Get-StagedVersion([string]$BinDir) {
     return $Matches[1]
 }
 
+function Test-VersionsEqual([string]$A, [string]$B) {
+    # Local copy of Core.psm1's Compare-AppVersions equality case (this
+    # script is deliberately standalone, no Import-Module - see the file
+    # header) - a plain string -ne here would wrongly treat 'V10' and
+    # 'V10.0' as different releases and abort/roll back a perfectly good
+    # update over a formatting difference alone. $null-safe: either side
+    # being $null (Get-StagedVersion couldn't read a version line at all)
+    # is never "equal", regardless of formatting.
+    if ($null -eq $A -or $null -eq $B) { return $false }
+    $pa = ($A -replace '^[vV]', '') -split '\.'
+    $pb = ($B -replace '^[vV]', '') -split '\.'
+    $n = [Math]::Max($pa.Count, $pb.Count)
+    for ($i = 0; $i -lt $n; $i++) {
+        $na = 0; $nb = 0
+        if ($i -lt $pa.Count) { [void][int]::TryParse($pa[$i], [ref]$na) }
+        if ($i -lt $pb.Count) { [void][int]::TryParse($pb[$i], [ref]$nb) }
+        if ($na -ne $nb) { return $false }
+    }
+    return $true
+}
+
 function Invoke-WithRetry([scriptblock]$Action, [string]$Description) {
     # AV scanning a freshly-written/moved file can transiently lock it -
     # documented history in this project (rclone.exe itself gets flagged
@@ -93,11 +114,23 @@ try {
     # nothing else references yet, so a failure here just leaves an inert
     # bin_new_* behind (cleaned up in the catch block) with the live bin\
     # completely untouched.
+    # Pre-create $newBin and copy $stagedBin's CHILDREN into it (not
+    # $stagedBin itself) - copying the folder ITSELF only lands directly
+    # inside $newBin while $newBin doesn't exist yet; if attempt 1 fails
+    # partway (the exact locked-file scenario Invoke-WithRetry exists for),
+    # $newBin now exists as a partial copy, and Copy-Item's behavior
+    # against an EXISTING destination folder is different - it nests the
+    # source folder AS A CHILD (bin_new_*\bin\... instead of bin_new_*\...),
+    # which the post-copy version check below would never find. Wildcard-
+    # copying children into an already-existing destination is correct on
+    # every attempt, first or retried alike. -Force so a retry can
+    # overwrite whatever attempt 1 partially wrote.
     Write-Log "Copying staged release to $newBin"
-    Invoke-WithRetry { Copy-Item -LiteralPath $stagedBin -Destination $newBin -Recurse -ErrorAction Stop } "copy staged bin to bin_new"
+    if (-not (Test-Path -LiteralPath $newBin)) { New-Item -ItemType Directory -Path $newBin -Force | Out-Null }
+    Invoke-WithRetry { Copy-Item -Path (Join-Path $stagedBin '*') -Destination $newBin -Recurse -Force -ErrorAction Stop } "copy staged bin to bin_new"
 
     $copiedVersion = Get-StagedVersion $newBin
-    if ($copiedVersion -ne $ExpectedVersion) {
+    if (-not (Test-VersionsEqual $copiedVersion $ExpectedVersion)) {
         throw "post-copy version check failed (expected $ExpectedVersion, got '$copiedVersion')"
     }
 
@@ -132,6 +165,20 @@ try {
         Write-Log "No config.txt in the old bin\ - nothing to carry over (a fresh/never-configured install)."
     }
 
+    # bin\logs\ (the always-on troubleshooting log) lives inside bin\ same
+    # as config.txt, and $oldBin gets deleted once the swap is verified -
+    # without carrying it over, a successful self-update silently wipes
+    # every pre-update log. Best-effort: a log history gap is real but
+    # minor (the log itself starts working again immediately either way),
+    # so a copy failure here logs and continues rather than failing the
+    # whole update over it.
+    $oldLogs = Join-Path $oldBin 'logs'
+    if (Test-Path -LiteralPath $oldLogs) {
+        Write-Log "Carrying bin\logs\ over from the old bin\"
+        try { Copy-Item -LiteralPath $oldLogs -Destination (Join-Path $liveBin 'logs') -Recurse -Force -ErrorAction Stop }
+        catch { Write-Log "Non-fatal: couldn't carry bin\logs\ over: $($_.Exception.Message)" }
+    }
+
     # Root-level launchers/README - safe to overwrite directly by this
     # point (the original .bat's own cmd.exe host has already exited for
     # the GUI path; the console path's cmd.exe may still be open per the
@@ -149,7 +196,7 @@ try {
     # 4. Verify the now-live bin\ actually reports the expected version
     # before committing to deleting the old one.
     $liveVersion = Get-StagedVersion $liveBin
-    if ($liveVersion -ne $ExpectedVersion) {
+    if (-not (Test-VersionsEqual $liveVersion $ExpectedVersion)) {
         throw "post-swap version check failed (expected $ExpectedVersion, got '$liveVersion')"
     }
 

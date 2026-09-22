@@ -163,6 +163,21 @@ function Initialize-LegacyCore {
 
     $script:AppDir = $ScriptDir
 
+    # Windows PowerShell 5.1's .NET Framework doesn't always default
+    # ServicePointManager to TLS 1.2 (depends on the machine's .NET/OS
+    # patch level - an older/locked-down Windows install can still default
+    # to TLS 1.0, which GitHub has rejected since 2018). Set explicitly
+    # rather than rely on the machine's default: this covers every
+    # Invoke-RestMethod/Invoke-WebRequest/HttpWebRequest call the app makes
+    # (Get-LatestReleaseInfo's GitHub API check, Invoke-AppUpdateDownload-
+    # AndStage's release download, the requirements checker's own
+    # HttpWebRequest downloads), since they all read the same process-wide
+    # setting. -bor preserves whatever protocols were already enabled
+    # rather than replacing them outright.
+    if (-not $IsLinux) {
+        try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
+    }
+
     if ($IsLinux) {
         $cmd = Get-Command rclone -ErrorAction SilentlyContinue
         $script:Rclone = if ($cmd) { $cmd.Source } else { 'rclone' }
@@ -564,7 +579,7 @@ function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$Expecte
             throw "couldn't read the staged package's version string"
         }
         $stagedVersion = $Matches[1]
-        if ($stagedVersion -ne $ExpectedVersion) {
+        if ((Compare-AppVersions $stagedVersion $ExpectedVersion) -ne 0) {
             throw "staged package reports version '$stagedVersion', expected '$ExpectedVersion'"
         }
         return [PSCustomObject]@{ Ok = $true; StagingDir = $stagingDir; ErrMsg = '' }

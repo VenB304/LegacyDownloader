@@ -666,11 +666,16 @@ function Show-SettingsWindow {
     $chkCheckAppUpdates.Checked = [bool]$script:Cfg.CheckAppUpdates
     $grpUpdates.Controls.AddRange(@($lblCurrentVersion, $btnCheckNow, $chkCheckAppUpdates))
 
-    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 400 428
+    # grpUpdates ends at y=404 (330+74) - hintRestart needs to start AFTER
+    # that, not before it (an earlier version of this put it at y=400,
+    # which overlapped the Updates group's own bottom border/checkbox -
+    # caught live by Ven, not self-test, since self-test only asserts
+    # button Left positions, not vertical layout).
+    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 408 428
     # Own row, stacked above the buttons - not a Settings toggle (see the
     # plan's "Always-on troubleshooting log" section: there's nothing to
     # configure, it's just always on), just letting the user know it exists.
-    $hintLog = New-Hint (T 'gui.settings_log_hint') 16 418 428
+    $hintLog = New-Hint (T 'gui.settings_log_hint') 16 426 428
 
     $btnSave   = New-Btn (T 'gui.btn_save') 0 446 0 30 $true
     $btnCancel = New-Btn (T 'gui.btn_cancel') 0 446 0 30 $false
@@ -685,11 +690,33 @@ function Show-SettingsWindow {
         $bwText = $txtBwLimit.Text.Trim()
         $bwOut = ''
         if ($bwText -ne '') {
-            if ($bwText -notmatch '^\d+$' -or [int]$bwText -eq 0) {
+            if ($bwText -match '^\d+$') {
+                # The plain-number case this field's UI is actually built
+                # for (always means MB/s) - [int]::TryParse instead of a
+                # bare [int] cast so a huge value (>2,147,483,647, past
+                # int32 range) fails the same clean validation path
+                # instead of throwing an unhandled OverflowException.
+                $bwNum = 0
+                if (-not [int]::TryParse($bwText, [ref]$bwNum) -or $bwNum -eq 0) {
+                    Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
+                    return
+                }
+                $bwOut = "${bwText}M"
+            } elseif ($bwText -match '^\d+[KkMmGg]$') {
+                # Already valid rclone bandwidth syntax (e.g. a hand-edited
+                # config.txt's "800k", which config.txt's own comment
+                # explicitly documents as supported) - pass through as-is
+                # rather than rejecting it just because this field's own
+                # simple "type a number" convention only produces the
+                # M-suffixed form itself. Without this, opening Settings to
+                # change something unrelated (AutoLaunch, say) with an
+                # existing non-M BWLIMIT already in config.txt blocked
+                # saving ANY change in the whole dialog.
+                $bwOut = $bwText
+            } else {
                 Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
                 return
             }
-            $bwOut = "${bwText}M"
         }
         Save-Config @{
             AutoCheck       = $chkAutoCheck.Checked
@@ -768,6 +795,13 @@ function Begin-Scan([bool]$IgnoreWrong) {
     $script:Scanning = $true
     $script:BtnCheck.Enabled = $true
     $script:BtnCheck.Text = T 'gui.btn_cancel'
+    # Red while it means Cancel - same red as New-StatusIcon's "missing"
+    # dot, so it stays inside the app's existing palette rather than
+    # introducing a new color. Restored to the normal primary blue in
+    # End-ScanUi once scanning/cancelling is done.
+    $script:BtnCheck.BackColor = [System.Drawing.Color]::FromArgb(214, 69, 69)
+    $script:BtnCheck.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(188, 56, 56)
+    $script:BtnCheck.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(162, 45, 45)
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
     $script:LblProg.Text = T 'gui.progress_scanning'
     Append-Log (T 'gui.progress_scanning')
@@ -796,6 +830,9 @@ function Begin-Scan([bool]$IgnoreWrong) {
 function End-ScanUi {
     $script:Scanning = $false
     $script:BtnCheck.Text = T 'gui.btn_check'
+    $script:BtnCheck.BackColor = $script:ColorPrimary
+    $script:BtnCheck.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(15, 84, 172)
+    $script:BtnCheck.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(12, 71, 146)
 }
 
 function Cancel-Scan {
@@ -3559,6 +3596,20 @@ function Set-Busy([bool]$On) {
     $script:RbSpecific.Enabled   = $enabled
     $script:CmbLang.Enabled   = $enabled
     $script:BtnSelect.Enabled = $enabled -and $script:RbSpecific.Checked
+    # Settings and the app-self-update button both weren't gated here -
+    # BtnUpdateAvailable's click ends in Invoke-AppUpdateNow, which
+    # downloads the update, spawns the swap helper, THEN calls
+    # $script:Form.Close() - if a real transfer is active at that point,
+    # the FormClosing handler's "cancel download?" prompt stops the close
+    # from silently killing it, but the helper is already spawned and
+    # waiting on this process's PID, so it just times out doing nothing
+    # ~30s later if the user declines. Disabling both while busy heads
+    # this off before it can happen rather than relying on that recovery
+    # path. BtnSettings has no equivalent hazard (its changes only take
+    # effect on next save/restart) but stays consistent with everything
+    # else in this row being busy-gated.
+    $script:BtnSettings.Enabled = $enabled
+    $script:BtnUpdateAvailable.Enabled = $enabled
 }
 
 function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
