@@ -1,4 +1,4 @@
-# LegacyDownloader.Core.psm1
+﻿# LegacyDownloader.Core.psm1
 # Shared engine for the Legacy Downloader console and GUI front-ends.
 #
 # Pure logic only: no Write-Host, no Read-Host, no menu code. A front-end
@@ -15,6 +15,73 @@ $ErrorActionPreference = 'Stop'
 $script:AppVersion = 'V9.3'
 
 function Get-AppVersion { return $script:AppVersion }
+
+# The public GitHub repo this tool ships releases from - self-update reads
+# straight from the releases API, same source the human release process
+# already publishes to via `gh release create`.
+$script:UpdateRepoApiUrl = 'https://api.github.com/repos/VenB304/LegacyDownloader/releases/latest'
+
+function Compare-AppVersions([string]$A, [string]$B) {
+    # Numeric-tuple comparison, not a string compare. 'V9.3' vs 'v10'
+    # breaks under a naive lexicographic/string comparison - '9' sorts
+    # after '1' character-by-character, so '9.3' would wrongly compare as
+    # "greater than" '10'. Strips a leading v/V from each side, splits on
+    # '.', compares each segment as [int] (a missing trailing segment on
+    # the shorter side counts as 0, so 'v10' == 'v10.0'). Returns -1/0/1.
+    $pa = ($A -replace '^[vV]', '') -split '\.'
+    $pb = ($B -replace '^[vV]', '') -split '\.'
+    $n = [Math]::Max($pa.Count, $pb.Count)
+    for ($i = 0; $i -lt $n; $i++) {
+        $na = 0; $nb = 0
+        if ($i -lt $pa.Count) { [void][int]::TryParse($pa[$i], [ref]$na) }
+        if ($i -lt $pb.Count) { [void][int]::TryParse($pb[$i], [ref]$nb) }
+        if ($na -ne $nb) { return [Math]::Sign($na - $nb) }
+    }
+    return 0
+}
+
+function Get-LatestReleaseInfo {
+    # Fails soft - returns Ok=$false on any network/parse error, never
+    # throws. No auth needed for a public repo; GitHub's unauthenticated
+    # rate limit is generous enough for an occasional per-launch check.
+    $out = @{ Ok = $false; Tag = ''; Version = ''; DownloadUrl = ''; ZipName = ''; ReleaseUrl = ''; ErrMsg = '' }
+    try {
+        $resp = Invoke-RestMethod -Uri $script:UpdateRepoApiUrl -Headers @{ 'User-Agent' = 'LegacyDownloader' } -TimeoutSec 10 -ErrorAction Stop
+        $asset = @($resp.assets | Where-Object { $_.name -like 'LegacyDownloader*.zip' }) | Select-Object -First 1
+        if (-not $asset) { $out.ErrMsg = 'release has no LegacyDownloader*.zip asset'; return [PSCustomObject]$out }
+        $out.Ok = $true
+        $out.Tag = [string]$resp.tag_name
+        $out.Version = 'V' + ($resp.tag_name -replace '^[vV]', '')
+        $out.DownloadUrl = [string]$asset.browser_download_url
+        $out.ZipName = [string]$asset.name
+        $out.ReleaseUrl = [string]$resp.html_url
+    } catch {
+        $out.ErrMsg = $_.Exception.Message
+    }
+    return [PSCustomObject]$out
+}
+
+function Test-AppUpdateAvailable {
+    # Checked=$false means the check itself failed (network/parse) -
+    # deliberately distinct from Available=$false (checked fine, already
+    # current), so a caller can stay silent on a failed check (same
+    # graceful-offline posture as AUTOCHECK's rclone check) instead of
+    # showing an error for what's usually just no internet.
+    $current = Get-AppVersion
+    $info = Get-LatestReleaseInfo
+    if (-not $info.Ok) {
+        return [PSCustomObject]@{
+            Available = $false; Checked = $false; CurrentVersion = $current
+            LatestVersion = ''; DownloadUrl = ''; ZipName = ''; ReleaseUrl = ''; ErrMsg = $info.ErrMsg
+        }
+    }
+    $newer = (Compare-AppVersions $info.Version $current) -gt 0
+    return [PSCustomObject]@{
+        Available = $newer; Checked = $true; CurrentVersion = $current
+        LatestVersion = $info.Version; DownloadUrl = $info.DownloadUrl; ZipName = $info.ZipName
+        ReleaseUrl = $info.ReleaseUrl; ErrMsg = ''
+    }
+}
 
 # --- module-scoped state, filled in by Initialize-LegacyCore ---
 $script:Rclone           = $null
@@ -343,6 +410,7 @@ function Load-Config {
     $autoLaunch = $false
     $autoCheck = $false
     $bwLimit = ''
+    $checkAppUpdates = $true
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -358,12 +426,14 @@ function Load-Config {
         if ($key -eq 'AUTOLAUNCH')  { $autoLaunch = ($value -eq 'true') }
         if ($key -eq 'AUTOCHECK')   { $autoCheck = ($value -eq 'true') }
         if ($key -eq 'BWLIMIT')     { $bwLimit = $value }
+        if ($key -eq 'CHECKAPPUPDATES') { $checkAppUpdates = ($value -eq 'true') }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
     return [PSCustomObject]@{
         GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl
         SongFilters = $songFilters; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck; BwLimit = $bwLimit
+        CheckAppUpdates = $checkAppUpdates
     }
 }
 
@@ -373,7 +443,8 @@ function Save-Config([hashtable]$Values = @{}) {
     # pile of per-key special cases (the old positional-parameter version
     # needed a separate ContainsKey/Read-ConfigValue trick for every value
     # added after GamePath/Editions). Recognized keys: GamePath, Editions,
-    # Lang, ShareUrl, SongFilters, AutoLaunch, AutoCheck, BwLimit.
+    # Lang, ShareUrl, SongFilters, AutoLaunch, AutoCheck, BwLimit,
+    # CheckAppUpdates.
     $current = if (Test-Path -LiteralPath $script:ConfigPath) { Load-Config } else { $null }
     function Resolve-Field([string]$Key, $Default) {
         if ($Values.ContainsKey($Key)) { return $Values[$Key] }
@@ -388,9 +459,15 @@ function Save-Config([hashtable]$Values = @{}) {
     $AutoLaunch  = Resolve-Field 'AutoLaunch' $false
     $AutoCheck   = Resolve-Field 'AutoCheck' $false
     $BwLimit     = Resolve-Field 'BwLimit' ''
+    # CHECKAPPUPDATES defaults ON (opt-out), unlike every other toggle here -
+    # it's a read-only version check, categorically lower risk than the
+    # others, so the same conservative-default reasoning correctly lands on
+    # the opposite default for this one.
+    $CheckAppUpdates = Resolve-Field 'CheckAppUpdates' $true
     if ([string]::IsNullOrWhiteSpace($Lang)) { $Lang = 'en' }
     $AutoLaunchOut = if ($AutoLaunch) { 'true' } else { 'false' }
     $AutoCheckOut  = if ($AutoCheck)  { 'true' } else { 'false' }
+    $CheckAppUpdatesOut = if ($CheckAppUpdates) { 'true' } else { 'false' }
     @(
         "# Legacy Downloader - configuration"
         "# You normally don't need to edit this by hand - use the program's"
@@ -439,7 +516,73 @@ function Save-Config([hashtable]$Values = @{}) {
         "# 800 KB/s). Blank/absent means unlimited. Takes effect the next"
         "# time the tool starts."
         "BWLIMIT=$BwLimit"
+        ""
+        "# CHECKAPPUPDATES (also settable from Settings) - when true, checks"
+        "# once at startup whether a newer LegacyDownloader release exists"
+        "# (a read-only GitHub API call, no download). Default true - unlike"
+        "# every other toggle above, this one is opt-out, since a version"
+        "# check has no file-system or download side effects of its own."
+        "CHECKAPPUPDATES=$CheckAppUpdatesOut"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
+}
+
+function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion) {
+    # Downloads the release zip to $env:TEMP and extracts it to a staging
+    # folder OUTSIDE the live install - never directly into the running
+    # bin\. Sanity-checks the staged copy's own $script:AppVersion line
+    # against $ExpectedVersion before returning: cheap insurance against a
+    # corrupt download or a mismatched/renamed asset. Returns
+    # @{ Ok; StagingDir; ErrMsg } - StagingDir is $null on failure, and any
+    # partial staging directory is cleaned up before returning.
+    $tempZip = Join-Path $env:TEMP ("LegacyDownloaderUpdate_" + [guid]::NewGuid().ToString('N') + ".zip")
+    $stagingDir = Join-Path $env:TEMP ("legacydownloader_update_" + [guid]::NewGuid().ToString('N'))
+    try {
+        Invoke-WebRequest -Uri $DownloadUrl -OutFile $tempZip -UseBasicParsing -ErrorAction Stop
+        Expand-Archive -LiteralPath $tempZip -DestinationPath $stagingDir -Force -ErrorAction Stop
+        $stagedCore = Join-Path $stagingDir 'bin\LegacyDownloader.Core.psm1'
+        if (-not (Test-Path -LiteralPath $stagedCore)) {
+            throw "staged package is missing bin\LegacyDownloader.Core.psm1"
+        }
+        $versionLine = Get-Content -LiteralPath $stagedCore | Where-Object { $_ -match '^\$script:AppVersion\s*=' } | Select-Object -First 1
+        if ($versionLine -notmatch "=\s*'([^']+)'") {
+            throw "couldn't read the staged package's version string"
+        }
+        $stagedVersion = $Matches[1]
+        if ($stagedVersion -ne $ExpectedVersion) {
+            throw "staged package reports version '$stagedVersion', expected '$ExpectedVersion'"
+        }
+        return [PSCustomObject]@{ Ok = $true; StagingDir = $stagingDir; ErrMsg = '' }
+    } catch {
+        Remove-Item -LiteralPath $stagingDir -Recurse -Force -ErrorAction SilentlyContinue
+        return [PSCustomObject]@{ Ok = $false; StagingDir = $null; ErrMsg = $_.Exception.Message }
+    } finally {
+        Remove-Item -LiteralPath $tempZip -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Start-AppUpdateHelper {
+    # Spawns bin\Update-Helper.ps1 as a real detached process (so it
+    # survives this process exiting) and returns immediately - the caller
+    # is responsible for actually exiting right after this returns, since
+    # the helper's very first step is waiting for this process's PID to
+    # disappear. InstallDir is the app root (parent of bin\, where the two
+    # .bat launchers live); RelaunchTarget is 'gui' or 'console'.
+    param(
+        [Parameter(Mandatory = $true)][string]$InstallDir,
+        [Parameter(Mandatory = $true)][string]$StagingDir,
+        [Parameter(Mandatory = $true)][string]$ExpectedVersion,
+        [Parameter(Mandatory = $true)][ValidateSet('gui', 'console')][string]$RelaunchTarget
+    )
+    $helperScript = Join-Path $InstallDir 'bin\Update-Helper.ps1'
+    $argList = @(
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$helperScript`""
+        '-InstallDir', "`"$InstallDir`""
+        '-StagingDir', "`"$StagingDir`""
+        '-MainPid', $PID
+        '-ExpectedVersion', "`"$ExpectedVersion`""
+        '-RelaunchTarget', $RelaunchTarget
+    )
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -WindowStyle Hidden | Out-Null
 }
 
 function Start-LegacyExe([string]$GamePath) {
@@ -2121,4 +2264,7 @@ Export-ModuleMember -Function `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
-    Invoke-RequirementInstall, Start-LegacyExe
+    Invoke-RequirementInstall, Start-LegacyExe, `
+    Compare-AppVersions, Get-LatestReleaseInfo, Test-AppUpdateAvailable, `
+    Invoke-AppUpdateDownloadAndStage, Start-AppUpdateHelper
+

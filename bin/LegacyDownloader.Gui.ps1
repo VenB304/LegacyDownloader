@@ -391,6 +391,108 @@ function Format-BwLimitForDisplay([string]$BwLimit) {
     return $BwLimit
 }
 
+$script:AppInstallDir = Split-Path -Parent $script:AppDir   # bin\'s parent - where the .bat launchers live
+$script:PendingUpdate = $null                               # Test-AppUpdateAvailable's result, once a check finds one
+
+function Show-UpdateConfirmDialog($UpdateInfo) {
+    # Small custom Form, same family as Show-LaunchPrompt - returns $true
+    # only if the user clicked "Update Now".
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.update_confirm_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
+    $f.ClientSize = New-Object System.Drawing.Size(380, 150)
+
+    $lblHead = New-Label (T 'gui.update_confirm_headline') 20 18 340 22
+    $lblHead.Font = $script:FontTitle
+    $lblBody = New-Label (T 'gui.update_confirm_body') 20 44 340 40
+    $lblVersion = New-Hint (T 'gui.update_confirm_version' @{ current = $UpdateInfo.CurrentVersion; latest = $UpdateInfo.LatestVersion }) 20 88 340
+
+    $btnUpdate = New-Btn (T 'gui.btn_update_now') 0 108 0 32 $true
+    $btnLater  = New-Btn (T 'gui.btn_later') 0 108 0 32 $false
+    foreach ($b in @($btnUpdate, $btnLater)) {
+        $b.Width = [Math]::Max(70, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $btnUpdate.Left = 380 - 20 - $btnUpdate.Width
+    $btnLater.Left = $btnUpdate.Left - 8 - $btnLater.Width
+
+    $btnUpdate.Add_Click({ param($s, $e) $f.Tag = 'update'; $f.Close() })
+    $btnLater.Add_Click({ param($s, $e) $f.Tag = ''; $f.Close() })
+
+    $f.AcceptButton = $btnUpdate
+    $f.CancelButton = $btnLater
+    $f.Controls.AddRange(@($lblHead, $lblBody, $lblVersion, $btnLater, $btnUpdate))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        Write-Host "  Show-UpdateConfirmDialog: rendered, Later@$($btnLater.Left) Update@$($btnUpdate.Left) (expect Later left of Update)"
+        if ($btnLater.Left -ge $btnUpdate.Left) { Write-Host "  SELFTEST FAILURE: Later is not left of Update" -ForegroundColor Red }
+        Start-Sleep -Milliseconds 100
+        $f.Dispose()
+        return $false
+    }
+
+    [void]$f.ShowDialog($script:Form)
+    $result = ($f.Tag -eq 'update')
+    $f.Dispose()
+    return $result
+}
+
+function Invoke-AppUpdateNow($UpdateInfo) {
+    # Deliberately synchronous (no background job like the scan/download
+    # queues get) - this is a rare, already-confirmed action that ends
+    # with the app closing anyway, so a brief wait-cursor freeze during the
+    # ~29MB download is an acceptable simplification rather than building
+    # a whole second async-job pattern just for this one action.
+    $script:Form.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $UpdateInfo.DownloadUrl -ExpectedVersion $UpdateInfo.LatestVersion
+    $script:Form.Cursor = [System.Windows.Forms.Cursors]::Default
+    if (-not $staged.Ok) {
+        Warn-Box (T 'gui.update_download_failed' @{ error = $staged.ErrMsg }) (T 'gui.err_title')
+        return
+    }
+    Start-AppUpdateHelper -InstallDir $script:AppInstallDir -StagingDir $staged.StagingDir -ExpectedVersion $UpdateInfo.LatestVersion -RelaunchTarget 'gui'
+    $script:Form.Close()
+}
+
+function Refresh-UpdateStatusButton {
+    if ($null -eq $script:BtnUpdateAvailable) { return }
+    if ($null -eq $script:PendingUpdate -or -not $script:PendingUpdate.Available) {
+        $script:BtnUpdateAvailable.Visible = $false
+        return
+    }
+    $script:BtnUpdateAvailable.Text = T 'gui.update_status_button' @{ version = $script:PendingUpdate.LatestVersion }
+    $script:BtnUpdateAvailable.Width = [Math]::Max(140, [System.Windows.Forms.TextRenderer]::MeasureText($script:BtnUpdateAvailable.Text, $script:BtnUpdateAvailable.Font).Width + 30)
+    $script:BtnUpdateAvailable.Left = $script:BtnSettings.Right + 8
+    $script:BtnUpdateAvailable.Visible = $true
+}
+
+function Check-ForAppUpdate {
+    # Silent/background check, same posture as AUTOCHECK's rclone check -
+    # fails soft, no dialog/error of its own, just updates the status
+    # button if it finds something.
+    $script:PendingUpdate = Test-AppUpdateAvailable
+    Refresh-UpdateStatusButton
+}
+
+function Invoke-ManualUpdateCheck {
+    # The Settings window's "Check now" button - unlike the silent startup
+    # check, this one always tells the user something happened.
+    $script:PendingUpdate = Test-AppUpdateAvailable
+    Refresh-UpdateStatusButton
+    if (-not $script:PendingUpdate.Checked) {
+        Warn-Box (T 'gui.settings_check_failed' @{ error = $script:PendingUpdate.ErrMsg }) (T 'gui.err_title')
+    } elseif (-not $script:PendingUpdate.Available) {
+        Info-Box (T 'gui.settings_no_update_found') (T 'gui.settings_group_updates')
+    } elseif (Show-UpdateConfirmDialog $script:PendingUpdate) {
+        Invoke-AppUpdateNow $script:PendingUpdate
+    }
+}
+
 function Show-SettingsWindow {
     $f = New-Object System.Windows.Forms.Form
     $f.Text = T 'gui.settings_title'
@@ -399,7 +501,7 @@ function Show-SettingsWindow {
     $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
     $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
     $f.MinimizeBox = $false; $f.MaximizeBox = $false; $f.ShowIcon = $false
-    $f.ClientSize = New-Object System.Drawing.Size(460, 404)
+    $f.ClientSize = New-Object System.Drawing.Size(460, 490)
 
     # --- Startup & Launch ---
     # Checkbox height is 34 (not a single line's ~20) - WinForms CheckBox
@@ -450,10 +552,28 @@ function Show-SettingsWindow {
     $hintShareUrl = New-Hint (T 'gui.settings_shareurl_hint') 16 66 396
     $grpAdvanced.Controls.AddRange(@($lblShareUrl, $txtShareUrl, $hintShareUrl))
 
-    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 330 428
+    # --- Updates (Feature 3) - its own group rather than folded into
+    # Startup & Launch, per the mockup: a self-updater deserves its own
+    # visible home, not a single buried checkbox. ---
+    $grpUpdates = New-GroupBox (T 'gui.settings_group_updates') 16 330 428 74
+    $lblCurrentVersion = New-Label (T 'gui.settings_current_version' @{ version = (Get-AppVersion) }) 16 24 220 20
+    $btnCheckNow = New-Btn (T 'gui.settings_check_now') 0 20 0 24 $false
+    $btnCheckNow.Font = New-Object System.Drawing.Font($script:FontFamilyUI, 8)
+    $btnCheckNow.Width = [Math]::Max(78, [System.Windows.Forms.TextRenderer]::MeasureText($btnCheckNow.Text, $btnCheckNow.Font).Width + 24)
+    $btnCheckNow.Left = 412 - $btnCheckNow.Width
+    $btnCheckNow.Add_Click({ param($s, $e) Invoke-ManualUpdateCheck })
+    $chkCheckAppUpdates = New-Object System.Windows.Forms.CheckBox
+    $chkCheckAppUpdates.Text = T 'gui.settings_checkappupdates'
+    $chkCheckAppUpdates.Font = $script:FontBase
+    $chkCheckAppUpdates.ForeColor = $script:ColorText
+    $chkCheckAppUpdates.SetBounds(16, 50, 400, 20)
+    $chkCheckAppUpdates.Checked = [bool]$script:Cfg.CheckAppUpdates
+    $grpUpdates.Controls.AddRange(@($lblCurrentVersion, $btnCheckNow, $chkCheckAppUpdates))
 
-    $btnSave   = New-Btn (T 'gui.btn_save') 0 360 0 30 $true
-    $btnCancel = New-Btn (T 'gui.btn_cancel') 0 360 0 30 $false
+    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 416 428
+
+    $btnSave   = New-Btn (T 'gui.btn_save') 0 446 0 30 $true
+    $btnCancel = New-Btn (T 'gui.btn_cancel') 0 446 0 30 $false
     foreach ($b in @($btnSave, $btnCancel)) {
         $b.Width = [Math]::Max(84, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
     }
@@ -472,10 +592,11 @@ function Show-SettingsWindow {
             $bwOut = "${bwText}M"
         }
         Save-Config @{
-            AutoCheck  = $chkAutoCheck.Checked
-            AutoLaunch = $chkAutoLaunch.Checked
-            BwLimit    = $bwOut
-            ShareUrl   = $txtShareUrl.Text.Trim()
+            AutoCheck       = $chkAutoCheck.Checked
+            AutoLaunch      = $chkAutoLaunch.Checked
+            BwLimit         = $bwOut
+            ShareUrl        = $txtShareUrl.Text.Trim()
+            CheckAppUpdates = $chkCheckAppUpdates.Checked
         }
         $script:Cfg = Load-Config
         $f.Tag = 'save'
@@ -485,7 +606,7 @@ function Show-SettingsWindow {
 
     $f.AcceptButton = $btnSave
     $f.CancelButton = $btnCancel
-    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $hintRestart, $btnSave, $btnCancel))
+    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $grpUpdates, $hintRestart, $btnSave, $btnCancel))
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -3671,12 +3792,36 @@ function Build-MainForm {
     # varies a lot in length across the 13 languages - "Settings" is short
     # in English but not everywhere.
     $script:BtnSettings = New-Btn '' 12 496 90 28 $false
-    $script:BtnSettings.Add_Click({ param($s, $e) Show-SettingsWindow })
+    $script:BtnSettings.Add_Click({ param($s, $e) Show-SettingsWindow; Refresh-UpdateStatusButton })
+
+    # App-update status button - hidden until a check actually finds a
+    # newer release (no "steady state" variant at all, per the mockup's
+    # final revision: a control that only exists when there's something to
+    # act on has far less to be confused with the "Check for updates"
+    # primary button, which is about GAME content, not the app itself).
+    # Light green (reads as "ready to go", not a warning), positioned right
+    # after BtnSettings' own actual (dynamically measured) right edge.
+    $script:BtnUpdateAvailable = New-Object System.Windows.Forms.Button
+    $script:BtnUpdateAvailable.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
+    $script:BtnUpdateAvailable.Font = New-Object System.Drawing.Font($script:FontFamilyUI, 8, [System.Drawing.FontStyle]::Bold)
+    $script:BtnUpdateAvailable.BackColor = [System.Drawing.Color]::FromArgb(220, 252, 231)
+    $script:BtnUpdateAvailable.ForeColor = [System.Drawing.Color]::FromArgb(21, 128, 61)
+    $script:BtnUpdateAvailable.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(134, 239, 172)
+    $script:BtnUpdateAvailable.FlatAppearance.BorderSize = 1
+    $script:BtnUpdateAvailable.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(201, 245, 217)
+    $script:BtnUpdateAvailable.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $script:BtnUpdateAvailable.SetBounds(120, 496, 160, 28)
+    $script:BtnUpdateAvailable.Visible = $false
+    $script:BtnUpdateAvailable.Add_Click({
+        param($s, $e)
+        if ($null -eq $script:PendingUpdate -or -not $script:PendingUpdate.Available) { return }
+        if (Show-UpdateConfirmDialog $script:PendingUpdate) { Invoke-AppUpdateNow $script:PendingUpdate }
+    })
 
     $script:Form.Controls.AddRange(@(
             $script:LblLang, $script:CmbLang,
             $script:GrpFolder, $script:GrpSongs,
-            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnSettings, $script:BtnRequirements, $script:BtnExit
+            $script:BtnCheck, $script:Bar, $script:LblProg, $script:TxtLog, $script:BtnSettings, $script:BtnUpdateAvailable, $script:BtnRequirements, $script:BtnExit
         ))
 
     $script:ScanTimer = New-Object System.Windows.Forms.Timer
@@ -3732,6 +3877,12 @@ function Build-MainForm {
             if ($script:Cfg.AutoCheck -and [string]::IsNullOrEmpty($script:FirstRunMode) -and (Test-GameFolder $script:Cfg.GamePath)) {
                 On-Check
             }
+
+            # App self-update check - read-only GitHub API call, no file-
+            # system or download side effects, so it runs regardless of
+            # first-run state (unlike AUTOCHECK above, which specifically
+            # excludes a first-run session).
+            if ($script:Cfg.CheckAppUpdates) { Check-ForAppUpdate }
         })
 
     Apply-I18n
@@ -3810,6 +3961,28 @@ if ($env:LEGACY_GUI_SELFTEST) {
         $ok = ($got -eq $case.Expect)
         Write-Host "  '$($case.In)' -> '$got' (expect '$($case.Expect)') $(if (-not $ok) { '[SELFTEST FAILURE]' })"
     }
+
+    Write-Host "`n=== BtnUpdateAvailable + Show-UpdateConfirmDialog (structural - real network/download coverage lives in Core.psm1's own live-tested functions) ==="
+    # Not asserting on .Visible here - its getter depends on the whole
+    # ancestor chain being shown (confirmed directly: a plain Button under
+    # a Form that's never had .Show() called returns Visible=False even
+    # right after setting it to True), and $script:Form is never shown in
+    # this selftest path at all. Text/Width/Left are unaffected by that and
+    # are what actually prove Refresh-UpdateStatusButton did its job; the
+    # real show/hide behavior is confirmed by live-launching the app.
+    $script:PendingUpdate = [PSCustomObject]@{ Available = $true; Checked = $true; CurrentVersion = 'V9.3'; LatestVersion = 'V10.1'; DownloadUrl = ''; ZipName = ''; ErrMsg = '' }
+    Refresh-UpdateStatusButton
+    Write-Host "  after a fake pending update: Text='$($script:BtnUpdateAvailable.Text)' Left=$($script:BtnUpdateAvailable.Left) (expect right of BtnSettings, text mentions V10.1)"
+    if ($script:BtnUpdateAvailable.Left -le $script:BtnSettings.Right) { Write-Host "  SELFTEST FAILURE: not positioned right of BtnSettings" -ForegroundColor Red }
+    if ($script:BtnUpdateAvailable.Text -notlike '*V10.1*') { Write-Host "  SELFTEST FAILURE: text doesn't mention the pending version" -ForegroundColor Red }
+    try {
+        $null = Show-UpdateConfirmDialog $script:PendingUpdate
+        Write-Host "  Show-UpdateConfirmDialog ran with no exception"
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-UpdateConfirmDialog threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+    $script:PendingUpdate = $null
+    Refresh-UpdateStatusButton
 
     Write-Host "`n=== Show-RequirementsDialog (real Get-RequirementsStatus against this machine - structural test only, not asserting specific installed/missing values, same spirit as the tracked-view test above) ==="
     try {

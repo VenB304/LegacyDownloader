@@ -1085,6 +1085,19 @@ if (-not $isFirstRunSession -and $cfg.AutoCheck -and (Test-GameFolder $cfg.GameP
     Pause-Continue
 }
 
+# App self-update check - read-only GitHub API call, once per process
+# start, on BOTH Windows and Linux (unlike the game-update AUTOCHECK
+# above, this has no file-system side effects of its own). Linux gets the
+# notice and can still see the release on GitHub, but the actual swap
+# (the 'U' menu option below) is Windows-only - build-release.ps1 only
+# ever bundles the Windows rclone.exe, so the whole "replace bin\ from the
+# release zip" premise doesn't map onto a Linux install to begin with.
+$PendingAppUpdate = $null
+if ($cfg.CheckAppUpdates) {
+    $appCheck = Test-AppUpdateAvailable
+    if ($appCheck.Checked -and $appCheck.Available) { $PendingAppUpdate = $appCheck }
+}
+
 while ($true) {
     Clear-Host
     $langEntry = $AvailableLangs | Where-Object { $_.Code -eq $cfg.Lang } | Select-Object -First 1
@@ -1110,6 +1123,14 @@ while ($true) {
     Write-Host ""
     Write-Host (T 'menu.safety')
     Write-Host ""
+    if ($null -ne $PendingAppUpdate) {
+        if ($IsLinux) {
+            Write-Host (T 'menu.update_available_notice_linux' @{ version = $PendingAppUpdate.LatestVersion; url = $PendingAppUpdate.ReleaseUrl }) -ForegroundColor Green
+        } else {
+            Write-Host (T 'menu.update_available_notice' @{ version = $PendingAppUpdate.LatestVersion }) -ForegroundColor Green
+        }
+        Write-Host ""
+    }
     Write-Host (T 'menu.opt_download')
     Write-Host (T 'menu.opt_choose')
     Write-Host (T 'menu.opt_folder')
@@ -1188,6 +1209,32 @@ while ($true) {
                 Pause-Brief (T 'common.not_valid_option')
             } else {
                 Exit-Console
+            }
+        }
+        'U' {
+            # Deliberately not a numbered menu item - it's only ever
+            # present some of the time (a pending update), and this
+            # project has been bitten twice before by numbered-menu-
+            # renumbering docs going stale (see the Settings option's own
+            # checklist above). Windows-only, matching Quick Launch and
+            # the rest of the apply mechanism - Linux only ever sees the
+            # notice + release URL, never this actionable path.
+            if ($null -eq $PendingAppUpdate -or $IsLinux) {
+                Pause-Brief (T 'common.not_valid_option')
+            } else {
+                Write-Host ""
+                if (Confirm-YesNo (T 'menu.update_confirm_q' @{ version = $PendingAppUpdate.LatestVersion })) {
+                    Write-Host ""
+                    Write-Host (T 'menu.update_downloading')
+                    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $PendingAppUpdate.DownloadUrl -ExpectedVersion $PendingAppUpdate.LatestVersion
+                    if (-not $staged.Ok) {
+                        Write-Host (T 'menu.update_download_failed' @{ error = $staged.ErrMsg }) -ForegroundColor Red
+                        Pause-Continue
+                    } else {
+                        Start-AppUpdateHelper -InstallDir (Split-Path -Parent $ScriptDir) -StagingDir $staged.StagingDir -ExpectedVersion $PendingAppUpdate.LatestVersion -RelaunchTarget 'console'
+                        Exit-Console
+                    }
+                }
             }
         }
         default {
