@@ -2223,6 +2223,9 @@ function Show-SongBrowserDialog {
                 if ($existing.Contains($code)) { continue }
                 [void]$existing.Add($code)
                 [void]$script:SbCtx.ByEdition[$ed].Add($code)
+                if (($script:SbCtx.WasAuto -or $script:SbCtx.TrackedList -contains $ed) -and -not $script:SbCtx.FilterMap.Contains($ed)) {
+                    [void]$script:SbCtx.SelectedKeys.Add("$ed|$code")
+                }
                 # Title/Artist/Difficulty/Effort stay $null on purpose - the
                 # Title field falls back to the code, and Artist/Difficulty/
                 # Effort's formatters render blank (not "Not rated") for

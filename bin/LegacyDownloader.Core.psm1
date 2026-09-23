@@ -1395,6 +1395,7 @@ function Initialize-SongSelectionContext {
         FilterMap       = $filterMap
         SelectedKeys    = $selectedKeys
         DuplicateKeys   = $duplicateKeys
+        WasAuto         = $wasAuto
     }
 }
 
