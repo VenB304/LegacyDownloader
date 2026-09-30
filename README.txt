@@ -184,6 +184,14 @@ https://github.com/VenB304/LegacyDownloader/releases
 In the console menu the same notice appears and pressing U starts the
 update (Windows only).
 
+If the update check fails with "403" or "limiting requests" (V10 and
+V11 only): GitHub allows just a few unauthenticated requests per hour
+per network address, and shared addresses (VPNs, Cloudflare WARP, some
+ISPs) use them up. Wait an hour, or download the new zip from the
+Releases page and extract it over your old folder. V11.1 and later ask
+GitHub's website instead of the rate-limited API, so this no longer
+happens.
+
 On Linux, the self-updater checks for new releases the same way but
 never applies them automatically, since the release zip doesn't ship a
 Linux rclone binary.
