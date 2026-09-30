@@ -1594,11 +1594,14 @@ function Get-SongRemovalPromptItems {
     # the unchecked files had ever been downloaded). Front-ends show these in
     # ONE prompt, then hand the same items to Invoke-SongRemovalDelete.
     param(
-        [Parameter(Mandatory = $true)][AllowEmptyCollection()]$Plan,
+        # AllowNull too: Get-SongRemovalPlan emits nothing (not an empty array)
+        # when there is nothing to remove, so a caller's $plan is $null then.
+        [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Plan,
         [Parameter(Mandatory = $true)][string]$GamePath
     )
     $items = @()
     foreach ($entry in @($Plan)) {
+        if ($null -eq $entry) { continue }
         $localDir = Join-Path (Join-Path $GamePath 'maps') $entry.Edition
         if (-not (Test-Path -LiteralPath $localDir)) { continue }
         if ($entry.WholeEditionRemoved) {
@@ -1621,11 +1624,12 @@ function Invoke-SongRemovalDelete {
     # $true if the folder/any file couldn't be removed, e.g. the game has it
     # open) so each front-end can word its own messages. Never throws.
     param(
-        [Parameter(Mandatory = $true)][AllowEmptyCollection()]$Items,
+        [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Items,
         [Parameter(Mandatory = $true)][string]$GamePath
     )
     $results = @()
     foreach ($item in @($Items)) {
+        if ($null -eq $item) { continue }
         $localDir = Join-Path (Join-Path $GamePath 'maps') $item.Edition
         $failed = $false
         $removed = 0

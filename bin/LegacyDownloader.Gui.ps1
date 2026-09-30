@@ -4007,7 +4007,7 @@ function Invoke-SongRemovalCleanup([string[]]$OldEditionList, [string]$OldSongFi
     # (Show-RemovalPromptDialog) and returns $false if the user cancelled -
     # the caller must then discard the new selection instead of saving it.
     $newEditionList = @($Res.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
-    $plan = Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog
+    $plan = @(Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog)
     $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath)
     if ($items.Count -eq 0) { return $true }
 
