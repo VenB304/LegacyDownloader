@@ -1279,7 +1279,7 @@ while ($true) {
                         Write-Host (T 'menu.update_download_failed' @{ error = $staged.ErrMsg }) -ForegroundColor Red
                         Pause-Continue
                     } else {
-                        Start-AppUpdateHelper -InstallDir (Split-Path -Parent $ScriptDir) -StagingDir $staged.StagingDir -ExpectedVersion $PendingAppUpdate.LatestVersion -RelaunchTarget 'console'
+                        Start-AppUpdateHelper -InstallDir (Split-Path -Parent $ScriptDir) -StagingDir $staged.StagingDir -ExpectedVersion $PendingAppUpdate.LatestVersion -RelaunchTarget 'console' | Out-Null
                         Exit-Console
                     }
                 }

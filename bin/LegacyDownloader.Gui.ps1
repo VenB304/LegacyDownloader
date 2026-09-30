@@ -606,7 +606,31 @@ function Invoke-AppUpdateNow($UpdateInfo) {
         [System.Windows.Forms.Application]::DoEvents()
     }.GetNewClosure()
 
-    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $UpdateInfo.DownloadUrl -ExpectedVersion $UpdateInfo.LatestVersion -ProgressCallback $progressCallback
+    # The download hitting 100% is not the end: verifying and unpacking the
+    # zip still take a while (seconds on a slow disk or with real-time
+    # antivirus), and used to run with the bar frozen at 100% and no repaints.
+    # Each phase now says what it is doing and keeps the window responsive.
+    $phaseCallback = {
+        param($phase, $pct)
+        switch ($phase) {
+            'verify' {
+                $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+                $lblStatus.Text = T 'gui.update_progress_verifying'
+            }
+            'unpack' {
+                $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+                $bar.Value = [Math]::Max(0, [Math]::Min(100, $pct))
+                $lblStatus.Text = T 'gui.update_progress_unpacking_pct' @{ pct = $pct }
+            }
+            'check' {
+                $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+                $lblStatus.Text = T 'gui.update_progress_checking'
+            }
+        }
+        [System.Windows.Forms.Application]::DoEvents()
+    }.GetNewClosure()
+
+    $staged = Invoke-AppUpdateDownloadAndStage -DownloadUrl $UpdateInfo.DownloadUrl -ExpectedVersion $UpdateInfo.LatestVersion -ProgressCallback $progressCallback -PhaseCallback $phaseCallback
 
     if (-not $staged.Ok) {
         $prog.Close(); $prog.Dispose()
@@ -615,7 +639,36 @@ function Invoke-AppUpdateNow($UpdateInfo) {
         return
     }
 
-    Start-AppUpdateHelper -InstallDir $script:AppInstallDir -StagingDir $staged.StagingDir -ExpectedVersion $UpdateInfo.LatestVersion -RelaunchTarget 'gui'
+    $bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+    $lblStatus.Text = T 'gui.update_progress_restarting'
+    [System.Windows.Forms.Application]::DoEvents()
+    $helper = Start-AppUpdateHelper -InstallDir $script:AppInstallDir -StagingDir $staged.StagingDir -ExpectedVersion $UpdateInfo.LatestVersion -RelaunchTarget 'gui'
+    # Keep this window up until the helper's own console window is on screen,
+    # so there is no blank gap where the app has vanished and nothing has
+    # appeared yet. Capped: under a terminal host that doesn't expose the
+    # window handle it would otherwise never see one (the helper does not
+    # depend on this wait - it only needs this process to exit).
+    if ($helper) {
+        # The console window exists before the helper script has drawn or
+        # titled anything, so wait for the title Update-Helper.ps1 sets as its
+        # first act (or, if a terminal host never reports one, 1.5s after the
+        # window handle appears) rather than for the bare window.
+        $waitUntil = [DateTime]::UtcNow.AddSeconds(8)
+        $handleSeenAt = $null
+        while ([DateTime]::UtcNow -lt $waitUntil) {
+            try {
+                $helper.Refresh()
+                if ($helper.HasExited -or $helper.MainWindowTitle -like 'LegacyDownloader - updating*') { break }
+                if ($helper.MainWindowHandle -ne [IntPtr]::Zero) {
+                    if ($null -eq $handleSeenAt) { $handleSeenAt = [DateTime]::UtcNow }
+                    elseif (([DateTime]::UtcNow - $handleSeenAt).TotalMilliseconds -ge 1500) { break }
+                }
+            } catch { break }
+            [System.Windows.Forms.Application]::DoEvents()
+            Start-Sleep -Milliseconds 50
+        }
+        Start-Sleep -Milliseconds 400   # let the helper window finish drawing before this one goes away
+    }
     $prog.Close(); $prog.Dispose()
     $script:Form.Close()
 }

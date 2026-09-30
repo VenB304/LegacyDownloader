@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V11.1'
+$script:AppVersion = 'V11.2'
 
 function Get-AppVersion { return $script:AppVersion }
 
@@ -646,7 +646,7 @@ function Assert-ZipEntriesConfined([string]$ZipPath, [string]$DestinationDir) {
     } finally { $zip.Dispose() }
 }
 
-function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion, [scriptblock]$ProgressCallback) {
+function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion, [scriptblock]$ProgressCallback, [scriptblock]$PhaseCallback) {
     # Downloads the release zip to $env:TEMP and extracts it to a staging
     # folder OUTSIDE the live install - never directly into the running
     # bin\. Sanity-checks the staged copy's own $script:AppVersion line
@@ -670,6 +670,12 @@ function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$Expecte
     $tempZip = Join-Path $env:TEMP ("LegacyDownloaderUpdate_" + [guid]::NewGuid().ToString('N') + ".zip")
     $stagingDir = Join-Path $env:TEMP ("legacydownloader_update_" + [guid]::NewGuid().ToString('N'))
     if (-not $ProgressCallback) { $ProgressCallback = {} }
+    # -PhaseCallback (optional): invoked as & $PhaseCallback $phase $percent
+    # after the download finishes, so a GUI can keep showing something real
+    # (and pump its message loop) through the steps that used to run silently
+    # behind a bar frozen at 100%: 'verify', 'unpack' (percent 0-100, by
+    # bytes), 'check'. Percent is -1 when a phase has no measurable progress.
+    if (-not $PhaseCallback) { $PhaseCallback = {} }
     try {
         $req = [System.Net.HttpWebRequest]::Create($DownloadUrl)
         $req.UserAgent = 'LegacyDownloader (+https://github.com/VenB304/LegacyDownloader)'
@@ -703,8 +709,37 @@ function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$Expecte
             } finally { $inStream.Dispose() }
         } finally { $resp.Dispose() }
         if (-not (Test-Path -LiteralPath $tempZip) -or (Get-Item -LiteralPath $tempZip).Length -eq 0) { throw "empty download" }
+        & $PhaseCallback 'verify' -1
         Assert-ZipEntriesConfined $tempZip $stagingDir
-        Expand-Archive -LiteralPath $tempZip -DestinationPath $stagingDir -Force -ErrorAction Stop
+        # Entry-by-entry extraction instead of Expand-Archive: Expand-Archive
+        # gives no hook at all, so the window could neither show progress nor
+        # repaint (Windows marked it "Not Responding") while a slow disk or a
+        # real-time antivirus scan chewed through the unpacked files.
+        # Assert-ZipEntriesConfined above already rejected any entry that
+        # would land outside $stagingDir.
+        & $PhaseCallback 'unpack' 0
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($tempZip)
+        try {
+            $sumBytes = [long]0
+            foreach ($entry in $zip.Entries) { $sumBytes += $entry.Length }
+            $doneBytes = [long]0
+            $lastUnpackPct = -1
+            [void][System.IO.Directory]::CreateDirectory($stagingDir)
+            foreach ($entry in $zip.Entries) {
+                $target = [System.IO.Path]::GetFullPath((Join-Path $stagingDir $entry.FullName))
+                if ($entry.FullName.EndsWith('/') -or $entry.FullName.EndsWith('\')) {
+                    [void][System.IO.Directory]::CreateDirectory($target)
+                    continue
+                }
+                [void][System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($target))
+                [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $target, $true)
+                $doneBytes += $entry.Length
+                $unpackPct = if ($sumBytes -gt 0) { [Math]::Min(100, [int](($doneBytes * 100) / $sumBytes)) } else { 100 }
+                if ($unpackPct -ne $lastUnpackPct) { $lastUnpackPct = $unpackPct; & $PhaseCallback 'unpack' $unpackPct }
+            }
+        } finally { $zip.Dispose() }
+        & $PhaseCallback 'check' -1
         $stagedCore = Join-Path $stagingDir 'bin\LegacyDownloader.Core.psm1'
         if (-not (Test-Path -LiteralPath $stagedCore)) {
             throw "staged package is missing bin\LegacyDownloader.Core.psm1"
@@ -758,7 +793,11 @@ function Start-AppUpdateHelper {
     # bypassed PowerShell child is the same dropper/loader heuristic shape
     # that got the V5-V6 .vbs launcher flagged. The helper shows a small
     # console window for the few seconds the swap takes.
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $argList | Out-Null
+    # -PassThru: returns the helper's Process so a GUI can keep its progress
+    # window up until the helper's own console window is actually on screen
+    # (otherwise there is a blank gap between the app vanishing and the
+    # helper appearing). Callers that don't need it pipe it to Out-Null.
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -PassThru
 }
 
 function Start-LegacyExe([string]$GamePath) {
