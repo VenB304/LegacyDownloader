@@ -573,6 +573,25 @@ function Save-Config([hashtable]$Values = @{}) {
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
+function Assert-ZipEntriesConfined([string]$ZipPath, [string]$DestinationDir) {
+    # Throws if any entry in the archive would be written outside $DestinationDir
+    # ("zip slip": entry names like ..\..\x, or an absolute path). Windows
+    # PowerShell 5.1's Expand-Archive did not always check this, so the entry
+    # names are inspected BEFORE anything is extracted.
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $root = [System.IO.Path]::GetFullPath($DestinationDir).TrimEnd([char]92, [char]47) + [System.IO.Path]::DirectorySeparatorChar
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        foreach ($entry in $zip.Entries) {
+            $target = $null
+            try { $target = [System.IO.Path]::GetFullPath((Join-Path $DestinationDir $entry.FullName)) } catch { }
+            if ($null -eq $target -or -not $target.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "unsafe path in the update package: $($entry.FullName)"
+            }
+        }
+    } finally { $zip.Dispose() }
+}
+
 function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$ExpectedVersion, [scriptblock]$ProgressCallback) {
     # Downloads the release zip to $env:TEMP and extracts it to a staging
     # folder OUTSIDE the live install - never directly into the running
@@ -630,6 +649,7 @@ function Invoke-AppUpdateDownloadAndStage([string]$DownloadUrl, [string]$Expecte
             } finally { $inStream.Dispose() }
         } finally { $resp.Dispose() }
         if (-not (Test-Path -LiteralPath $tempZip) -or (Get-Item -LiteralPath $tempZip).Length -eq 0) { throw "empty download" }
+        Assert-ZipEntriesConfined $tempZip $stagingDir
         Expand-Archive -LiteralPath $tempZip -DestinationPath $stagingDir -Force -ErrorAction Stop
         $stagedCore = Join-Path $stagingDir 'bin\LegacyDownloader.Core.psm1'
         if (-not (Test-Path -LiteralPath $stagedCore)) {
@@ -666,18 +686,24 @@ function Start-AppUpdateHelper {
         [Parameter(Mandatory = $true)][ValidateSet('gui', 'console')][string]$RelaunchTarget
     )
     $helperScript = Join-Path $InstallDir 'bin\Update-Helper.ps1'
+    # ConvertTo-QuotedArg, not hand-rolled "`"$x`"" quoting: an install at a
+    # drive root gives InstallDir = 'D:\', and a hand-quoted "D:\" makes
+    # Windows read the \" as an escaped quote, so the helper received a
+    # garbled -InstallDir and the update never started (the app had already
+    # closed). ConvertTo-QuotedArg leaves a space-free 'D:\' alone and
+    # doubles trailing backslashes when a path does need quotes.
     $argList = @(
-        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$helperScript`""
-        '-InstallDir', "`"$InstallDir`""
-        '-StagingDir', "`"$StagingDir`""
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (ConvertTo-QuotedArg $helperScript)
+        '-InstallDir', (ConvertTo-QuotedArg $InstallDir)
+        '-StagingDir', (ConvertTo-QuotedArg $StagingDir)
         '-MainPid', $PID
-        '-ExpectedVersion', "`"$ExpectedVersion`""
+        '-ExpectedVersion', (ConvertTo-QuotedArg $ExpectedVersion)
         '-RelaunchTarget', $RelaunchTarget
     )
     # Deliberately NOT hidden: a script spawning a hidden, execution-policy-
     # bypassed PowerShell child is the same dropper/loader heuristic shape
-    # that got the V5-V6 .vbs launcher flagged (see docs/technical-notes.md).
-    # The helper shows a small console window for the few seconds the swap takes.
+    # that got the V5-V6 .vbs launcher flagged. The helper shows a small
+    # console window for the few seconds the swap takes.
     Start-Process -FilePath 'powershell.exe' -ArgumentList $argList | Out-Null
 }
 
@@ -941,8 +967,17 @@ function Get-TrackedDownloadStatus {
 }
 
 function ConvertTo-QuotedArg([string]$Value) {
-    if ($Value -notmatch '\s') { return $Value }
-    $escaped = $Value -replace '(\\+)$', '$1$1'
+    # Quotes one argument for a command LINE (Start-Process -ArgumentList
+    # takes a joined string), following CommandLineToArgvW's rules: quote
+    # when the value has whitespace OR a double quote; inside the quotes a
+    # run of backslashes before a quote is doubled and the quote escaped, and
+    # trailing backslashes (which would otherwise escape our closing quote)
+    # are doubled. Before, an embedded quote passed straight through and could
+    # split one value into several arguments (flag injection into rclone from
+    # a hostile song code).
+    if ($Value -notmatch '[\s"]') { return $Value }
+    $escaped = [regex]::Replace($Value, '(\\*)"', { param($m) $m.Groups[1].Value + $m.Groups[1].Value + '\"' })
+    $escaped = [regex]::Replace($escaped, '(\\+)$', { param($m) $m.Value + $m.Value })
     return '"' + $escaped + '"'
 }
 
@@ -1191,6 +1226,61 @@ function ConvertTo-RcloneGlobLiteral([string]$Text) {
     return [regex]::Replace($Text, '[\\*?\[\]{}]', { param($m) '\' + $m.Value })
 }
 
+function Test-SafeEditionName([string]$Edition) {
+    # An edition is ONE folder name under maps\. The value comes from
+    # config.txt and the online catalog, both editable by a user or a third
+    # party, and ends up in path joins and a recursive delete - so anything
+    # that could resolve elsewhere ('', '.', '..', a path separator, a drive
+    # colon, characters invalid in a file name) is rejected outright.
+    if ([string]::IsNullOrWhiteSpace($Edition)) { return $false }
+    if ($Edition -eq '.' -or $Edition -eq '..') { return $false }
+    if ($Edition -ne $Edition.Trim() -or $Edition.EndsWith('.')) { return $false }
+    if ($Edition.IndexOfAny([System.IO.Path]::GetInvalidFileNameChars()) -ge 0) { return $false }
+    if ($Edition.IndexOfAny([char[]]@([char]92, [char]47, [char]58)) -ge 0) { return $false }   # \ / :
+    return $true
+}
+
+function Resolve-KeepSongsRaw($KeepSongs) {
+    # $null = "read KEEPSONGS from config.txt" (so the background scan job and
+    # the download queue see the same value without extra plumbing).
+    if ($null -eq $KeepSongs) {
+        if ([string]::IsNullOrEmpty($script:ConfigPath)) { return '' }   # Core not initialized (tests, tooling): no config, no locks
+        return [string](Load-Config).KeepSongs
+    }
+    return [string]$KeepSongs
+}
+
+function Get-KeepKeySet($KeepSongs = $null) {
+    # KEEPSONGS -> HashSet of "Edition|code" keys (case-insensitive), the shape
+    # both pickers work with. The comma keeps PowerShell from unrolling the set.
+    $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $map = Get-SongFilterMap (Resolve-KeepSongsRaw $KeepSongs)
+    foreach ($ed in @($map.Keys)) { foreach ($c in @($map[$ed])) { [void]$set.Add("$ed|$c") } }
+    return ,$set
+}
+
+function Format-KeepKeySet($Keys) {
+    # "Edition|code" keys -> the KEEPSONGS string (edition:code|code;...),
+    # editions and codes sorted so config.txt doesn't churn.
+    $byEd = [ordered]@{}
+    foreach ($k in @($Keys | Sort-Object)) {
+        $i = ([string]$k).IndexOf('|')
+        if ($i -lt 1) { continue }
+        $ed = $k.Substring(0, $i)
+        if (-not $byEd.Contains($ed)) { $byEd[$ed] = @() }
+        $byEd[$ed] += $k.Substring($i + 1).ToLowerInvariant()
+    }
+    return (Format-SongFilters $byEd)
+}
+
+function Get-LocalSongKeySet([string]$GamePath) {
+    # "Edition|code" keys for every song file actually on disk.
+    $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $localMap = Get-LocalSongMap $GamePath
+    foreach ($ed in @($localMap.Keys)) { foreach ($c in @($localMap[$ed])) { [void]$set.Add("$ed|$c") } }
+    return ,$set
+}
+
 function Get-KeptSongCodes {
     # The codes from KEEPSONGS ("Keep my version") for $Edition whose file
     # really exists in maps\<edition>. A lock only protects a file the user
@@ -1199,10 +1289,11 @@ function Get-KeptSongCodes {
     param(
         [Parameter(Mandatory = $true)][string]$Edition,
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GamePath,
-        [string]$KeepSongs = ''
+        $KeepSongs = $null
     )
     if ([string]::IsNullOrEmpty($GamePath)) { return @() }
-    $map = Get-SongFilterMap $KeepSongs
+    if (-not (Test-SafeEditionName $Edition)) { return @() }
+    $map = Get-SongFilterMap (Resolve-KeepSongsRaw $KeepSongs)
     if (-not $map.Contains($Edition)) { return @() }
     $dir = Join-Path (Join-Path $GamePath 'maps') $Edition
     if (-not (Test-Path -LiteralPath $dir)) { return @() }
@@ -1211,6 +1302,25 @@ function Get-KeptSongCodes {
         [void]$present.Add(($f.BaseName -replace '_pc$', ''))
     }
     return @($map[$Edition] | Where-Object { $present.Contains($_) })
+}
+
+function New-RcloneFilterFile([string[]]$Rules) {
+    # Writes ordered filter rules (one per line) to a small file in %TEMP% and
+    # returns its path, for rclone's --filter-from. The name is a hash of the
+    # content, so identical rules reuse one file instead of piling up. UTF-8
+    # WITHOUT a BOM: rclone would read a BOM as part of the first rule.
+    $text = ($Rules -join "`n") + "`n"
+    $sha = [System.Security.Cryptography.SHA1]::Create()
+    try { $hash = -join ($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($text)) | ForEach-Object { $_.ToString('x2') }) }
+    finally { $sha.Dispose() }
+    $path = Join-Path ([System.IO.Path]::GetTempPath()) "legacydownloader_filters_$hash.txt"
+    if (-not (Test-Path -LiteralPath $path)) { [System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding($false))) }
+    # Housekeeping: every distinct rule set is its own file, so drop our own week-old ones.
+    try {
+        Get-ChildItem -LiteralPath ([System.IO.Path]::GetTempPath()) -Filter 'legacydownloader_filters_*.txt' -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) } | Remove-Item -Force -ErrorAction SilentlyContinue
+    } catch { }
+    return $path
 }
 
 function Get-SongFilterArgs {
@@ -1228,6 +1338,10 @@ function Get-SongFilterArgs {
     # given - lock exclusions first, then the includes, then an explicit
     # "- *" (--filter does NOT add the implicit exclude-everything-else that
     # --include does).
+    # A handful of rules ride on the command line, but hundreds of kept songs
+    # would blow past CreateProcess's 32,767-character limit (about 800 kept
+    # songs in Everything mode), so a long rule list goes into a --filter-from
+    # file instead - same rules, same order.
     # -KeepSongs omitted = read it from config.txt, so the background scan
     # job and the download queue pick it up without extra plumbing.
     param(
@@ -1236,31 +1350,34 @@ function Get-SongFilterArgs {
         [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GamePath,
         $KeepSongs = $null
     )
-    if ($null -eq $KeepSongs) { $KeepSongs = [string](Load-Config).KeepSongs }
-    $KeepSongs = [string]$KeepSongs
+    $KeepSongs = Resolve-KeepSongsRaw $KeepSongs
+    $rules = New-Object System.Collections.Generic.List[string]
 
     if ($Edition -ne '') {
         $kept = @(Get-KeptSongCodes -Edition $Edition -GamePath $GamePath -KeepSongs $KeepSongs)
         if ($kept.Count -eq 0) { return @(Get-SongIncludeArgs $Songs) }
-        $out = @()
-        foreach ($c in $kept) { $out += @('--filter', "- /$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk") }
+        foreach ($c in $kept) { $rules.Add("- /$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk") }
         $wanted = @($Songs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
         if ($wanted.Count -gt 0) {
-            foreach ($c in $wanted) { $out += @('--filter', "+ $(ConvertTo-RcloneGlobLiteral $c.Trim().ToLowerInvariant())_pc.ipk") }
-            $out += @('--filter', '- *')
+            foreach ($c in $wanted) { $rules.Add("+ $(ConvertTo-RcloneGlobLiteral $c.Trim().ToLowerInvariant())_pc.ipk") }
+            $rules.Add('- *')
         }
-        $out += '--ignore-case'
-        return $out
+    } else {
+        $map = Get-SongFilterMap $KeepSongs
+        foreach ($ed in @($map.Keys)) {
+            foreach ($c in @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)) {
+                $rules.Add("- /$(ConvertTo-RcloneGlobLiteral $ed)/$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk")
+            }
+        }
+        if ($rules.Count -eq 0) { return @() }
     }
 
-    $out = @()
-    $map = Get-SongFilterMap $KeepSongs
-    foreach ($ed in @($map.Keys)) {
-        foreach ($c in @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)) {
-            $out += @('--filter', "- /$(ConvertTo-RcloneGlobLiteral $ed)/$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk")
-        }
+    if (($rules -join ' ').Length -gt 6000) {
+        return @('--filter-from', (New-RcloneFilterFile $rules.ToArray()), '--ignore-case')
     }
-    if ($out.Count -gt 0) { $out += '--ignore-case' }
+    $out = @()
+    foreach ($r in $rules) { $out += @('--filter', $r) }
+    $out += '--ignore-case'
     return $out
 }
 
@@ -1587,29 +1704,38 @@ function Get-SongRemovalPlan {
 
 function Get-SongRemovalPromptItems {
     # Narrows a Get-SongRemovalPlan result down to what there is actually
-    # something to ask about: entries with real files on disk. A dropped
-    # edition counts if its maps\<edition> folder exists; a narrowed edition
-    # counts only if at least one of its unchecked songs is really there (the
-    # old per-edition prompt fired for any existing folder, even when none of
-    # the unchecked files had ever been downloaded). Front-ends show these in
-    # ONE prompt, then hand the same items to Invoke-SongRemovalDelete.
+    # something to ask about: entries with real, DELETABLE files on disk. A
+    # dropped edition counts if its maps\<edition> folder holds anything
+    # besides songs the user marked Keep my version; a narrowed edition counts
+    # only if at least one of its unchecked songs is really there and isn't
+    # kept. KeptCount says how many kept songs sit in an entry, so the
+    # front-ends can tell the user they will be left alone. Front-ends show
+    # the items in ONE prompt, then hand them to Invoke-SongRemovalDelete.
     param(
         # AllowNull too: Get-SongRemovalPlan emits nothing (not an empty array)
         # when there is nothing to remove, so a caller's $plan is $null then.
         [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Plan,
-        [Parameter(Mandatory = $true)][string]$GamePath
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        $KeepSongs = $null
     )
+    $KeepSongs = Resolve-KeepSongsRaw $KeepSongs
     $items = @()
     foreach ($entry in @($Plan)) {
         if ($null -eq $entry) { continue }
-        $localDir = Join-Path (Join-Path $GamePath 'maps') $entry.Edition
-        if (-not (Test-Path -LiteralPath $localDir)) { continue }
+        $ed = [string]$entry.Edition
+        if (-not (Test-SafeEditionName $ed)) { continue }
+        $localDir = Join-Path (Join-Path $GamePath 'maps') $ed
+        if (-not (Test-Path -LiteralPath $localDir -PathType Container)) { continue }
+        $kept = @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)
         if ($entry.WholeEditionRemoved) {
-            $items += [PSCustomObject]@{ Edition = [string]$entry.Edition; Whole = $true; Codes = @(); Count = 0 }
+            $fileCount = @(Get-ChildItem -LiteralPath $localDir -File -Recurse -ErrorAction SilentlyContinue).Count
+            if ($fileCount -gt 0 -and ($fileCount - $kept.Count) -le 0) { continue }   # only kept songs in there
+            $items += [PSCustomObject]@{ Edition = $ed; Whole = $true; Codes = @(); Count = 0; KeptCount = $kept.Count }
         } else {
-            $present = @($entry.RemovedCodes | Where-Object { Test-Path -LiteralPath (Join-Path $localDir "${_}_pc.ipk") })
-            if ($present.Count -gt 0) {
-                $items += [PSCustomObject]@{ Edition = [string]$entry.Edition; Whole = $false; Codes = $present; Count = $present.Count }
+            $existing = @($entry.RemovedCodes | Where-Object { Test-Path -LiteralPath (Join-Path $localDir "${_}_pc.ipk") })
+            $deletable = @($existing | Where-Object { $kept -notcontains $_ })
+            if ($deletable.Count -gt 0) {
+                $items += [PSCustomObject]@{ Edition = $ed; Whole = $false; Codes = $deletable; Count = $deletable.Count; KeptCount = ($existing.Count - $deletable.Count) }
             }
         }
     }
@@ -1617,33 +1743,63 @@ function Get-SongRemovalPromptItems {
 }
 
 function Invoke-SongRemovalDelete {
-    # Deletes the local files behind Get-SongRemovalPromptItems entries: the
-    # whole maps\<edition> folder for a dropped edition, or just the unchecked
-    # <code>_pc.ipk files for a narrowed one. Returns one result per item
-    # (Edition, Whole, Count = files removed for a narrowed edition, Failed =
-    # $true if the folder/any file couldn't be removed, e.g. the game has it
+    # Deletes the local files behind Get-SongRemovalPromptItems entries: a
+    # dropped edition's files, or just the unchecked <code>_pc.ipk files of a
+    # narrowed one. Songs marked Keep my version are NEVER deleted here - the
+    # lock protects the user's own modified copy from deletion as well as from
+    # updates (a whole edition is then emptied around them and its folder
+    # stays). Every path is confined to maps\<one folder>: an unsafe edition
+    # name is refused, not joined. Returns one result per item (Edition,
+    # Whole, Count = files removed, KeptLeft = kept songs left in place,
+    # Failed = $true if anything couldn't be removed, e.g. the game has it
     # open) so each front-end can word its own messages. Never throws.
     param(
         [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Items,
-        [Parameter(Mandatory = $true)][string]$GamePath
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        $KeepSongs = $null
     )
+    $KeepSongs = Resolve-KeepSongsRaw $KeepSongs
+    $mapsDir = Join-Path $GamePath 'maps'
     $results = @()
     foreach ($item in @($Items)) {
         if ($null -eq $item) { continue }
-        $localDir = Join-Path (Join-Path $GamePath 'maps') $item.Edition
-        $failed = $false
-        $removed = 0
-        if ($item.Whole) {
-            try { Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop } catch { $failed = $true }
+        $ed = [string]$item.Edition
+        $failed = $false; $removed = 0; $keptLeft = 0
+        $localDir = $null
+        if (Test-SafeEditionName $ed) {
+            $localDir = Join-Path $mapsDir $ed
+            $mapsFull = [System.IO.Path]::GetFullPath($mapsDir).TrimEnd([char]92, [char]47)
+            $dirFull = [System.IO.Path]::GetFullPath($localDir).TrimEnd([char]92, [char]47)
+            if (-not [string]::Equals([System.IO.Path]::GetDirectoryName($dirFull), $mapsFull, [System.StringComparison]::OrdinalIgnoreCase)) { $localDir = $null }
+        }
+        if ($null -eq $localDir) {
+            $failed = $true
         } else {
-            foreach ($code in $item.Codes) {
-                $target = Join-Path $localDir "${code}_pc.ipk"
-                if (Test-Path -LiteralPath $target) {
-                    try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
+            $kept = @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)
+            if ($item.Whole) {
+                if ($kept.Count -eq 0) {
+                    try { Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop; $removed = 1 } catch { $failed = $true }
+                } else {
+                    foreach ($f in @(Get-ChildItem -LiteralPath $localDir -File -Recurse -Force -ErrorAction SilentlyContinue)) {
+                        if ($f.BaseName -match '_pc$' -and $f.Extension -ieq '.ipk' -and ($kept -contains ($f.BaseName -replace '_pc$', ''))) { $keptLeft++; continue }
+                        try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
+                    }
+                    # tidy sub-folders the deletions emptied (never the edition folder itself: kept songs live there)
+                    foreach ($d in @(Get-ChildItem -LiteralPath $localDir -Directory -Recurse -Force -ErrorAction SilentlyContinue | Sort-Object { $_.FullName.Length } -Descending)) {
+                        if (@(Get-ChildItem -LiteralPath $d.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0) { Remove-Item -LiteralPath $d.FullName -Force -ErrorAction SilentlyContinue }
+                    }
+                }
+            } else {
+                foreach ($code in $item.Codes) {
+                    if ($kept -contains $code) { $keptLeft++; continue }
+                    $target = Join-Path $localDir "${code}_pc.ipk"
+                    if (Test-Path -LiteralPath $target) {
+                        try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
+                    }
                 }
             }
         }
-        $results += [PSCustomObject]@{ Edition = [string]$item.Edition; Whole = [bool]$item.Whole; Count = $removed; Failed = $failed }
+        $results += [PSCustomObject]@{ Edition = $ed; Whole = [bool]$item.Whole; Count = $removed; KeptLeft = $keptLeft; Failed = $failed }
     }
     return $results
 }
@@ -1695,7 +1851,6 @@ function Get-UpdatePlan {
         [Parameter(Mandatory = $true)][string]$GamePath,
         [Parameter(Mandatory = $true)][string]$Editions,
         [string]$SongFilters = '',
-        $KeepSongs = $null,
         [switch]$IgnoreWrongLevel
     )
 
@@ -1739,7 +1894,7 @@ function Get-UpdatePlan {
     $songs         = @()
 
     if ($Editions.ToUpper() -eq 'AUTO') {
-        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + (Get-SongFilterArgs -GamePath $GamePath -KeepSongs $KeepSongs) + $script:ScanArgs) -Label 'scan-allmaps'
+        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + (Get-SongFilterArgs -GamePath $GamePath) + $script:ScanArgs) -Label 'scan-allmaps'
         if ($mapRun.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
         $m = Parse-DryRun $mapRun.Lines
         $songBytes = $m.Bytes
@@ -1779,7 +1934,7 @@ function Get-UpdatePlan {
         # per-edition scan.
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) {
-            $includeArgs = Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $SongFilters) -GamePath $GamePath -KeepSongs $KeepSongs
+            $includeArgs = Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $SongFilters) -GamePath $GamePath
             $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs) -Label "scan-edition-$ed"
             if ($r.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
             $p = Parse-DryRun $r.Lines
@@ -2580,7 +2735,8 @@ Export-ModuleMember -Function `
     Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, Get-SongFilterArgs, Get-KeptSongCodes, `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
-    Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, `
+    Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, Test-SafeEditionName, `
+    Get-KeepKeySet, Format-KeepKeySet, Get-LocalSongKeySet, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
     Invoke-RequirementInstall, Start-LegacyExe, `

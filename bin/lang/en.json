@@ -80,6 +80,7 @@
   "maps.go_back_list": "Go back to the list?",
   "maps.removal_headline": "You unchecked songs that are already on your computer. What should happen to their files?",
   "maps.removal_hint": "Files you keep stay in your game folder, but they won't be updated anymore.",
+  "maps.removal_kept_note": "Songs you marked “Keep my version” are never deleted here.",
   "maps.removal_item_edition": "{edition} - all songs",
   "maps.removal_item_songs": "{edition} - {count} song(s)",
   "maps.removal_btn_delete": "Delete the files",

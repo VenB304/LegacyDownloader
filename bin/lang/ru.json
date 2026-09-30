@@ -80,6 +80,7 @@
   "maps.go_back_list": "Вернуться к списку?",
   "maps.removal_headline": "Вы сняли отметку с песен, которые уже есть на вашем компьютере. Что сделать с их файлами?",
   "maps.removal_hint": "Сохранённые файлы останутся в папке игры, но больше обновляться не будут.",
+  "maps.removal_kept_note": "Песни, отмеченные «Оставить мою версию», здесь никогда не удаляются.",
   "maps.removal_item_edition": "{edition} - все песни",
   "maps.removal_item_songs": "{edition} - песен: {count}",
   "maps.removal_btn_delete": "Удалить файлы",

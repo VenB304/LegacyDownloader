@@ -80,6 +80,7 @@
   "maps.go_back_list": "返回列表？",
   "maps.removal_headline": "您取消勾选了已在电脑上的歌曲。要如何处理它们的文件？",
   "maps.removal_hint": "保留的文件会留在游戏文件夹中，但不再更新。",
+  "maps.removal_kept_note": "标记为“保留我的版本”的歌曲永远不会在此处被删除。",
   "maps.removal_item_edition": "{edition} - 所有歌曲",
   "maps.removal_item_songs": "{edition} - {count} 首歌曲",
   "maps.removal_btn_delete": "删除文件",

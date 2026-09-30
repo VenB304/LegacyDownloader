@@ -80,6 +80,7 @@
   "maps.go_back_list": "Terug naar de lijst?",
   "maps.removal_headline": "Je hebt nummers uitgevinkt die al op je computer staan. Wat moet er met hun bestanden gebeuren?",
   "maps.removal_hint": "Bestanden die je bewaart blijven in je spelmap staan, maar worden niet meer bijgewerkt.",
+  "maps.removal_kept_note": "Nummers die je met “Mijn versie behouden” hebt gemarkeerd, worden hier nooit verwijderd.",
   "maps.removal_item_edition": "{edition} - alle nummers",
   "maps.removal_item_songs": "{edition} - {count} nummer(s)",
   "maps.removal_btn_delete": "Bestanden verwijderen",

@@ -428,7 +428,7 @@ function Show-LaunchPrompt {
     # "na." - found from the tutorial screenshots). Measure the wrapped text
     # and grow the label, the buttons' row and the form to fit; unchanged
     # (44 / 100 / 148) whenever it already fits.
-    $bodyWrapped = [System.Windows.Forms.TextRenderer]::MeasureText($lblBody.Text, $lblBody.Font, (New-Object System.Drawing.Size(288, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height + 4
+    $bodyWrapped = (Get-WrappedTextHeight $lblBody.Text $lblBody.Font 288) + 4
     $lblBody.AutoSize = $false
     $lblBody.Height = [Math]::Max(44, $bodyWrapped)
     $btnRowY = [Math]::Max(100, $lblBody.Bottom + 12)
@@ -473,6 +473,14 @@ function New-GroupBox([string]$Text, [int]$X, [int]$Y, [int]$W, [int]$H) {
     $g.ForeColor = [System.Drawing.Color]::FromArgb(30, 58, 110)
     $g.SetBounds($X, $Y, $W, $H)
     return $g
+}
+
+function Get-WrappedTextHeight([string]$Text, $Font, [int]$Width) {
+    # Height in pixels the text needs when word-wrapped to $Width (GDI text
+    # rendering, matching what a non-compatible-rendering Label draws). Callers
+    # add their own padding. Used to grow labels/forms so long translations
+    # are never clipped or run off the edge.
+    return [System.Windows.Forms.TextRenderer]::MeasureText($Text, $Font, (New-Object System.Drawing.Size($Width, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height
 }
 
 function New-Hint([string]$Text, [int]$X, [int]$Y, [int]$W) {
@@ -774,7 +782,7 @@ function Show-SettingsWindow {
     # unchanged positions (426 / 446 / 490) whenever both fit on one line.
     foreach ($h in @($hintRestart, $hintLog)) {
         $h.AutoSize = $false
-        $wrapped = [System.Windows.Forms.TextRenderer]::MeasureText($h.Text, $h.Font, (New-Object System.Drawing.Size(428, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height + 2
+        $wrapped = (Get-WrappedTextHeight $h.Text $h.Font 428) + 2
         $h.Height = [Math]::Max(16, $wrapped)
     }
     $hintLog.Top = $hintRestart.Bottom + 2
@@ -1131,7 +1139,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
 
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
         if (@($Plan.Songs).Count -gt 0) {
-            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = @(Get-SongFilterArgs -GamePath $gp -KeepSongs $script:Cfg.KeepSongs) }
+            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = @(Get-SongFilterArgs -GamePath $gp) }
         }
     } else {
         $planEditions = @($Plan.Songs | Where-Object { $_.Count -gt 0 } | ForEach-Object { [string]$_.Edition })
@@ -1140,7 +1148,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         }
         foreach ($ed in $planEditions) {
             $dispLabel = Format-EditionDisplay $ed
-            $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp -KeepSongs $script:Cfg.KeepSongs)
+            $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp)
             $jobs += @{ Label = $dispLabel; Source = ($script:Conn + "maps/$ed"); Dest = (Join-Path $gp "maps\$ed"); Extra = $extra }
         }
     }
@@ -1650,6 +1658,12 @@ function Show-SongBrowserDialog {
     $keepTip.AutoPopDelay = 12000
     $keepTip.SetToolTip($btnKeep, (T 'gui.songbrowser_keep_tip'))
     $updateKeepButton = { $btnKeep.Enabled = ($null -ne $script:SbCtx -and $lv.SelectedItems.Count -gt 0) }
+    # The right-hand toolbar group is anchored to the right edge, the Keep
+    # button to the left, so shrinking the window slides them together. Long
+    # translations collided at the old fixed 860px minimum in 7 of 13
+    # languages (measured) - derive the minimum from the real button widths.
+    $toolbarNeed = 268 + $btnKeep.Width + 8 + ($btnColumns.Width + 8 + $btnCheckShown.Width + 8 + $btnUncheckShown.Width) + 14
+    $f.MinimumSize = New-Object System.Drawing.Size([Math]::Max(860, $toolbarNeed + ($f.Width - $f.ClientSize.Width)), 460)
 
     $lv = New-Object System.Windows.Forms.ListView
     $lv.SetBounds(268, 66, 718, 500)
@@ -1700,20 +1714,9 @@ function Show-SongBrowserDialog {
     # song is ticked/re-downloaded later. $script:SbLocalKeys (what's really
     # on disk) is built lazily on the first Keep click, not at dialog open.
     $keptMark = [string][char]0x2713
-    $script:SbKeep = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $keepMapSeed = Get-SongFilterMap $script:Cfg.KeepSongs
-    foreach ($ked in $keepMapSeed.Keys) { foreach ($kc in $keepMapSeed[$ked]) { [void]$script:SbKeep.Add("$ked|$kc") } }
+    $script:SbKeep = Get-KeepKeySet $script:Cfg.KeepSongs
     $script:SbLocalKeys = $null
-    $formatKeepSongs = {
-        $byEd = [ordered]@{}
-        foreach ($k in ($script:SbKeep | Sort-Object)) {
-            $i = $k.IndexOf('|')
-            $ked = $k.Substring(0, $i)
-            if (-not $byEd.Contains($ked)) { $byEd[$ked] = @() }
-            $byEd[$ked] += $k.Substring($i + 1).ToLowerInvariant()
-        }
-        Format-SongFilters $byEd
-    }
+    $formatKeepSongs = { Format-KeepKeySet $script:SbKeep }
 
     # Format-DifficultyTier/Format-EffortTier are pure functions over a tiny
     # domain (tiers 1-4, efforts 0-4, plus "unrated") but were being called
@@ -2279,11 +2282,7 @@ function Show-SongBrowserDialog {
     $btnKeep.Add_Click({
         param($s, $e)
         if ($null -eq $script:SbCtx -or $lv.SelectedItems.Count -eq 0) { return }
-        if ($null -eq $script:SbLocalKeys) {
-            $script:SbLocalKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-            $localMap = Get-LocalSongMap $script:Cfg.GamePath
-            foreach ($led in $localMap.Keys) { foreach ($lc in $localMap[$led]) { [void]$script:SbLocalKeys.Add("$led|$lc") } }
-        }
+        if ($null -eq $script:SbLocalKeys) { $script:SbLocalKeys = Get-LocalSongKeySet $script:Cfg.GamePath }
         # Only a song that's really on disk has "my version" to protect.
         $targets = @($lv.SelectedItems | Where-Object { $script:SbLocalKeys.Contains([string]$_.Tag) })
         if ($targets.Count -eq 0) { Warn-Box (T 'gui.songbrowser_keep_none_local') (T 'gui.window_title'); return }
@@ -2538,7 +2537,7 @@ function Show-SongBrowserDialog {
                 # click Keep, then click again to release.
                 $ktItem = $lv.Items[0]
                 $ktKey = [string]$ktItem.Tag
-                if ($null -eq $script:SbLocalKeys) { $script:SbLocalKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase) }
+                if ($null -eq $script:SbLocalKeys) { $script:SbLocalKeys = Get-LocalSongKeySet '' }
                 [void]$script:SbLocalKeys.Add($ktKey)
                 $keptCol = [Array]::IndexOf($script:SbVisibleFieldKeys, 'Kept')
                 $disabledWithoutSelection = -not $btnKeep.Enabled
@@ -3941,17 +3940,13 @@ function Show-RemovalPromptDialog($Items) {
     $clientW = [Math]::Max(480, $rowW + 2 * $pad)
     $inner = $clientW - 2 * $pad
 
-    $measureH = {
-        param($text, $font)
-        [System.Windows.Forms.TextRenderer]::MeasureText($text, $font, (New-Object System.Drawing.Size($inner, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height
-    }
     $lblHead = New-Label (T 'maps.removal_headline') $pad 16 $inner 20
     $lblHead.Font = $script:FontTitle
-    $lblHead.Height = (& $measureH $lblHead.Text $lblHead.Font) + 4
+    $lblHead.Height = (Get-WrappedTextHeight $lblHead.Text $lblHead.Font $inner) + 4
     $y = 16 + $lblHead.Height + 6
     $lblHint = New-Label (T 'maps.removal_hint') $pad $y $inner 20
     $lblHint.ForeColor = $script:ColorMuted
-    $lblHint.Height = (& $measureH $lblHint.Text $lblHint.Font) + 4
+    $lblHint.Height = (Get-WrappedTextHeight $lblHint.Text $lblHint.Font $inner) + 4
     $y += $lblHint.Height + 10
 
     $lb = New-Object System.Windows.Forms.ListBox
@@ -3967,7 +3962,21 @@ function Show-RemovalPromptDialog($Items) {
     }
     $rows = [Math]::Min([Math]::Max($lb.Items.Count, 1), 8)
     $lb.SetBounds($pad, $y, $inner, $rows * $lb.ItemHeight + 6)
-    $y += $lb.Height + 16
+    $y += $lb.Height + 8
+
+    # Songs marked Keep my version are skipped by the delete (Invoke-SongRemovalDelete)
+    # - say so, or "Delete the files" leaves files behind with no explanation.
+    $keptTotal = 0
+    foreach ($it in @($Items)) { $keptTotal += [int]$it.KeptCount }
+    $lblKept = $null
+    if ($keptTotal -gt 0) {
+        $lblKept = New-Label (T 'maps.removal_kept_note') $pad $y $inner 20
+        $lblKept.AutoSize = $false
+        $lblKept.ForeColor = $script:ColorMuted
+        $lblKept.Height = (Get-WrappedTextHeight $lblKept.Text $lblKept.Font $inner) + 4
+        $y += $lblKept.Height
+    }
+    $y += 8
 
     $btnCancel.Left = $clientW - $pad - $btnCancel.Width
     $btnKeep.Left   = $btnCancel.Left - 8 - $btnKeep.Width
@@ -3982,6 +3991,7 @@ function Show-RemovalPromptDialog($Items) {
     $f.AcceptButton = $btnKeep
     $f.CancelButton = $btnCancel
     $f.Controls.AddRange(@($lblHead, $lblHint, $lb, $btnDelete, $btnKeep, $btnCancel))
+    if ($null -ne $lblKept) { $f.Controls.Add($lblKept) }
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -4008,13 +4018,16 @@ function Invoke-SongRemovalCleanup([string[]]$OldEditionList, [string]$OldSongFi
     # the caller must then discard the new selection instead of saving it.
     $newEditionList = @($Res.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
     $plan = @(Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog)
-    $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath)
+    # -KeepSongs from the picker's result, not config: the new locks aren't
+    # saved until after this prompt, and a song marked Keep in THIS picker
+    # session must already be protected from the Delete choice.
+    $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath -KeepSongs $Res.KeepSongs)
     if ($items.Count -eq 0) { return $true }
 
     $choice = Show-RemovalPromptDialog $items
     if ($choice -eq 'cancel') { return $false }
     if ($choice -eq 'delete') {
-        $results = @(Invoke-SongRemovalDelete -Items $items -GamePath $script:Cfg.GamePath)
+        $results = @(Invoke-SongRemovalDelete -Items $items -GamePath $script:Cfg.GamePath -KeepSongs $Res.KeepSongs)
         $problems = @($results | Where-Object { $_.Failed } | ForEach-Object {
             if ($_.Whole) { T 'maps.cant_delete' @{ edition = $_.Edition } } else { T 'maps.cant_delete_songs' @{ edition = $_.Edition } }
         })
@@ -4322,7 +4335,7 @@ function Build-MainForm {
             param($s, $e)
             if ($script:AutoRunDone) { return }
             $script:AutoRunDone = $true
-            if ($env:LEGACY_CAPTURE_STATE) { Invoke-CaptureState; return }
+            if (@('quicklaunch', 'update') -contains $env:LEGACY_CAPTURE_STATE) { Invoke-CaptureState; return }
             if ($script:FirstRunMode -eq 'get' -and -not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
                 if (Test-GameFolder $script:Cfg.GamePath) { On-Check } else { Start-FirstRunBaseDownload }
                 return
@@ -4429,6 +4442,38 @@ if ($env:LEGACY_GUI_SELFTEST) {
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-RemovalPromptDialog threw: $($_.Exception.Message)" -ForegroundColor Red
         try { $null = Initialize-Language -Code $savedLangCode } catch { }
+    }
+
+    Write-Host "`n=== Lock + removal logic (Core, throwaway temp folder) ==="
+    $tg = Join-Path ([System.IO.Path]::GetTempPath()) ('ld_selftest_' + [guid]::NewGuid().ToString('N'))
+    try {
+        foreach ($f0 in '2015\a_pc.ipk', '2015\mine_pc.ipk', '2016\solo_pc.ipk') {
+            $p0 = Join-Path (Join-Path $tg 'maps') $f0
+            New-Item -ItemType Directory -Force (Split-Path $p0) | Out-Null
+            [System.IO.File]::WriteAllText($p0, 'x')
+        }
+        $lk = '2015:mine;2016:solo'
+        $bad = @()
+        if (@(Get-SongRemovalPromptItems -Plan $null -GamePath $tg -KeepSongs '').Count -ne 0) { $bad += 'null plan must give no prompt items' }
+        $pi = @(Get-SongRemovalPromptItems -Plan @([pscustomobject]@{ Edition = '2015'; RemovedCodes = $null; WholeEditionRemoved = $true }, [pscustomobject]@{ Edition = '2016'; RemovedCodes = $null; WholeEditionRemoved = $true }) -GamePath $tg -KeepSongs $lk)
+        if ($pi.Count -ne 1 -or $pi[0].Edition -ne '2015' -or $pi[0].KeptCount -ne 1) { $bad += 'a kept-only edition must not be offered; 2015 must report 1 kept song' }
+        $null = Invoke-SongRemovalDelete -Items $pi -GamePath $tg -KeepSongs $lk
+        if ((Test-Path (Join-Path $tg 'maps\2015\a_pc.ipk')) -or -not (Test-Path (Join-Path $tg 'maps\2015\mine_pc.ipk'))) { $bad += 'delete must remove the normal song and keep the kept one' }
+        $ur = @(Invoke-SongRemovalDelete -Items @([pscustomobject]@{ Edition = '..'; Whole = $true; Codes = @(); Count = 0 }) -GamePath (Join-Path $tg 'maps') -KeepSongs '')
+        if (-not (Test-Path (Join-Path $tg 'maps')) -or -not $ur[0].Failed) { $bad += "an edition of '..' must be refused" }
+        if ((@(Get-SongFilterArgs -Edition '2015' -Songs @('a') -GamePath $tg -KeepSongs '') -join ' ') -ne (@(Get-SongIncludeArgs @('a')) -join ' ')) { $bad += 'no locks must equal the plain include args' }
+        if ((@(Get-SongFilterArgs -GamePath $tg -KeepSongs $lk))[0] -ne '--filter') { $bad += 'a lock must produce --filter rules' }
+        $many = '2015:' + ((1..300 | ForEach-Object { 'aVeryLongSongCodeName{0:D4}' -f $_ }) -join '|')
+        foreach ($n in 1..300) { $p1 = Join-Path $tg ('maps\2015\' + ('aVeryLongSongCodeName{0:D4}' -f $n) + '_pc.ipk'); [System.IO.File]::WriteAllText($p1, 'x') }
+        $bigArgs = @(Get-SongFilterArgs -GamePath $tg -KeepSongs $many)
+        if ($bigArgs[0] -ne '--filter-from' -or -not (Test-Path $bigArgs[1])) { $bad += 'hundreds of locks must switch to --filter-from' }
+        elseif ($bigArgs[1] -like '*legacydownloader_filters_*') { [System.IO.File]::Delete($bigArgs[1]) }
+        Write-Host "  lock/removal checks: $(if ($bad.Count -eq 0) { 'all passed' } else { $bad -join '; ' })"
+        if ($bad.Count -gt 0) { Write-Host "  SELFTEST FAILURE: lock/removal logic: $($bad -join '; ')" -ForegroundColor Red }
+    } catch {
+        Write-Host "  SELFTEST FAILURE: lock/removal logic threw: $($_.Exception.Message)" -ForegroundColor Red
+    } finally {
+        try { [System.IO.Directory]::Delete($tg, $true) } catch { }
     }
 
     Write-Host "`n=== BtnSettings gating ==="

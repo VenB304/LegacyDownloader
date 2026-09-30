@@ -80,6 +80,7 @@
   "maps.go_back_list": "Bumalik sa listahan?",
   "maps.removal_headline": "In-uncheck mo ang mga kantang nasa computer mo na. Ano ang gagawin sa mga file ng mga ito?",
   "maps.removal_hint": "Ang mga file na itatago mo ay mananatili sa game folder mo, pero hindi na ia-update.",
+  "maps.removal_kept_note": "Ang mga kantang minarkahan mo ng “Itago ang bersyon ko” ay hindi kailanman buburahin dito.",
   "maps.removal_item_edition": "{edition} - lahat ng kanta",
   "maps.removal_item_songs": "{edition} - {count} kanta",
   "maps.removal_btn_delete": "Burahin ang mga file",

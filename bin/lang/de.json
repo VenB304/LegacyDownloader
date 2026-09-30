@@ -80,6 +80,7 @@
   "maps.go_back_list": "Zurück zur Liste?",
   "maps.removal_headline": "Du hast Songs abgewählt, die bereits auf deinem Computer liegen. Was soll mit ihren Dateien passieren?",
   "maps.removal_hint": "Behaltene Dateien bleiben in deinem Spielordner, werden aber nicht mehr aktualisiert.",
+  "maps.removal_kept_note": "Songs, die du mit „Meine Version behalten“ markiert hast, werden hier nie gelöscht.",
   "maps.removal_item_edition": "{edition} - alle Songs",
   "maps.removal_item_songs": "{edition} - {count} Song(s)",
   "maps.removal_btn_delete": "Dateien löschen",

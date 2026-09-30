@@ -460,9 +460,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters,
     # "Keep my version" locks (KEEPSONGS), toggled with F7 on a song row. Only
     # a song that's really on disk can be kept (built lazily on first use).
     # Returned as KeepSongs when the picker is confirmed.
-    $keepSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-    $keepSeed = Get-SongFilterMap (Load-Config).KeepSongs
-    foreach ($ked in $keepSeed.Keys) { foreach ($kc in $keepSeed[$ked]) { [void]$keepSet.Add("$ked|$kc") } }
+    $keepSet = Get-KeepKeySet
     $localKeys = $null
 
     $expanded         = New-Object System.Collections.Generic.HashSet[string]
@@ -696,11 +694,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters,
             if ($key.Key -eq 'F7') {
                 if ($cursor -lt $visible.Count -and $visible[$cursor].Kind -eq 'Song') {
                     $k = "$($visible[$cursor].Edition)|$($visible[$cursor].Code)"
-                    if ($null -eq $localKeys) {
-                        $localKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-                        $localMap = Get-LocalSongMap $GamePath
-                        foreach ($led in $localMap.Keys) { foreach ($lc in $localMap[$led]) { [void]$localKeys.Add("$led|$lc") } }
-                    }
+                    if ($null -eq $localKeys) { $localKeys = Get-LocalSongKeySet $GamePath }
                     if ($keepSet.Contains($k)) { [void]$keepSet.Remove($k) }
                     elseif ($localKeys.Contains($k)) { [void]$keepSet.Add($k) }
                     else { Pause-Brief (T 'gui.songbrowser_keep_none_local') 2 }
@@ -724,13 +718,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters,
                         if (-not (Confirm-YesNo (T 'maps.go_back_list'))) { return @{ Action = 'Cancel' } }
                         continue
                     }
-                    $keepByEd = [ordered]@{}
-                    foreach ($kk in ($keepSet | Sort-Object)) {
-                        $ki = $kk.IndexOf('|'); $ked = $kk.Substring(0, $ki)
-                        if (-not $keepByEd.Contains($ked)) { $keepByEd[$ked] = @() }
-                        $keepByEd[$ked] += $kk.Substring($ki + 1).ToLowerInvariant()
-                    }
-                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; KeepSongs = (Format-SongFilters $keepByEd); Catalog = $catalog }
+                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; KeepSongs = (Format-KeepKeySet $keepSet); Catalog = $catalog }
                 }
                 if ($cursor -eq $cancelIdx) { return @{ Action = 'Cancel' } }
                 if ($cursor -lt $visible.Count) {
@@ -926,6 +914,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         # Keep-my-version locks are saved at the picker's Done, like the
         # selection itself is (see below) - and before the preview, so the
         # scan and any download that follows already honor them.
+        $priorKeep = [string](Load-Config).KeepSongs
         Save-Config @{ KeepSongs = [string]$browse.KeepSongs }
 
         # The picker's own "Done" is the real confirmation - captured here so
@@ -956,7 +945,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         # way to answer for all of them or back out). Cancel returns $null =
         # "no change": nothing deleted, the new selection is discarded and
         # the pending download below never runs.
-        $removalItems = @(Get-SongRemovalPromptItems -Plan $removalPlan -GamePath $GamePath)
+        $removalItems = @(Get-SongRemovalPromptItems -Plan $removalPlan -GamePath $GamePath -KeepSongs $browse.KeepSongs)
         if ($removalItems.Count -gt 0) {
             Write-Host ""
             Write-Host (T 'maps.removal_headline')
@@ -966,6 +955,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
                 $riLine = if ($ri.Whole) { T 'maps.removal_item_edition' @{ edition = $riDisp } } else { T 'maps.removal_item_songs' @{ edition = $riDisp; count = $ri.Count } }
                 Write-Host ("  - " + $riLine)
             }
+            if (@($removalItems | Where-Object { $_.KeptCount -gt 0 }).Count -gt 0) { Write-Host (T 'maps.removal_kept_note') }
             Write-Host ""
             Write-Host ("[1] " + (T 'maps.removal_btn_delete'))
             Write-Host ("[2] " + (T 'maps.removal_btn_keep'))
@@ -975,9 +965,14 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
                 if ($rc -eq '1' -or $rc -eq '2' -or $rc -eq '3') { break }
                 Write-Host (T 'preview.choose_1_2_3')
             }
-            if ($rc -eq '3') { return $null }
+            if ($rc -eq '3') {
+                # Cancel = no change at all, so put the previous locks back (they
+                # were saved early only so the preview scan above honored them).
+                Save-Config @{ KeepSongs = $priorKeep }
+                return $null
+            }
             if ($rc -eq '1') {
-                foreach ($r in @(Invoke-SongRemovalDelete -Items $removalItems -GamePath $GamePath)) {
+                foreach ($r in @(Invoke-SongRemovalDelete -Items $removalItems -GamePath $GamePath -KeepSongs $browse.KeepSongs)) {
                     if ($r.Failed) {
                         $failKey = if ($r.Whole) { 'maps.cant_delete' } else { 'maps.cant_delete_songs' }
                         Write-Host (T $failKey @{ edition = $r.Edition }) -ForegroundColor Yellow

@@ -80,6 +80,7 @@
   "maps.go_back_list": "リストに戻りますか?",
   "maps.removal_headline": "パソコンに保存済みの曲のチェックを外しました。それらのファイルをどうしますか?",
   "maps.removal_hint": "保持したファイルはゲームフォルダに残りますが、今後は更新されません。",
+  "maps.removal_kept_note": "「自分のバージョンを保持」にした曲は、ここでは削除されません。",
   "maps.removal_item_edition": "{edition} - すべての曲",
   "maps.removal_item_songs": "{edition} - {count}曲",
   "maps.removal_btn_delete": "ファイルを削除",

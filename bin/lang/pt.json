@@ -80,6 +80,7 @@
   "maps.go_back_list": "Voltar para a lista?",
   "maps.removal_headline": "Você desmarcou músicas que já estão no seu computador. O que deve acontecer com os arquivos delas?",
   "maps.removal_hint": "Os arquivos mantidos continuam na pasta do jogo, mas não serão mais atualizados.",
+  "maps.removal_kept_note": "As músicas que você marcou com “Manter minha versão” nunca são excluídas aqui.",
   "maps.removal_item_edition": "{edition} - todas as músicas",
   "maps.removal_item_songs": "{edition} - {count} música(s)",
   "maps.removal_btn_delete": "Excluir os arquivos",
