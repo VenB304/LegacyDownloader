@@ -130,6 +130,7 @@ picker:
   current search or filter is showing, instead of clicking song by song.
 - **Columns...** — show or hide the Artist, Difficulty, or Effort columns
   if you want a simpler view.
+- **Keep my version** — modified a song yourself (say, with a higher-quality video)? Click the song's row in the list (not its checkbox), then click this. Updates will never overwrite your copy: the song stays tracked and gets a ✓ in the **Kept** column. Click the button again to release it. Only songs that are already downloaded can be kept.
 
 Click **OK** to save your picks, or **Cancel** to back out without changing
 anything.
@@ -177,25 +178,27 @@ window while this is running.** When everything's done, you'll see a
 **Automatically launch the game and close** in Settings if you'd rather
 skip this prompt entirely and go straight to playing every time.)
 
+![Ready to Play prompt](images/09-quicklaunch-en.png)
+
 ## 8. Coming back later for new songs
 
 Just run `LegacyDownloader-GUI.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs
 anything new since your last visit.
 
-- **Add or remove songs**: click **Select maps / songs** again, tick or
-  untick whatever you want, and click OK. Unticking something you already
-  downloaded — a whole edition or just a few songs — asks whether to
-  delete those files too, or just stop getting updates for them while
-  keeping what you already have.
+- **Add or remove songs**: click **Select maps / songs** again, tick or untick whatever you want, and click OK. If you untick songs you've already downloaded — a whole edition or just a few — you're asked once: **Delete the files** removes those files, **Keep the files, stop updating** leaves them on disk but stops updating them, and **Cancel** leaves your picks unchanged.
 - **Change language**: the flag dropdown, top-right, any time.
 - **Adjust settings**: click **Settings** on the main window for auto-check,
   auto-launch, a download speed limit, checking for LegacyDownloader updates
   automatically, and an advanced custom share URL.
+
+  ![Settings window](images/08-settings-en.png)
 - **Updating Legacy Downloader itself**: when a new version is available, a
   button appears next to Settings on the main window. Click it and the tool
   updates itself in place and reopens automatically — no manual re-download
   needed.
+
+  ![Update available dialog](images/10-update-en.png)
 
 ---
 
@@ -241,6 +244,7 @@ navigated with number keys:
 - **It says "up to date" but I'm missing songs** — open **Select maps /
   songs** and check you've actually ticked the ones you want (or pick
   **Everything**).
+- **An update replaced a song I modified** — before updating, open **Select maps / songs**, click the song's row, and click **Keep my version** (see step 5). Kept songs are never overwritten.
 - **Still stuck?** Post in the Legacy Downloader thread on Discord with a
   screenshot of what you're seeing and which step you were on — someone
   will help.

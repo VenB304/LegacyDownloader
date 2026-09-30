@@ -137,6 +137,7 @@ hoofdvenster) om de kiezer te openen:
   van nummer voor nummer te klikken.
 - **Kolommen...** — toon of verberg de kolommen Artiest, Moeilijkheidsgraad
   of Inspanning voor een eenvoudigere weergave.
+- **Mijn versie behouden** — heb je een nummer zelf aangepast (bijvoorbeeld een video van hogere kwaliteit)? Klik op de rij van het nummer in de lijst (niet op het selectievakje) en dan op deze knop. Updates overschrijven jouw kopie nooit: het nummer blijft bijgehouden en krijgt een ✓ in de kolom **Bewaard**. Klik nog een keer om het los te laten. Alleen nummers die al gedownload zijn kunnen bewaard worden.
 
 Klik op **OK** om je keuzes op te slaan, of op **Annuleren** om terug te
 gaan zonder iets te wijzigen.
@@ -188,28 +189,29 @@ sluiten. (Schakel **"Het spel automatisch starten en sluiten, zodra er niets
 meer nodig is"** in bij Instellingen als je deze melding liever helemaal
 overslaat en elke keer meteen wilt spelen.)
 
+![Melding “Klaar om te spelen”](images/09-quicklaunch-nl.png)
+
 ## 8. Later terugkomen voor nieuwe nummers
 
 Voer `LegacyDownloader-GUI.bat` gewoon op elk moment opnieuw uit. Het onthoudt
 je map en je nummerkeuzes, en klikken op **"Downloaden / Controleren op
 updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
 
-- **Nummers toevoegen of verwijderen**: klik opnieuw op **"Kaarten /
-  nummers selecteren"**, vink aan of uit wat je wilt, en klik op OK. Het
-  uitvinken van iets dat je al hebt gedownload — een hele editie of maar
-  een paar nummers — vraagt of je ook die bestanden wilt verwijderen, of
-  gewoon wilt stoppen met updates ervoor terwijl je behoudt wat je al
-  hebt.
+- **Nummers toevoegen of verwijderen**: klik opnieuw op **Kaarten / nummers selecteren**, vink aan of uit wat je wilt en klik op OK. Als je nummers uitvinkt die je al hebt gedownload — een hele editie of maar een paar — word je één keer gevraagd: **Bestanden verwijderen** verwijdert die bestanden, **Bestanden bewaren, niet meer bijwerken** laat ze op schijf staan maar werkt ze niet meer bij, en **Annuleren** laat je keuzes ongewijzigd.
 - **Taal wijzigen**: de vlag-vervolgkeuzelijst, rechtsboven, op elk
   moment.
 - **Instellingen aanpassen**: klik op **Instellingen** in het hoofdvenster
   voor automatisch controleren, automatisch starten, een
   downloadsnelheidslimiet, automatisch op LegacyDownloader-updates controleren
   en een geavanceerde aangepaste share-URL.
+
+  ![Instellingenvenster](images/08-settings-nl.png)
 - **Legacy Downloader zelf bijwerken**: wanneer er een nieuwe versie
   beschikbaar is, verschijnt er een knop naast **Instellingen** in het
   hoofdvenster. Klik erop en de tool werkt zichzelf ter plekke bij en opent
   daarna automatisch opnieuw — handmatig opnieuw downloaden is niet nodig.
+
+  ![Dialoogvenster Update beschikbaar](images/10-update-nl.png)
 
 ---
 
@@ -259,6 +261,7 @@ cijfertoetsen:
 - **Er staat "up-to-date", maar ik mis nummers** — open **"Kaarten /
   nummers selecteren"** en controleer of je echt de gewenste hebt
   aangevinkt (of kies **"Alles"**).
+- **Een update verving een nummer dat ik had aangepast** — open vóór het updaten **Kaarten / nummers selecteren**, klik op de rij van het nummer en dan op **Mijn versie behouden** (zie stap 5). Bewaarde nummers worden nooit overschreven.
 - **Nog steeds vastzitten?** Plaats een bericht in de Legacy Downloader-
   topic op Discord met een screenshot van wat je ziet en bij welke stap je
   bent — iemand helpt je.

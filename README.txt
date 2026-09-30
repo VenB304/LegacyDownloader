@@ -66,6 +66,17 @@ From the main window's "Songs" section you then choose what you want
     by title/artist/codename, and filter by Difficulty/Effort.
     Available in both the GUI and the console menu.
 
+  - Keeping your own copy of a song - if you modified a song yourself
+    (for example with a higher-quality video), click its row in the
+    picker (not its checkbox) and click "Keep my version" (in the
+    console picker: press F7 on the song). The song stays tracked, but
+    updates never overwrite your file. Click again to release it. Only
+    songs that are already downloaded can be kept.
+
+  - If you untick songs you already downloaded, the tool asks once,
+    for everything you unticked: "Delete the files", "Keep the files,
+    stop updating", or "Cancel" to leave your picks unchanged.
+
 
 AFTER SETUP
 -----------

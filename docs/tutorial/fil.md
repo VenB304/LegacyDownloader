@@ -141,6 +141,7 @@ para buksan ang picker:
   paghahanap o filter, sa halip na mag-click nang isa-isa.
 - **Mga Column...** — ipakita o itago ang mga column na Artista, Antas ng
   Hirap, o Sikap kung gusto mo ng mas simpleng tingin.
+- **Itago ang bersyon ko** — binago mo ba ang isang kanta (halimbawa, mas mataas na kalidad na video)? I-click ang row ng kanta sa listahan (hindi ang checkbox nito), tapos i-click ito. Hindi na kailanman papalitan ng mga update ang kopya mo: nananatiling sinusubaybayan ang kanta at may ✓ ito sa column na **Itinago**. I-click ulit para bitawan. Mga kantang na-download na lang ang puwedeng itago.
 
 I-click ang **OK** para i-save ang mga pinili mo, o **Kanselahin** para
 umatras nang hindi nagbabago ng anuman.
@@ -191,6 +192,8 @@ Legacy Downloader sa isang hakbang. (I-on ang **Awtomatikong buksan ang laro
 at isara ito, kapag wala nang kailangan pa** sa Mga Setting kung mas gusto mong
 laktawan ang prompt na ito at dumiretso agad sa paglalaro sa bawat pagkakataon.)
 
+![Prompt na Ready to Play](images/09-quicklaunch-fil.png)
+
 ## 8. Pagbalik mamaya para sa bagong kanta
 
 Patakbuhin lang ulit ang `LegacyDownloader-GUI.bat` anumang oras. Naaalala
@@ -198,20 +201,19 @@ nito ang iyong folder at ang mga pinili mong kanta, at ang pag-click sa
 **Mag-download / Suriin ang mga update** ay kukunin ang anumang bago mula
 noong huli mong pagbisita.
 
-- **Magdagdag o mag-alis ng kanta**: i-click ulit ang **Pumili ng mapa / kanta**,
-  i-check o i-uncheck ang anumang gusto mo, at i-click ang OK.
-  Ang pag-uncheck ng isang bagay na na-download mo na — buong edisyon man o
-  ilang kanta lang — ay magtatanong kung burahin din ang mga file na iyon,
-  o itigil na lang ang pagkuha ng update para sa mga ito habang itinatago
-  ang mayroon ka na.
+- **Magdagdag o mag-alis ng mga kanta**: i-click ulit ang **Pumili ng mapa / kanta**, mag-tick o mag-untick ng kahit ano, at i-click ang OK. Kapag in-untick mo ang mga kantang na-download mo na — buong edisyon man o ilang kanta lang — isang beses kang tatanungin: buburahin ng **Burahin ang mga file** ang mga file na iyon, iiwan ng **Itago ang mga file, itigil ang pag-update** ang mga ito sa disk pero hindi na ia-update, at hindi babaguhin ng **Kanselahin** ang mga pinili mo.
 - **Baguhin ang wika**: ang flag dropdown, sa kanang-itaas, anumang oras.
 - **Ayusin ang mga setting**: i-click ang **Mga Setting** sa main window para sa
   auto-check, auto-launch, limitasyon sa bilis ng download, awtomatikong
   mag-check ng update ng LegacyDownloader, at advanced na custom share URL.
+
+  ![Window ng Settings](images/08-settings-fil.png)
 - **Pag-update sa Legacy Downloader mismo**: kapag may bagong bersyon na
   available, may lalabas na button sa tabi ng **Mga Setting** sa main window.
   I-click ito at ia-update ng tool ang sarili nito doon mismo at awtomatikong
   magbubukas ulit — hindi na kailangang mag-download ulit nang manu-mano.
+
+  ![Dialog ng available na update](images/10-update-fil.png)
 
 ---
 
@@ -262,6 +264,7 @@ gamit ang number keys:
 - **Sinasabing "updated" pero kulang ako ng kanta** — buksan ang
   **Pumili ng mapa / kanta** at tingnan kung na-check mo talaga ang mga
   gusto mo (o piliin ang **"Lahat"**).
+- **Napalitan ng update ang kantang binago ko** — bago mag-update, buksan ang **Pumili ng mapa / kanta**, i-click ang row ng kanta, at i-click ang **Itago ang bersyon ko** (tingnan ang hakbang 5). Hindi kailanman pinapalitan ang mga itinagong kanta.
 - **Natitigil pa rin?** Mag-post sa Legacy Downloader thread sa Discord na
   may screenshot ng nakikita mo at kung aling hakbang ka — may tutulong
   sa'yo.

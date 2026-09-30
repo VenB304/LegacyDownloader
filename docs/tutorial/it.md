@@ -138,6 +138,7 @@ qualsiasi momento) per aprire il selettore:
   stanno mostrando, invece di cliccare canzone per canzone.
 - **Colonne...** — mostra o nascondi le colonne Artista, Difficoltà o
   Impegno se preferisci una vista più semplice.
+- **Mantieni la mia versione** — hai modificato una canzone da solo (ad esempio con un video di qualità superiore)? Clicca sulla riga della canzone nell'elenco (non sulla sua casella), poi su questo pulsante. Gli aggiornamenti non sovrascriveranno mai la tua copia: la canzone resta tracciata e riceve un ✓ nella colonna **Tenuta**. Clicca di nuovo per rilasciarla. Si possono mantenere solo le canzoni già scaricate.
 
 Fai clic su **OK** per salvare le tue scelte, o su **Annulla** per uscire
 senza cambiare nulla.
@@ -189,6 +190,8 @@ Downloader in un solo clic. (Attiva **"Avvia automaticamente il gioco e chiudi,
 non appena non serve più nulla"** nelle Impostazioni se preferisci saltare del
 tutto questo avviso e iniziare a giocare direttamente ogni volta.)
 
+![Schermata «Pronto a giocare»](images/09-quicklaunch-it.png)
+
 ## 8. Tornare più tardi per nuove canzoni
 
 Esegui semplicemente di nuovo `LegacyDownloader-GUI.bat` in qualsiasi momento.
@@ -196,21 +199,21 @@ Ricorda la tua cartella e le tue scelte di canzoni, e cliccare su
 **"Scarica / Controlla aggiornamenti"** prende tutto ciò che è nuovo dalla
 tua ultima visita.
 
-- **Aggiungere o rimuovere canzoni**: fai di nuovo clic su **"Seleziona
-  mappe / canzoni"**, seleziona o deseleziona quello che vuoi, e fai clic
-  su OK. Deselezionare qualcosa già scaricato — un'intera edizione o solo
-  alcune canzoni — chiederà se eliminare anche quei file, o solo smettere
-  di riceverne gli aggiornamenti tenendo ciò che hai già.
+- **Aggiungere o rimuovere canzoni**: clicca di nuovo su **Seleziona mappe / canzoni**, spunta o deseleziona ciò che vuoi e clicca su OK. Se deselezioni canzoni già scaricate — un'intera edizione o solo alcune — ti viene chiesto una volta sola: **Elimina i file** elimina quei file, **Conserva i file, non aggiornare più** li lascia sul disco ma smette di aggiornarli, e **Annulla** lascia invariata la tua selezione.
 - **Cambiare lingua**: il menu a tendina della bandiera, in alto a destra,
   in qualsiasi momento.
 - **Regolare le impostazioni**: fai clic su **Impostazioni** nella finestra
   principale per il controllo automatico, l'avvio automatico, un limite di
   velocità di download, il controllo automatico degli aggiornamenti di
   LegacyDownloader e un URL di condivisione personalizzato avanzato.
+
+  ![Finestra delle impostazioni](images/08-settings-it.png)
 - **Aggiornare Legacy Downloader stesso**: quando è disponibile una nuova
   versione, appare un pulsante accanto a **Impostazioni** nella finestra
   principale. Fai clic su di esso e lo strumento si aggiorna sul posto e si
   riapre automaticamente — nessun nuovo download manuale necessario.
+
+  ![Finestra di aggiornamento disponibile](images/10-update-it.png)
 
 ---
 
@@ -261,6 +264,7 @@ con i tasti numerici:
 - **Dice "aggiornato" ma mi mancano canzoni** — apri **"Seleziona mappe /
   canzoni"** e controlla di aver davvero selezionato quelle che vuoi (o
   scegli **"Tutto"**).
+- **Un aggiornamento ha sostituito una canzone che avevo modificato** — prima di aggiornare, apri **Seleziona mappe / canzoni**, clicca sulla riga della canzone e poi su **Mantieni la mia versione** (vedi passo 5). Le canzoni mantenute non vengono mai sovrascritte.
 - **Ancora bloccato?** Scrivi nel thread di Legacy Downloader su Discord
   con uno screenshot di cosa vedi e a che punto sei arrivato — qualcuno
   ti aiuterà.

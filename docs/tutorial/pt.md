@@ -138,6 +138,7 @@ qualquer momento) para abrir o seletor:
   clicar música por música.
 - **Colunas...** — mostre ou oculte as colunas Artista, Dificuldade ou
   Esforço se preferir uma visão mais simples.
+- **Manter minha versão** — você modificou uma música por conta própria (por exemplo, com um vídeo de qualidade maior)? Clique na linha da música na lista (não na caixa de seleção) e depois neste botão. As atualizações nunca vão sobrescrever a sua cópia: a música continua rastreada e recebe um ✓ na coluna **Mantida**. Clique de novo para liberá-la. Só é possível manter músicas já baixadas.
 
 Clique em **OK** para salvar suas escolhas, ou em **Cancelar** para voltar
 sem mudar nada.
@@ -189,27 +190,29 @@ jogar"** com um botão **"Iniciar jogo"** — clique nele para abrir
 necessário"** em Configurações se preferir pular essa confirmação e ir
 direto para o jogo toda vez.)
 
+![Tela “Pronto para jogar”](images/09-quicklaunch-pt.png)
+
 ## 8. Voltando depois por novas músicas
 
 Basta executar `LegacyDownloader-GUI.bat` novamente a qualquer momento. Ele
 lembra sua pasta e suas escolhas de músicas, e clicar em **"Baixar /
 Verificar atualizações"** pega tudo que é novo desde sua última visita.
 
-- **Adicionar ou remover músicas**: clique em **"Selecionar mapas /
-  músicas"** novamente, marque ou desmarque o que quiser, e clique em OK.
-  Desmarcar algo já baixado — uma edição inteira ou só algumas músicas —
-  vai perguntar se quer também excluir esses arquivos, ou apenas parar de
-  receber atualizações para eles mantendo o que você já tem.
+- **Adicionar ou remover músicas**: clique de novo em **Selecionar mapas / músicas**, marque ou desmarque o que quiser e clique em OK. Se você desmarcar músicas que já baixou — uma edição inteira ou só algumas —, a pergunta aparece uma única vez: **Excluir os arquivos** exclui esses arquivos, **Manter os arquivos e parar de atualizar** deixa os arquivos no disco mas para de atualizá-los, e **Cancelar** mantém suas escolhas como estavam.
 - **Mudar idioma**: o menu suspenso da bandeira, no canto superior
   direito, a qualquer momento.
 - **Ajustar configurações**: clique em **Configurações** na janela
   principal para verificação automática, inicialização automática, um
   limite de velocidade de download, verificação automática de atualizações do
   LegacyDownloader e uma URL de compartilhamento personalizada avançada.
+
+  ![Janela de configurações](images/08-settings-pt.png)
 - **Atualizar o próprio Legacy Downloader**: quando uma nova versão estiver
   disponível, um botão aparece ao lado de **Configurações** na janela
   principal. Clique nele e a ferramenta se atualiza no mesmo local e reabre
   automaticamente — nenhum novo download manual necessário.
+
+  ![Caixa de diálogo de atualização disponível](images/10-update-pt.png)
 
 ---
 
@@ -262,6 +265,7 @@ navegando com as teclas numéricas:
 - **Diz "atualizado" mas estou sem músicas** — abra **"Selecionar mapas /
   músicas"** e verifique se você realmente marcou as que quer (ou escolha
   **"Tudo"**).
+- **Uma atualização substituiu uma música que eu modifiquei** — antes de atualizar, abra **Selecionar mapas / músicas**, clique na linha da música e depois em **Manter minha versão** (veja o passo 5). Músicas mantidas nunca são sobrescritas.
 - **Ainda travado?** Poste no tópico do Legacy Downloader no Discord com
   uma captura de tela do que você está vendo e em qual passo você está —
   alguém vai ajudar.

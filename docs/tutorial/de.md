@@ -140,6 +140,7 @@ Picker zu öffnen:
   Song zu klicken.
 - **Spalten...** — blende die Spalten Künstler, Schwierigkeit oder
   Anstrengung ein oder aus, wenn du eine einfachere Ansicht willst.
+- **Meine Version behalten** — du hast einen Song selbst verändert (zum Beispiel ein Video in höherer Qualität)? Klicke in der Liste auf die Zeile des Songs (nicht auf sein Kontrollkästchen) und dann auf diese Schaltfläche. Updates überschreiben deine Kopie nie: Der Song bleibt verfolgt und bekommt in der Spalte **Behalten** ein ✓. Klicke erneut, um ihn freizugeben. Nur bereits heruntergeladene Songs können behalten werden.
 
 Klicke auf **OK**, um deine Auswahl zu speichern, oder auf **Abbrechen**,
 um ohne Änderungen zurückzugehen.
@@ -191,27 +192,28 @@ Klick zu schließen. (Aktiviere **„Spiel automatisch starten und schließen,
 sobald nichts mehr nötig ist"** in den Einstellungen, wenn du diese Abfrage
 lieber ganz überspringen und jedes Mal direkt losspielen möchtest.)
 
+![Bereit-zum-Spielen-Fenster](images/09-quicklaunch-de.png)
+
 ## 8. Später wiederkommen für neue Songs
 
 Starte `LegacyDownloader-GUI.bat` einfach jederzeit erneut. Es merkt sich
 deinen Ordner und deine Song-Auswahl, und ein Klick auf **„Herunterladen /
 Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
 
-- **Songs hinzufügen oder entfernen**: klicke wieder auf **„Karten / Songs
-  auswählen"**, hake an oder ab, was du willst, und klicke auf OK. Wenn du
-  etwas bereits Heruntergeladenes abwählst — eine ganze Edition oder nur
-  ein paar Songs —, wirst du gefragt, ob auch die Dateien gelöscht werden
-  sollen oder ob nur die Updates dafür gestoppt werden sollen, während du
-  behältst, was du schon hast.
+- **Songs hinzufügen oder entfernen**: klicke wieder auf **Karten / Songs auswählen**, hake an oder ab, was du willst, und klicke auf OK. Wenn du bereits heruntergeladene Songs abwählst — eine ganze Edition oder nur ein paar —, wirst du einmal gefragt: **Dateien löschen** entfernt diese Dateien, **Dateien behalten, nicht mehr aktualisieren** lässt sie auf der Festplatte, aktualisiert sie aber nicht mehr, und **Abbrechen** lässt deine Auswahl unverändert.
 - **Sprache ändern**: das Flaggen-Dropdown oben rechts, jederzeit.
 - **Einstellungen anpassen**: klicke auf **Einstellungen** im Hauptfenster
   für automatische Prüfung, automatisches Starten, ein
   Download-Geschwindigkeitslimit, automatisches Suchen nach
   LegacyDownloader-Updates und eine erweiterte eigene Share-URL.
+
+  ![Einstellungsfenster](images/08-settings-de.png)
 - **Legacy Downloader selbst aktualisieren**: wenn eine neue Version verfügbar
   ist, erscheint ein Button neben **Einstellungen** im Hauptfenster. Klicke
   darauf und das Tool aktualisiert sich direkt an Ort und Stelle und öffnet
   sich automatisch wieder — kein manueller erneuter Download nötig.
+
+  ![Dialog „Update verfügbar“](images/10-update-de.png)
 
 ---
 
@@ -263,6 +265,7 @@ Zifferntasten:
 - **Es sagt „aktuell", aber mir fehlen Songs** — öffne **„Karten / Songs
   auswählen"** und prüfe, ob du wirklich die gewünschten angehakt hast
   (oder wähle **„Alles"**).
+- **Ein Update hat einen von mir veränderten Song ersetzt** — öffne vor dem Update **Karten / Songs auswählen**, klicke auf die Zeile des Songs und dann auf **Meine Version behalten** (siehe Schritt 5). Behaltene Songs werden nie überschrieben.
 - **Immer noch festgefahren?** Poste im Legacy-Downloader-Thread auf
   Discord einen Screenshot von dem, was du siehst, und bei welchem
   Schritt du bist — jemand hilft dir.

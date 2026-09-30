@@ -140,6 +140,7 @@ principale, à tout moment) pour ouvrir le sélecteur :
   lieu de cliquer chanson par chanson.
 - **Colonnes...** — affichez ou masquez les colonnes Artiste, Difficulté ou
   Effort si vous préférez une vue plus simple.
+- **Garder ma version** — vous avez modifié une chanson vous-même (par exemple avec une vidéo de meilleure qualité) ? Cliquez sur la ligne de la chanson dans la liste (pas sur sa case), puis sur ce bouton. Les mises à jour n'écraseront jamais votre copie : la chanson reste suivie et reçoit un ✓ dans la colonne **Gardé**. Cliquez à nouveau pour la libérer. Seules les chansons déjà téléchargées peuvent être gardées.
 
 Cliquez sur **OK** pour enregistrer vos choix, ou **Annuler** pour revenir
 en arrière sans rien changer.
@@ -191,6 +192,8 @@ ouvrir `Legacy.exe` et fermer Legacy Downloader en un clic. (Activez
 dans les Paramètres si vous préférez ignorer cette invite et commencer à
 jouer directement à chaque fois.)
 
+![Invite « Prêt à jouer »](images/09-quicklaunch-fr.png)
+
 ## 8. Revenir plus tard pour de nouvelles chansons
 
 Relancez simplement `LegacyDownloader-GUI.bat` à tout moment. Il se souvient de
@@ -198,22 +201,21 @@ votre dossier et de vos choix de chansons, et cliquer sur **« Télécharger /
 Vérifier les mises à jour »** récupère tout ce qui est nouveau depuis votre
 dernière visite.
 
-- **Ajouter ou retirer des chansons** : cliquez à nouveau sur
-  **« Sélectionner des cartes / chansons »**, cochez ou décochez ce que vous
-  voulez, puis cliquez sur OK. Décocher quelque chose déjà téléchargé — une
-  édition entière ou seulement quelques chansons — demande si vous voulez
-  aussi supprimer ces fichiers, ou juste arrêter de recevoir leurs mises à
-  jour tout en gardant ce que vous avez déjà.
+- **Ajouter ou retirer des chansons** : cliquez de nouveau sur **Sélectionner des cartes / chansons**, cochez ou décochez ce que vous voulez, puis cliquez sur OK. Si vous décochez des chansons déjà téléchargées — une édition entière ou seulement quelques-unes —, la question n'est posée qu'une seule fois : **Supprimer les fichiers** supprime ces fichiers, **Conserver les fichiers, arrêter les mises à jour** les laisse sur le disque mais ne les met plus à jour, et **Annuler** laisse votre sélection inchangée.
 - **Changer de langue** : le menu déroulant du drapeau, en haut à droite, à
   tout moment.
 - **Ajuster les paramètres** : cliquez sur **Paramètres** dans la fenêtre
   principale pour la vérification automatique, le lancement automatique, une
   limite de vitesse de téléchargement, la vérification automatique des mises à
   jour de LegacyDownloader, et une URL de partage personnalisée avancée.
+
+  ![Fenêtre des paramètres](images/08-settings-fr.png)
 - **Mettre à jour Legacy Downloader lui-même** : quand une nouvelle version est
   disponible, un bouton apparaît à côté de **Paramètres** dans la fenêtre
   principale. Cliquez dessus et l'outil se met à jour sur place et se rouvre
   automatiquement — aucun retéléchargement manuel nécessaire.
+
+  ![Boîte de dialogue de mise à jour disponible](images/10-update-fr.png)
 
 ---
 
@@ -264,6 +266,7 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 - **Il dit « à jour » mais il me manque des chansons** — ouvrez
   **« Sélectionner des cartes / chansons »** et vérifiez que vous avez bien
   coché celles que vous voulez (ou choisissez **« Tout »**).
+- **Une mise à jour a remplacé une chanson que j'avais modifiée** — avant de mettre à jour, ouvrez **Sélectionner des cartes / chansons**, cliquez sur la ligne de la chanson, puis sur **Garder ma version** (voir l'étape 5). Les chansons gardées ne sont jamais écrasées.
 - **Toujours bloqué ?** Postez dans le fil Legacy Downloader sur Discord
   avec une capture d'écran de ce que vous voyez et à quelle étape vous
   êtes — quelqu'un vous aidera.

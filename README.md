@@ -75,6 +75,18 @@ maps / songs**. Either way it opens a picker where you can check whole
 editions or individual songs within them, search by title/artist/codename,
 and filter by Difficulty/Effort.
 
+**Keeping your own copy of a song:** modified a song yourself (say, with a
+higher-quality video)? In the picker, click the song's row (not its checkbox)
+and click **Keep my version** (in the console picker: **F7** on the song).
+The song stays tracked, but updates never overwrite your file - it gets a ✓
+in the **Kept** column (`*` in the console). Click the button again to
+release it. Only songs that are already downloaded can be kept; the list is
+stored as `KEEPSONGS` in `config.txt`.
+
+**Unticking songs you already downloaded:** the tool asks once, for
+everything you unticked - **Delete the files**, **Keep the files, stop
+updating**, or **Cancel** to leave your picks unchanged.
+
 **Quick Launch:** after a successful check/update, both front-ends offer to
 launch `Legacy.exe` directly instead of just telling you to do it yourself —
 in the GUI, a "Ready to Play" prompt with a **Launch Game** button; in the
