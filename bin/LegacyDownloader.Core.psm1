@@ -12,13 +12,18 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V11'
+$script:AppVersion = 'V11.1'
 
 function Get-AppVersion { return $script:AppVersion }
 
-# The public GitHub repo this tool ships releases from - self-update reads
-# straight from the releases API, same source the human release process
-# already publishes to via `gh release create`.
+# The public GitHub repo this tool ships releases from. The update check asks
+# the plain WEB site which release is latest (github.com/<repo>/releases/latest
+# redirects to .../releases/tag/<tag>) and only falls back to the REST API:
+# the API allows just 60 unauthenticated requests per hour PER IP ADDRESS, and
+# people on shared addresses (VPN, Cloudflare WARP, carrier-grade NAT - common
+# where Discord is blocked) exhaust that instantly, so V10/V11's API-only check
+# failed for them with "(403) Forbidden". The web route isn't subject to it.
+$script:UpdateRepoWebUrl = 'https://github.com/VenB304/LegacyDownloader'
 $script:UpdateRepoApiUrl = 'https://api.github.com/repos/VenB304/LegacyDownloader/releases/latest'
 
 function Compare-AppVersions([string]$A, [string]$B) {
@@ -40,13 +45,59 @@ function Compare-AppVersions([string]$A, [string]$B) {
     return 0
 }
 
+function Get-RedirectTarget([string]$Url) {
+    # HEAD without following redirects. Returns @{ Status; Location } for ANY
+    # HTTP answer (a 4xx/5xx comes back as a status, not an exception); throws
+    # only when there is no HTTP answer at all (offline, DNS, TLS, timeout).
+    $req = [System.Net.HttpWebRequest]::Create($Url)
+    $req.Method = 'HEAD'
+    $req.AllowAutoRedirect = $false
+    $req.Timeout = 10000
+    $req.UserAgent = 'LegacyDownloader (+https://github.com/VenB304/LegacyDownloader)'
+    $resp = $null
+    try {
+        try { $resp = $req.GetResponse() }
+        catch [System.Net.WebException] {
+            if ($null -eq $_.Exception.Response) { throw }
+            $resp = $_.Exception.Response
+        }
+        return @{ Status = [int]$resp.StatusCode; Location = [string]$resp.Headers['Location'] }
+    } finally { if ($null -ne $resp) { $resp.Close() } }
+}
+
+function Get-ReleaseApiResponse {
+    # The REST API call, on its own so the fallback route can be exercised in tests.
+    return Invoke-RestMethod -Uri $script:UpdateRepoApiUrl -Headers @{ 'User-Agent' = 'LegacyDownloader' } -TimeoutSec 10 -ErrorAction Stop
+}
+
 function Get-LatestReleaseInfo {
-    # Fails soft - returns Ok=$false on any network/parse error, never
-    # throws. No auth needed for a public repo; GitHub's unauthenticated
-    # rate limit is generous enough for an occasional per-launch check.
+    # Fails soft - returns Ok=$false on any network/parse error, never throws.
+    # Two routes, web first (see $script:UpdateRepoWebUrl for why):
+    #  1. github.com/<repo>/releases/latest redirects to .../releases/tag/<tag>;
+    #     the zip is named LegacyDownloader<Version>.zip by tools\build-release.ps1,
+    #     and a HEAD on its download URL confirms it exists under that name.
+    #  2. The REST API (exact asset list) if the web route can't answer.
     $out = @{ Ok = $false; Tag = ''; Version = ''; DownloadUrl = ''; ZipName = ''; ReleaseUrl = ''; ErrMsg = '' }
     try {
-        $resp = Invoke-RestMethod -Uri $script:UpdateRepoApiUrl -Headers @{ 'User-Agent' = 'LegacyDownloader' } -TimeoutSec 10 -ErrorAction Stop
+        $r = Get-RedirectTarget "$script:UpdateRepoWebUrl/releases/latest"
+        if ($r.Status -ge 300 -and $r.Status -lt 400 -and $r.Location -match '/releases/tag/([^/?#]+)$') {
+            $tag = [System.Uri]::UnescapeDataString($Matches[1])
+            if ($tag -match '^[A-Za-z0-9._\-]+$') {
+                $version = 'V' + ($tag -replace '^[vV]', '')
+                $zipName = "LegacyDownloader$version.zip"
+                $downloadUrl = "$script:UpdateRepoWebUrl/releases/download/$tag/$zipName"
+                $a = Get-RedirectTarget $downloadUrl
+                if ($a.Status -ge 300 -and $a.Status -lt 400) {
+                    $out.Ok = $true; $out.Tag = $tag; $out.Version = $version
+                    $out.DownloadUrl = $downloadUrl; $out.ZipName = $zipName
+                    $out.ReleaseUrl = "$script:UpdateRepoWebUrl/releases/tag/$tag"
+                    return [PSCustomObject]$out
+                }
+            }
+        }
+    } catch { }
+    try {
+        $resp = Get-ReleaseApiResponse
         $asset = @($resp.assets | Where-Object { $_.name -like 'LegacyDownloader*.zip' }) | Select-Object -First 1
         if (-not $asset) { $out.ErrMsg = 'release has no LegacyDownloader*.zip asset'; return [PSCustomObject]$out }
         $out.Ok = $true
@@ -57,6 +108,9 @@ function Get-LatestReleaseInfo {
         $out.ReleaseUrl = [string]$resp.html_url
     } catch {
         $out.ErrMsg = $_.Exception.Message
+        if ($out.ErrMsg -match '\((403|429)\)') {
+            $out.ErrMsg = "GitHub is limiting requests from your network right now (HTTP $($Matches[1]) - common on shared VPN / Cloudflare WARP addresses). Try again later, or download the new version from the Releases page."
+        }
     }
     return [PSCustomObject]$out
 }
