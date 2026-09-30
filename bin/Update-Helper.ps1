@@ -235,9 +235,20 @@ try {
     Write-Log "FAILED: $($_.Exception.Message)"
     if ($swapStarted) {
         Write-Log "Rolling back: restoring $oldBin as bin"
-        if (Test-Path -LiteralPath $liveBin) { Remove-Item -LiteralPath $liveBin -Recurse -Force -ErrorAction SilentlyContinue }
+        if (Test-Path -LiteralPath $liveBin) {
+            Remove-Item -LiteralPath $liveBin -Recurse -Force -ErrorAction SilentlyContinue
+            if (Test-Path -LiteralPath $liveBin) {
+                # An antivirus scan or the search indexer still holds a file in the
+                # half-swapped bin\, so it can't be deleted - and then the rename
+                # below would fail because "bin" exists. Move it out of the way
+                # instead so the known-good copy can take its place.
+                $failedBin = "bin_failed_$stamp"
+                try { Invoke-WithRetry { Rename-Item -LiteralPath $liveBin -NewName $failedBin -ErrorAction Stop } "move the failed bin aside" }
+                catch { Write-Log "Couldn't move the failed bin\ aside either: $($_.Exception.Message)" }
+            }
+        }
         if (Test-Path -LiteralPath $oldBin) {
-            try { Rename-Item -LiteralPath $oldBin -NewName 'bin' -ErrorAction Stop }
+            try { Invoke-WithRetry { Rename-Item -LiteralPath $oldBin -NewName 'bin' -ErrorAction Stop } "restore the previous bin" }
             catch { Write-Log "ROLLBACK ALSO FAILED to restore bin from $oldBin - : $($_.Exception.Message)" }
         }
     } else {
