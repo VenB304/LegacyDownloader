@@ -657,14 +657,18 @@ function Start-AppUpdateHelper {
     )
     $helperScript = Join-Path $InstallDir 'bin\Update-Helper.ps1'
     $argList = @(
-        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-WindowStyle', 'Hidden', '-File', "`"$helperScript`""
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$helperScript`""
         '-InstallDir', "`"$InstallDir`""
         '-StagingDir', "`"$StagingDir`""
         '-MainPid', $PID
         '-ExpectedVersion', "`"$ExpectedVersion`""
         '-RelaunchTarget', $RelaunchTarget
     )
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $argList -WindowStyle Hidden | Out-Null
+    # Deliberately NOT hidden: a script spawning a hidden, execution-policy-
+    # bypassed PowerShell child is the same dropper/loader heuristic shape
+    # that got the V5-V6 .vbs launcher flagged (see docs/technical-notes.md).
+    # The helper shows a small console window for the few seconds the swap takes.
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $argList | Out-Null
 }
 
 function Start-LegacyExe([string]$GamePath) {

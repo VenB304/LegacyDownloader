@@ -1,6 +1,7 @@
 # Update-Helper.ps1 - self-update's swap step.
 #
-# Spawned by Start-AppUpdateHelper (Core.psm1) as a detached, hidden process
+# Spawned by Start-AppUpdateHelper (Core.psm1) as a detached process with a
+# small visible console window (deliberately not hidden - see Core.psm1)
 # right before the main app exits. Never run this by hand - it expects to
 # be the only thing touching InstallDir\bin during its run.
 #
@@ -27,7 +28,14 @@ $logPath = Join-Path $InstallDir 'update-helper.log'
 function Write-Log([string]$Message) {
     $line = "[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Message
     try { Add-Content -LiteralPath $logPath -Value $line -Encoding UTF8 } catch { }
+    # The window is visible now, so the same lines double as progress output.
+    Write-Host $line
 }
+
+# Language-neutral title (product name + version only) so it needs no lang
+# strings; the log lines below are the same technical English already
+# written to update-helper.log.
+try { $Host.UI.RawUI.WindowTitle = "LegacyDownloader - updating to $ExpectedVersion" } catch { }
 
 function Get-StagedVersion([string]$BinDir) {
     $core = Join-Path $BinDir 'LegacyDownloader.Core.psm1'
@@ -240,4 +248,7 @@ try {
     Write-Log "Relaunching the still-working previous version."
     Start-App
     Write-Log "=== Update failed, rolled back, relaunched previous version ==="
+    # The window is visible, so hold it a few seconds on failure - otherwise
+    # it would vanish before anyone could read why the update didn't apply.
+    Start-Sleep -Seconds 6
 }
