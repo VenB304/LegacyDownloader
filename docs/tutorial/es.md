@@ -112,11 +112,13 @@ Una vez que el juego base está en su sitio, llegas aquí:
   - **Solo ediciones concretas** — elige exactamente lo que quieres en su
     lugar. Haz clic en **«Elegir mapas / canciones»** para abrir el
     selector — lo vemos en el siguiente paso.
+  - **Ver seguidos** — abre una lista de tus canciones con códigos de color: verde = «Descargada», amarillo = «Siguiendo, aún no descargada», rojo = «Descargada, no seguida». Útil para ver qué descargaría una comprobación o para detectar restos.
 - **«Descargar / Buscar actualizaciones»** — el botón grande. Haz clic para
   obtener lo que elegiste, y vuelve a hacer clic más adelante para buscar
   canciones nuevas o actualizaciones.
 - **Requisitos** — vuelve a abrir la comprobación del paso anterior, cuando
   quieras volver a comprobar o instalar algo que te hubieras saltado.
+- **Configuración** — comprobación automática, inicio automático, un límite de velocidad de descarga y más; ver el paso 8.
 
 ## 5. Elegir canciones individuales
 

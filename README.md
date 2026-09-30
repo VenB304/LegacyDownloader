@@ -137,8 +137,10 @@ the tool, not immediately.
 LegacyDownloader can check for its own newer releases and update itself in
 place — no more manually downloading a new zip and extracting it over your
 old folder. When an update is available, a button appears next to Settings
-on the main window (e.g. **"V10.1 Update Available"**); clicking it closes
-the tool, installs the update, and reopens automatically. Nothing installs
+on the main window (e.g. **"V11.1 Update Available"**); clicking it closes
+the tool, installs the update, and reopens automatically - a small window
+shows what it's doing for the few seconds that takes (it's deliberately not
+hidden). Nothing installs
 itself without you clicking that button first, and you can turn the
 automatic check off in Settings if you'd rather check manually via the
 [Releases page](https://github.com/VenB304/LegacyDownloader/releases).
@@ -164,6 +166,25 @@ English, Français, Deutsch, Español, Filipino, Italiano, Português, Nederland
 > covers the script. (`[Console]::OutputEncoding` is forced to UTF-8
 > automatically.)
 
+## Antivirus warnings
+
+Two things can trigger a false positive from Windows Defender or other
+antivirus tools:
+
+- **`rclone.exe`** is flagged by some engines as a "hacktool" because
+  attackers also use it. It is the legitimate, widely used open-source tool
+  this program relies on to fetch files. Restore it from your antivirus's
+  quarantine, allow it, then run the tool again.
+- **The release zip itself** can get a cloud "trojan" detection shortly
+  after it is published, simply because the file is brand new and unsigned
+  (V10 was hit this way). The zip contains only the PowerShell scripts in
+  this repository, the language files, an icon, two `.bat` launchers and the
+  official `rclone.exe`, so you can read exactly what runs. To be sure you
+  have the real file, compare the SHA-256 shown next to the download on the
+  [Releases page](https://github.com/VenB304/LegacyDownloader/releases)
+  with `Get-FileHash <zip>`. Reporting it to your antivirus vendor as an
+  incorrect detection helps everyone.
+
 ## Files
 
 - `LegacyDownloader-GUI.bat` — → GUI (default); the end-user launcher
@@ -172,6 +193,8 @@ English, Français, Deutsch, Español, Filipino, Italiano, Português, Nederland
 - `bin/LegacyDownloader.Core.psm1` — all pure logic (no `Write-Host` / `Read-Host`)
 - `bin/LegacyDownloader.Console.ps1` — text/menu front-end
 - `bin/LegacyDownloader.Gui.ps1` — WinForms GUI front-end
+- `bin/Update-Helper.ps1` — the self-updater's swap step (waits for the tool to exit, swaps `bin\` in place, reopens; rolls back on any failure)
+- `bin/LegacyDownloader.ico` — the app icon
 - `bin/lang/*.json` — string tables for all 13 languages
 - `docs/tutorial/*.md` — end-user tutorials with screenshots, in all 13 languages
 - `bin/rclone.exe` *(gitignored — see below)*

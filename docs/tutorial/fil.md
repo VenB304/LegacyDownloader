@@ -112,11 +112,13 @@ Kapag nasa lugar na ang base na laro, dito ka makakarating:
   - **Tiyak** — piliin sa halip ang eksaktong gusto mo. I-click ang
     **Pumili ng mapa / kanta** para buksan ang picker — tatalakayin sa
     susunod na hakbang.
+  - **Tingnan ang sinusubaybayan** — nagbubukas ng listahan ng mga kanta mo na may kulay: berde = “Na-download na”, dilaw = “Sinusubaybayan, hindi pa na-download”, pula = “Na-download, hindi sinusubaybayan”. Kapaki-pakinabang para makita kung ano pa ang kukunin ng pagsusuri, o para makita ang mga natirang file.
 - **Mag-download / Suriin ang mga update** — ang malaking buton. I-click
   ito para kunin ang napili mo, at i-click ulit anumang oras mamaya para
   suriin ang bagong kanta o update.
 - **Requirements** — binubuksan ulit ang pagsuri mula sa nakaraang hakbang,
   anumang oras na gusto mong suriin ulit o i-install ang nalaktawan mo.
+- **Mga Setting** — awtomatikong pagsusuri, awtomatikong paglulunsad, limitasyon sa bilis ng download at iba pa; tingnan ang hakbang 8.
 
 ## 5. Pagpili ng indibidwal na kanta
 

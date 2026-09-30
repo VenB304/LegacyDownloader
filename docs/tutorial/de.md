@@ -111,12 +111,14 @@ Sobald das Basisspiel vorhanden ist, landest du hier:
   - **Bestimmte Editionen** — wähle stattdessen genau das, was du willst.
     Klicke auf **„Karten / Songs auswählen"**, um den Picker zu öffnen —
     dazu mehr im nächsten Schritt.
+  - **Verfolgte anzeigen** — öffnet eine farbcodierte Liste deiner Songs: grün = „Heruntergeladen“, gelb = „Verfolgt, noch nicht heruntergeladen“, rot = „Heruntergeladen, nicht verfolgt“. Praktisch, um zu sehen, was eine Prüfung noch herunterladen würde, oder um Überbleibsel zu entdecken.
 - **„Herunterladen / Nach Updates suchen"** — der große Button. Klicke ihn,
   um zu holen, was du ausgewählt hast, und klicke ihn später erneut, um
   nach neuen Songs oder Updates zu suchen.
 - **Anforderungen** — öffnet die Prüfung aus dem vorherigen Schritt erneut,
   jederzeit, wenn du etwas erneut prüfen oder nachträglich installieren
   willst.
+- **Einstellungen** — automatische Prüfung, automatisches Starten, ein Download-Geschwindigkeitslimit und mehr; siehe Schritt 8.
 
 ## 5. Einzelne Songs auswählen
 

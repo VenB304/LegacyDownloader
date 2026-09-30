@@ -109,11 +109,13 @@ Una volta che il gioco base è a posto, arrivi qui:
   - **Specifiche** — scegli esattamente quello che vuoi invece. Fai clic
     su **"Seleziona mappe / canzoni"** per aprire il selettore — lo vediamo
     nel prossimo passaggio.
+  - **Visualizza tracciati** — apre un elenco colorato delle tue canzoni: verde = «Scaricata», giallo = «Tracciata, non ancora scaricata», rosso = «Scaricata, non tracciata». Utile per vedere cosa scaricherebbe ancora un controllo o per individuare gli avanzi.
 - **"Scarica / Controlla aggiornamenti"** — il pulsante grande. Fai clic
   per ottenere quello che hai scelto, e clicca di nuovo più avanti per
   controllare nuove canzoni o aggiornamenti.
 - **Requisiti** — riapre la verifica del passaggio precedente, ogni volta
   che vuoi ricontrollare o installare qualcosa che avevi saltato.
+- **Impostazioni** — controllo automatico, avvio automatico, un limite di velocità di download e altro; vedi il passo 8.
 
 ## 5. Scegliere singole canzoni
 

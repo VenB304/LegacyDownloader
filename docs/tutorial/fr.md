@@ -110,12 +110,14 @@ Une fois le jeu de base en place, vous arrivez ici :
   - **Seulement certaines éditions** — choisissez exactement ce que vous
     voulez à la place. Cliquez sur **« Sélectionner des cartes / chansons »**
     pour ouvrir le sélecteur — voir l'étape suivante.
+  - **Voir le suivi** — ouvre une liste de vos chansons avec des couleurs : vert = « Téléchargée », jaune = « Suivie, pas encore téléchargée », rouge = « Téléchargée, non suivie ». Pratique pour voir ce qu'une vérification téléchargerait encore, ou repérer les restes.
 - **« Télécharger / Vérifier les mises à jour »** — le gros bouton.
   Cliquez dessus pour récupérer ce que vous avez choisi, et cliquez à
   nouveau plus tard pour vérifier les nouvelles chansons ou mises à jour.
 - **Prérequis** — rouvre la vérification de l'étape précédente, à tout
   moment où vous voulez revérifier ou installer quelque chose que vous
   aviez ignoré.
+- **Paramètres** — vérification automatique, lancement automatique, une limite de débit de téléchargement et plus ; voir l'étape 8.
 
 ## 5. Choisir des chansons individuelles
 

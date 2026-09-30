@@ -126,9 +126,10 @@ first install and then never touched again, so updates won't reset your
 resolution or windowed/fullscreen choice.
 
 It only ever adds or updates files - it never deletes anything on its
-own. If you uncheck an edition you'd previously downloaded, it'll ask
-whether to delete those files or just leave them on disk. Nothing is
-ever removed without you being asked first.
+own. If you untick songs or editions you'd previously downloaded, it
+asks once whether to delete those files, keep them and stop updating
+them, or cancel and leave your picks unchanged. Nothing is ever removed
+without you being asked first.
 
 
 SOFTWARE REQUIREMENTS
@@ -173,8 +174,9 @@ LegacyDownloader can check for its own newer releases and update itself
 in place - no more manually downloading a new zip and extracting it over
 your old folder. When an update is available, a button appears next to
 Settings on the main window; clicking it closes the tool, installs the
-update, and reopens automatically. Nothing installs itself without you
-clicking that button first, and you can turn the automatic check off in
+update, and reopens automatically - a small window shows what it is
+doing for the few seconds that takes (it is deliberately not hidden).
+Nothing installs itself without you clicking that button first, and you can turn the automatic check off in
 Settings if you'd rather check manually at:
 https://github.com/VenB304/LegacyDownloader/releases
 
@@ -213,6 +215,15 @@ TROUBLESHOOTING
   attackers also use it (it's a legitimate, widely-used open-source
   tool). Check your antivirus quarantine or history for rclone.exe,
   restore or allow it, then run this again.
+
+- Windows Defender (or another antivirus) flags the downloaded zip as a
+  trojan - this can happen shortly after a release is published, because
+  the file is brand new and unsigned, not because of what is in it. The
+  zip only contains the PowerShell scripts, the language files, an icon,
+  two .bat launchers and the official rclone.exe. Compare the SHA-256
+  shown next to the download on the Releases page with
+  Get-FileHash <zip>, and report it to your antivirus vendor as an
+  incorrect detection.
 
 - "Legacy.exe wasn't found there" - you can still proceed if you're
   sure the folder is right (e.g. before the game has been downloaded

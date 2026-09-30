@@ -103,11 +103,13 @@ Once the base game is in place, you land here:
     if you're not sure — pick this one.
   - **Specific** — pick exactly what you want instead. Click **Select
     maps / songs** to open the picker — covered in the next step.
+  - **View tracked** — opens a colour-coded list of your songs: green = “Downloaded”, yellow = “Tracked, not downloaded yet”, red = “Downloaded, not tracked”. Handy for seeing what a check would still fetch, or spotting leftovers.
 - **Download / Check for updates** — the big button. Click it to fetch
   whatever you picked, and click it again any time later to check for new
   songs or updates.
 - **Requirements** — reopens the software check from the previous step,
   any time you want to re-check or install something you skipped.
+- **Settings** — auto-check, auto-launch, a download speed limit and more; see step 8.
 
 ## 5. Picking individual songs
 

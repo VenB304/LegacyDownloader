@@ -109,11 +109,13 @@ Assim que o jogo base estiver pronto, você chega aqui:
   - **Específicas** — escolha exatamente o que você quer, em vez disso.
     Clique em **"Selecionar mapas / músicas"** para abrir o seletor — veja
     o próximo passo.
+  - **Ver rastreados** — abre uma lista das suas músicas com cores: verde = “Baixada”, amarelo = “Rastreada, ainda não baixada”, vermelho = “Baixada, não rastreada”. Útil para ver o que uma verificação ainda baixaria ou para achar sobras.
 - **"Baixar / Verificar atualizações"** — o botão grande. Clique para
   obter o que você escolheu, e clique novamente mais tarde para verificar
   novas músicas ou atualizações.
 - **Requisitos** — reabre a verificação do passo anterior, sempre que você
   quiser reverificar ou instalar algo que tenha pulado.
+- **Configurações** — verificação automática, início automático, um limite de velocidade de download e mais; veja o passo 8.
 
 ## 5. Escolhendo músicas individuais
 

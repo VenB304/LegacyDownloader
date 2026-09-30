@@ -109,11 +109,13 @@ Zodra het basisspel op zijn plek staat, kom je hier terecht:
   - **Specifiek** — kies in plaats daarvan precies wat je wilt. Klik op
     **"Kaarten / nummers selecteren"** om de kiezer te openen — meer
     daarover in de volgende stap.
+  - **Bijgehouden bekijken** — opent een kleurgecodeerde lijst van je nummers: groen = “Gedownload”, geel = “Bijgehouden, nog niet gedownload”, rood = “Gedownload, niet bijgehouden”. Handig om te zien wat een controle nog zou ophalen, of om restanten te spotten.
 - **"Downloaden / Controleren op updates"** — de grote knop. Klik erop om
   op te halen wat je hebt gekozen, en klik er later opnieuw op om te
   controleren op nieuwe nummers of updates.
 - **Vereisten** — opent de controle van de vorige stap opnieuw, wanneer je
   iets wilt herchecken of alsnog wilt installeren wat je hebt overgeslagen.
+- **Instellingen** — automatische controle, automatisch starten, een downloadsnelheidslimiet en meer; zie stap 8.
 
 ## 5. Losse nummers kiezen
 
