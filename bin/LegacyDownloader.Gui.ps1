@@ -3762,34 +3762,116 @@ function On-ChangeFolder {
     Refresh-FolderStatus
 }
 
+function Show-RemovalPromptDialog($Items) {
+    # One prompt for everything the user just unchecked that has files on
+    # disk (this used to be a separate Yes/No MessageBox per edition, with
+    # no way to answer for all of them and no way to back out). MessageBox
+    # buttons can't be relabeled, so this is a small bespoke Form. Returns
+    # 'delete', 'keep' or 'cancel' (Cancel button, Esc, or the close box) -
+    # Keep is the default button since it's the non-destructive answer.
+    $f = New-Object System.Windows.Forms.Form
+    $f.Text = T 'gui.window_title'
+    $f.Font = $script:FontBase
+    $f.BackColor = $script:ColorBg
+    $f.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedDialog
+    $f.StartPosition = [System.Windows.Forms.FormStartPosition]::CenterParent
+    $f.MinimizeBox = $false; $f.MaximizeBox = $false
+    Set-FormIcon $f
+
+    # Button widths come first: they're measured from the translated text
+    # (13 languages), and the form widens to fit the row rather than
+    # clipping a long label.
+    $pad = 20
+    $btnCancel = New-Btn (T 'gui.btn_cancel') 0 0 0 32 $false
+    $btnKeep   = New-Btn (T 'maps.removal_btn_keep') 0 0 0 32 $true
+    $btnDelete = New-Btn (T 'maps.removal_btn_delete') 0 0 0 32 $false
+    foreach ($b in @($btnCancel, $btnKeep, $btnDelete)) {
+        $b.Width = [Math]::Max(84, [System.Windows.Forms.TextRenderer]::MeasureText($b.Text, $b.Font).Width + 28)
+    }
+    $rowW = $btnDelete.Width + 8 + $btnKeep.Width + 8 + $btnCancel.Width
+    $clientW = [Math]::Max(480, $rowW + 2 * $pad)
+    $inner = $clientW - 2 * $pad
+
+    $measureH = {
+        param($text, $font)
+        [System.Windows.Forms.TextRenderer]::MeasureText($text, $font, (New-Object System.Drawing.Size($inner, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height
+    }
+    $lblHead = New-Label (T 'maps.removal_headline') $pad 16 $inner 20
+    $lblHead.Font = $script:FontTitle
+    $lblHead.Height = (& $measureH $lblHead.Text $lblHead.Font) + 4
+    $y = 16 + $lblHead.Height + 6
+    $lblHint = New-Label (T 'maps.removal_hint') $pad $y $inner 20
+    $lblHint.ForeColor = $script:ColorMuted
+    $lblHint.Height = (& $measureH $lblHint.Text $lblHint.Font) + 4
+    $y += $lblHint.Height + 10
+
+    $lb = New-Object System.Windows.Forms.ListBox
+    $lb.Font = $script:FontBase
+    $lb.BackColor = $script:ColorCard
+    $lb.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+    $lb.SelectionMode = [System.Windows.Forms.SelectionMode]::None
+    $lb.IntegralHeight = $false
+    foreach ($it in @($Items)) {
+        $disp = Format-EditionDisplay $it.Edition
+        $line = if ($it.Whole) { T 'maps.removal_item_edition' @{ edition = $disp } } else { T 'maps.removal_item_songs' @{ edition = $disp; count = $it.Count } }
+        [void]$lb.Items.Add($line)
+    }
+    $rows = [Math]::Min([Math]::Max($lb.Items.Count, 1), 8)
+    $lb.SetBounds($pad, $y, $inner, $rows * $lb.ItemHeight + 6)
+    $y += $lb.Height + 16
+
+    $btnCancel.Left = $clientW - $pad - $btnCancel.Width
+    $btnKeep.Left   = $btnCancel.Left - 8 - $btnKeep.Width
+    $btnDelete.Left = $btnKeep.Left - 8 - $btnDelete.Width
+    foreach ($b in @($btnCancel, $btnKeep, $btnDelete)) { $b.Top = $y }
+
+    $btnDelete.Add_Click({ param($s, $e) $f.Tag = 'delete'; $f.Close() })
+    $btnKeep.Add_Click({ param($s, $e) $f.Tag = 'keep'; $f.Close() })
+    $btnCancel.Add_Click({ param($s, $e) $f.Tag = 'cancel'; $f.Close() })
+
+    $f.ClientSize = New-Object System.Drawing.Size($clientW, ($y + 32 + 16))
+    $f.AcceptButton = $btnKeep
+    $f.CancelButton = $btnCancel
+    $f.Controls.AddRange(@($lblHead, $lblHint, $lb, $btnDelete, $btnKeep, $btnCancel))
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        $fits = ($btnDelete.Left -ge $pad) -and (($btnCancel.Left + $btnCancel.Width) -le ($clientW - $pad)) -and (($lb.Top + $lb.Height) -lt $btnDelete.Top) -and (($btnDelete.Top + $btnDelete.Height) -le $f.ClientSize.Height)
+        Write-Host "  Show-RemovalPromptDialog: rendered $($lb.Items.Count) item(s), client ${clientW}x$($f.ClientSize.Height), Delete@$($btnDelete.Left) Keep@$($btnKeep.Left) Cancel@$($btnCancel.Left) (expect left-to-right, all inside the form)"
+        if (-not $fits) { Write-Host "  SELFTEST FAILURE: removal prompt controls overlap or overflow" -ForegroundColor Red }
+        Start-Sleep -Milliseconds 100
+        $f.Dispose()
+        return 'cancel'
+    }
+
+    [void]$f.ShowDialog($script:Form)
+    $choice = [string]$f.Tag
+    $f.Dispose()
+    if ($choice -eq 'delete' -or $choice -eq 'keep') { return $choice }
+    return 'cancel'
+}
+
 function Invoke-SongRemovalCleanup([string[]]$OldEditionList, [string]$OldSongFilters, $Res) {
     # Whole editions dropped, or editions narrowed to fewer songs, may have
-    # local files the player no longer wants - ask once per affected
-    # edition, same spirit as the tool's older "unchecked an edition"
-    # cleanup prompt.
+    # local files the player no longer wants. Asks ONCE for the whole batch
+    # (Show-RemovalPromptDialog) and returns $false if the user cancelled -
+    # the caller must then discard the new selection instead of saving it.
     $newEditionList = @($Res.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
     $plan = Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog
-    foreach ($item in $plan) {
-        $localDir = Join-Path $script:Cfg.GamePath "maps\$($item.Edition)"
-        if (-not (Test-Path -LiteralPath $localDir)) { continue }
-        if ($item.WholeEditionRemoved) {
-            if (Ask-YesNo (T 'maps.delete_or_keep' @{ edition = $item.Edition }) (T 'gui.window_title')) {
-                try { Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop }
-                catch { Warn-Box (T 'maps.cant_delete' @{ edition = $item.Edition }) (T 'gui.err_title') }
-            }
-        } else {
-            if (Ask-YesNo (T 'maps.delete_songs_or_keep' @{ count = $item.RemovedCodes.Count; edition = $item.Edition }) (T 'gui.window_title')) {
-                $failed = 0
-                foreach ($code in $item.RemovedCodes) {
-                    $target = Join-Path $localDir "${code}_pc.ipk"
-                    if (Test-Path -LiteralPath $target) {
-                        try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop } catch { $failed++ }
-                    }
-                }
-                if ($failed -gt 0) { Warn-Box (T 'maps.cant_delete_songs' @{ edition = $item.Edition }) (T 'gui.err_title') }
-            }
-        }
+    $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath)
+    if ($items.Count -eq 0) { return $true }
+
+    $choice = Show-RemovalPromptDialog $items
+    if ($choice -eq 'cancel') { return $false }
+    if ($choice -eq 'delete') {
+        $results = @(Invoke-SongRemovalDelete -Items $items -GamePath $script:Cfg.GamePath)
+        $problems = @($results | Where-Object { $_.Failed } | ForEach-Object {
+            if ($_.Whole) { T 'maps.cant_delete' @{ edition = $_.Edition } } else { T 'maps.cant_delete_songs' @{ edition = $_.Edition } }
+        })
+        if ($problems.Count -gt 0) { Warn-Box ($problems -join "`n`n") (T 'gui.err_title') }
     }
+    return $true
 }
 
 function On-SongModeChanged {
@@ -3811,7 +3893,12 @@ function On-SongModeChanged {
             $script:RbEverything.Checked = $true
             return
         }
-        Invoke-SongRemovalCleanup -OldEditionList @(Get-LocalEditions $script:Cfg.GamePath) -OldSongFilters '' -Res $res
+        if (-not (Invoke-SongRemovalCleanup -OldEditionList @(Get-LocalEditions $script:Cfg.GamePath) -OldSongFilters '' -Res $res)) {
+            # cancelled at the delete/keep prompt -> same as cancelling the
+            # picker: back to Everything, nothing changed
+            $script:RbEverything.Checked = $true
+            return
+        }
         Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
         $script:Cfg = Load-Config
     }
@@ -3823,7 +3910,9 @@ function On-SelectMapsSongs {
     $res = Show-SongBrowserDialog
     if ($null -eq $res) { return }
     $oldEditionList = @(if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') { Get-LocalEditions $script:Cfg.GamePath } else { $script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
-    Invoke-SongRemovalCleanup -OldEditionList $oldEditionList -OldSongFilters $script:Cfg.SongFilters -Res $res
+    # Cancel at the delete/keep prompt discards the whole selection, same as
+    # cancelling the picker itself - nothing deleted, nothing saved.
+    if (-not (Invoke-SongRemovalCleanup -OldEditionList $oldEditionList -OldSongFilters $script:Cfg.SongFilters -Res $res)) { return }
     Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
     $script:Cfg = Load-Config
     $script:RbSpecific.Checked = $true
@@ -4169,6 +4258,27 @@ if ($env:LEGACY_GUI_SELFTEST) {
         $script:Cfg.AutoLaunch = $savedAutoLaunch
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-LaunchPrompt threw: $($_.Exception.Message)" -ForegroundColor Red
+    }
+
+    Write-Host "`n=== Show-RemovalPromptDialog (every language; 1 item and 12 items) ==="
+    try {
+        $savedLangCode = Get-LanguageCode
+        $sampleWhole = [PSCustomObject]@{ Edition = '2015'; Whole = $true; Codes = @(); Count = 0 }
+        $sampleSongs = [PSCustomObject]@{ Edition = '2016'; Whole = $false; Codes = @('a', 'b', 'c'); Count = 3 }
+        $twelve = @(1..6 | ForEach-Object { $sampleWhole; $sampleSongs })
+        $overflows = 0
+        foreach ($lg in $script:Langs) {
+            $null = Initialize-Language -Code $lg.Code
+            foreach ($set in @(@($sampleWhole), $twelve)) {
+                $out = Show-RemovalPromptDialog $set
+                if ($out -ne 'cancel') { $overflows++; Write-Host "  SELFTEST FAILURE: $($lg.Code): selftest dialog returned '$out', expected 'cancel'" -ForegroundColor Red }
+            }
+        }
+        $null = Initialize-Language -Code $savedLangCode
+        Write-Host "  rendered in $(@($script:Langs).Count) languages"
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-RemovalPromptDialog threw: $($_.Exception.Message)" -ForegroundColor Red
+        try { $null = Initialize-Language -Code $savedLangCode } catch { }
     }
 
     Write-Host "`n=== BtnSettings gating ==="

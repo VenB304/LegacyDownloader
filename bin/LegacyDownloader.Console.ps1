@@ -913,41 +913,48 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         if ($prev.Dismissed) { return $result }
 
         # Whole editions dropped, or editions narrowed to fewer songs, may
-        # have local files the player no longer wants - ask once per
-        # affected edition, same spirit as the tool's older "unchecked an
-        # edition" cleanup prompt.
+        # have local files the player no longer wants - asked as one batch
+        # below.
         $oldEditionList = @(if ($CurrentEditions.ToUpper() -eq 'AUTO') { Get-LocalEditions $GamePath } else { $CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
         $newEditionList = @($browse.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         $removalPlan = Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog
-        foreach ($item in $removalPlan) {
-            # Same fix as Invoke-EditionSync above - Join-Path twice instead
-            # of a literal "\" embedded inside one path segment, which broke
-            # on Linux.
-            $localDir = Join-Path (Join-Path $GamePath 'maps') $item.Edition
-            if (-not (Test-Path -LiteralPath $localDir)) { continue }
-            if ($item.WholeEditionRemoved) {
-                if (Confirm-YesNo (T 'maps.delete_or_keep' @{ edition = $item.Edition })) {
-                    try {
-                        Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop
-                        Write-Host (T 'maps.deleted' @{ edition = $item.Edition })
-                    } catch {
-                        Write-Host (T 'maps.cant_delete' @{ edition = $item.Edition }) -ForegroundColor Yellow
+        # One prompt for the whole batch (was one Y/N per edition, with no
+        # way to answer for all of them or back out). Cancel returns $null =
+        # "no change": nothing deleted, the new selection is discarded and
+        # the pending download below never runs.
+        $removalItems = @(Get-SongRemovalPromptItems -Plan $removalPlan -GamePath $GamePath)
+        if ($removalItems.Count -gt 0) {
+            Write-Host ""
+            Write-Host (T 'maps.removal_headline')
+            Write-Host (T 'maps.removal_hint')
+            foreach ($ri in $removalItems) {
+                $riDisp = Format-EditionDisplay $ri.Edition
+                $riLine = if ($ri.Whole) { T 'maps.removal_item_edition' @{ edition = $riDisp } } else { T 'maps.removal_item_songs' @{ edition = $riDisp; count = $ri.Count } }
+                Write-Host ("  - " + $riLine)
+            }
+            Write-Host ""
+            Write-Host ("[1] " + (T 'maps.removal_btn_delete'))
+            Write-Host ("[2] " + (T 'maps.removal_btn_keep'))
+            Write-Host (T 'preview.opt_cancel')
+            while ($true) {
+                $rc = Read-Host (T 'common.choose_1_3')
+                if ($rc -eq '1' -or $rc -eq '2' -or $rc -eq '3') { break }
+                Write-Host (T 'preview.choose_1_2_3')
+            }
+            if ($rc -eq '3') { return $null }
+            if ($rc -eq '1') {
+                foreach ($r in @(Invoke-SongRemovalDelete -Items $removalItems -GamePath $GamePath)) {
+                    if ($r.Failed) {
+                        $failKey = if ($r.Whole) { 'maps.cant_delete' } else { 'maps.cant_delete_songs' }
+                        Write-Host (T $failKey @{ edition = $r.Edition }) -ForegroundColor Yellow
+                    } elseif ($r.Whole) {
+                        Write-Host (T 'maps.deleted' @{ edition = $r.Edition })
+                    } else {
+                        Write-Host (T 'maps.songs_deleted' @{ count = $r.Count; edition = $r.Edition })
                     }
-                } else {
-                    Write-Host (T 'maps.keeping_untracked' @{ edition = $item.Edition })
                 }
             } else {
-                if (Confirm-YesNo (T 'maps.delete_songs_or_keep' @{ count = $item.RemovedCodes.Count; edition = $item.Edition })) {
-                    $failed = 0
-                    foreach ($code in $item.RemovedCodes) {
-                        $target = Join-Path $localDir "${code}_pc.ipk"
-                        if (Test-Path -LiteralPath $target) {
-                            try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop } catch { $failed++ }
-                        }
-                    }
-                    if ($failed -gt 0) { Write-Host (T 'maps.cant_delete_songs' @{ edition = $item.Edition }) -ForegroundColor Yellow }
-                    else { Write-Host (T 'maps.songs_deleted' @{ count = $item.RemovedCodes.Count; edition = $item.Edition }) }
-                }
+                foreach ($ri in $removalItems) { Write-Host (T 'maps.keeping_untracked' @{ edition = $ri.Edition }) }
             }
         }
 

@@ -1496,6 +1496,65 @@ function Get-SongRemovalPlan {
     return $plan
 }
 
+function Get-SongRemovalPromptItems {
+    # Narrows a Get-SongRemovalPlan result down to what there is actually
+    # something to ask about: entries with real files on disk. A dropped
+    # edition counts if its maps\<edition> folder exists; a narrowed edition
+    # counts only if at least one of its unchecked songs is really there (the
+    # old per-edition prompt fired for any existing folder, even when none of
+    # the unchecked files had ever been downloaded). Front-ends show these in
+    # ONE prompt, then hand the same items to Invoke-SongRemovalDelete.
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()]$Plan,
+        [Parameter(Mandatory = $true)][string]$GamePath
+    )
+    $items = @()
+    foreach ($entry in @($Plan)) {
+        $localDir = Join-Path (Join-Path $GamePath 'maps') $entry.Edition
+        if (-not (Test-Path -LiteralPath $localDir)) { continue }
+        if ($entry.WholeEditionRemoved) {
+            $items += [PSCustomObject]@{ Edition = [string]$entry.Edition; Whole = $true; Codes = @(); Count = 0 }
+        } else {
+            $present = @($entry.RemovedCodes | Where-Object { Test-Path -LiteralPath (Join-Path $localDir "${_}_pc.ipk") })
+            if ($present.Count -gt 0) {
+                $items += [PSCustomObject]@{ Edition = [string]$entry.Edition; Whole = $false; Codes = $present; Count = $present.Count }
+            }
+        }
+    }
+    return $items
+}
+
+function Invoke-SongRemovalDelete {
+    # Deletes the local files behind Get-SongRemovalPromptItems entries: the
+    # whole maps\<edition> folder for a dropped edition, or just the unchecked
+    # <code>_pc.ipk files for a narrowed one. Returns one result per item
+    # (Edition, Whole, Count = files removed for a narrowed edition, Failed =
+    # $true if the folder/any file couldn't be removed, e.g. the game has it
+    # open) so each front-end can word its own messages. Never throws.
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()]$Items,
+        [Parameter(Mandatory = $true)][string]$GamePath
+    )
+    $results = @()
+    foreach ($item in @($Items)) {
+        $localDir = Join-Path (Join-Path $GamePath 'maps') $item.Edition
+        $failed = $false
+        $removed = 0
+        if ($item.Whole) {
+            try { Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop } catch { $failed = $true }
+        } else {
+            foreach ($code in $item.Codes) {
+                $target = Join-Path $localDir "${code}_pc.ipk"
+                if (Test-Path -LiteralPath $target) {
+                    try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
+                }
+            }
+        }
+        $results += [PSCustomObject]@{ Edition = [string]$item.Edition; Whole = [bool]$item.Whole; Count = $removed; Failed = $failed }
+    }
+    return $results
+}
+
 function Get-SongDisplayMap {
     # code -> display label for one edition's songs, built from whatever the
     # catalog knows (falls back to the raw code for anything the sheet
@@ -2427,6 +2486,7 @@ Export-ModuleMember -Function `
     Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
+    Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
     Invoke-RequirementInstall, Start-LegacyExe, `
