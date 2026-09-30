@@ -199,7 +199,7 @@ Voer `LegacyDownloader-GUI.bat` gewoon op elk moment opnieuw uit. Het onthoudt
 je map en je nummerkeuzes, en klikken op **"Downloaden / Controleren op
 updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
 
-- **Nummers toevoegen of verwijderen**: klik opnieuw op **Kaarten / nummers selecteren**, vink aan of uit wat je wilt en klik op OK. Als je nummers uitvinkt die je al hebt gedownload — een hele editie of maar een paar — word je één keer gevraagd: **Bestanden verwijderen** verwijdert die bestanden, **Bestanden bewaren, niet meer bijwerken** laat ze op schijf staan maar werkt ze niet meer bij, en **Annuleren** laat je keuzes ongewijzigd.
+- **Nummers toevoegen of verwijderen**: klik opnieuw op **Kaarten / nummers selecteren**, vink aan of uit wat je wilt en klik op OK. Als je nummers uitvinkt die je al hebt gedownload — een hele editie of maar een paar — word je één keer gevraagd: **Bestanden verwijderen** verwijdert die bestanden, **Bestanden bewaren, niet meer bijwerken** laat ze op schijf staan maar werkt ze niet meer bij, en **Annuleren** laat je keuzes ongewijzigd. Nummers die je met “Mijn versie behouden” hebt gemarkeerd, worden hier nooit verwijderd.
 - **Taal wijzigen**: de vlag-vervolgkeuzelijst, rechtsboven, op elk
   moment.
 - **Instellingen aanpassen**: klik op **Instellingen** in het hoofdvenster

@@ -202,7 +202,7 @@ Starte `LegacyDownloader-GUI.bat` einfach jederzeit erneut. Es merkt sich
 deinen Ordner und deine Song-Auswahl, und ein Klick auf **„Herunterladen /
 Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
 
-- **Songs hinzufügen oder entfernen**: klicke wieder auf **Karten / Songs auswählen**, hake an oder ab, was du willst, und klicke auf OK. Wenn du bereits heruntergeladene Songs abwählst — eine ganze Edition oder nur ein paar —, wirst du einmal gefragt: **Dateien löschen** entfernt diese Dateien, **Dateien behalten, nicht mehr aktualisieren** lässt sie auf der Festplatte, aktualisiert sie aber nicht mehr, und **Abbrechen** lässt deine Auswahl unverändert.
+- **Songs hinzufügen oder entfernen**: klicke wieder auf **Karten / Songs auswählen**, hake an oder ab, was du willst, und klicke auf OK. Wenn du bereits heruntergeladene Songs abwählst — eine ganze Edition oder nur ein paar —, wirst du einmal gefragt: **Dateien löschen** entfernt diese Dateien, **Dateien behalten, nicht mehr aktualisieren** lässt sie auf der Festplatte, aktualisiert sie aber nicht mehr, und **Abbrechen** lässt deine Auswahl unverändert. Songs, die du mit „Meine Version behalten“ markiert hast, werden hier nie gelöscht.
 - **Sprache ändern**: das Flaggen-Dropdown oben rechts, jederzeit.
 - **Einstellungen anpassen**: klicke auf **Einstellungen** im Hauptfenster
   für automatische Prüfung, automatisches Starten, ein

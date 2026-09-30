@@ -203,7 +203,7 @@ nito ang iyong folder at ang mga pinili mong kanta, at ang pag-click sa
 **Mag-download / Suriin ang mga update** ay kukunin ang anumang bago mula
 noong huli mong pagbisita.
 
-- **Magdagdag o mag-alis ng mga kanta**: i-click ulit ang **Pumili ng mapa / kanta**, mag-tick o mag-untick ng kahit ano, at i-click ang OK. Kapag in-untick mo ang mga kantang na-download mo na — buong edisyon man o ilang kanta lang — isang beses kang tatanungin: buburahin ng **Burahin ang mga file** ang mga file na iyon, iiwan ng **Itago ang mga file, itigil ang pag-update** ang mga ito sa disk pero hindi na ia-update, at hindi babaguhin ng **Kanselahin** ang mga pinili mo.
+- **Magdagdag o mag-alis ng mga kanta**: i-click ulit ang **Pumili ng mapa / kanta**, mag-tick o mag-untick ng kahit ano, at i-click ang OK. Kapag in-untick mo ang mga kantang na-download mo na — buong edisyon man o ilang kanta lang — isang beses kang tatanungin: buburahin ng **Burahin ang mga file** ang mga file na iyon, iiwan ng **Itago ang mga file, itigil ang pag-update** ang mga ito sa disk pero hindi na ia-update, at hindi babaguhin ng **Kanselahin** ang mga pinili mo. Ang mga kantang minarkahan mo ng “Itago ang bersyon ko” ay hindi kailanman buburahin dito.
 - **Baguhin ang wika**: ang flag dropdown, sa kanang-itaas, anumang oras.
 - **Ayusin ang mga setting**: i-click ang **Mga Setting** sa main window para sa
   auto-check, auto-launch, limitasyon sa bilis ng download, awtomatikong

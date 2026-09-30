@@ -201,7 +201,7 @@ Ricorda la tua cartella e le tue scelte di canzoni, e cliccare su
 **"Scarica / Controlla aggiornamenti"** prende tutto ciò che è nuovo dalla
 tua ultima visita.
 
-- **Aggiungere o rimuovere canzoni**: clicca di nuovo su **Seleziona mappe / canzoni**, spunta o deseleziona ciò che vuoi e clicca su OK. Se deselezioni canzoni già scaricate — un'intera edizione o solo alcune — ti viene chiesto una volta sola: **Elimina i file** elimina quei file, **Conserva i file, non aggiornare più** li lascia sul disco ma smette di aggiornarli, e **Annulla** lascia invariata la tua selezione.
+- **Aggiungere o rimuovere canzoni**: clicca di nuovo su **Seleziona mappe / canzoni**, spunta o deseleziona ciò che vuoi e clicca su OK. Se deselezioni canzoni già scaricate — un'intera edizione o solo alcune — ti viene chiesto una volta sola: **Elimina i file** elimina quei file, **Conserva i file, non aggiornare più** li lascia sul disco ma smette di aggiornarli, e **Annulla** lascia invariata la tua selezione. Le canzoni che hai contrassegnato con «Mantieni la mia versione» non vengono mai eliminate qui.
 - **Cambiare lingua**: il menu a tendina della bandiera, in alto a destra,
   in qualsiasi momento.
 - **Regolare le impostazioni**: fai clic su **Impostazioni** nella finestra

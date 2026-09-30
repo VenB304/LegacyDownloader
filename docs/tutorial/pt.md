@@ -200,7 +200,7 @@ Basta executar `LegacyDownloader-GUI.bat` novamente a qualquer momento. Ele
 lembra sua pasta e suas escolhas de músicas, e clicar em **"Baixar /
 Verificar atualizações"** pega tudo que é novo desde sua última visita.
 
-- **Adicionar ou remover músicas**: clique de novo em **Selecionar mapas / músicas**, marque ou desmarque o que quiser e clique em OK. Se você desmarcar músicas que já baixou — uma edição inteira ou só algumas —, a pergunta aparece uma única vez: **Excluir os arquivos** exclui esses arquivos, **Manter os arquivos e parar de atualizar** deixa os arquivos no disco mas para de atualizá-los, e **Cancelar** mantém suas escolhas como estavam.
+- **Adicionar ou remover músicas**: clique de novo em **Selecionar mapas / músicas**, marque ou desmarque o que quiser e clique em OK. Se você desmarcar músicas que já baixou — uma edição inteira ou só algumas —, a pergunta aparece uma única vez: **Excluir os arquivos** exclui esses arquivos, **Manter os arquivos e parar de atualizar** deixa os arquivos no disco mas para de atualizá-los, e **Cancelar** mantém suas escolhas como estavam. As músicas que você marcou com “Manter minha versão” nunca são excluídas aqui.
 - **Mudar idioma**: o menu suspenso da bandeira, no canto superior
   direito, a qualquer momento.
 - **Ajustar configurações**: clique em **Configurações** na janela

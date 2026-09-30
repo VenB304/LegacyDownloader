@@ -128,7 +128,8 @@ resolution or windowed/fullscreen choice.
 It only ever adds or updates files - it never deletes anything on its
 own. If you untick songs or editions you'd previously downloaded, it
 asks once whether to delete those files, keep them and stop updating
-them, or cancel and leave your picks unchanged. Nothing is ever removed
+them, or cancel and leave your picks unchanged. Songs you marked "Keep
+my version" are never deleted by this prompt. Nothing is ever removed
 without you being asked first.
 
 
@@ -179,6 +180,9 @@ doing for the few seconds that takes (it is deliberately not hidden).
 Nothing installs itself without you clicking that button first, and you can turn the automatic check off in
 Settings if you'd rather check manually at:
 https://github.com/VenB304/LegacyDownloader/releases
+
+In the console menu the same notice appears and pressing U starts the
+update (Windows only).
 
 On Linux, the self-updater checks for new releases the same way but
 never applies them automatically, since the release zip doesn't ship a

@@ -188,7 +188,7 @@ Just run `LegacyDownloader-GUI.bat` again any time. It remembers your folder and
 your song choices, and clicking **Download / Check for updates** grabs
 anything new since your last visit.
 
-- **Add or remove songs**: click **Select maps / songs** again, tick or untick whatever you want, and click OK. If you untick songs you've already downloaded — a whole edition or just a few — you're asked once: **Delete the files** removes those files, **Keep the files, stop updating** leaves them on disk but stops updating them, and **Cancel** leaves your picks unchanged.
+- **Add or remove songs**: click **Select maps / songs** again, tick or untick whatever you want, and click OK. If you untick songs you've already downloaded — a whole edition or just a few — you're asked once: **Delete the files** removes those files, **Keep the files, stop updating** leaves them on disk but stops updating them, and **Cancel** leaves your picks unchanged. Songs you marked “Keep my version” are never deleted here.
 - **Change language**: the flag dropdown, top-right, any time.
 - **Adjust settings**: click **Settings** on the main window for auto-check,
   auto-launch, a download speed limit, checking for LegacyDownloader updates

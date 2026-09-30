@@ -68,9 +68,10 @@ immediately starts downloading the **base game** (no preview) — song packs are
 a deliberate second step you pick afterward. If the folder you choose already
 contains `Legacy.exe`, it falls back to a normal checked update with a preview.
 
-**Picking songs:** in the GUI, click **Select maps / songs** (works
-regardless of which radio, "Everything" or "Specific", is selected). In
-the console menu it's **[2] Choose which songs to get** → **[2] Specific
+**Picking songs:** in the GUI, choose **Specific** — the first time this
+opens the picker straight away, and afterwards **Select maps / songs**
+reopens it (that button is only available while **Specific** is selected;
+**Everything** needs no picking). In the console menu it's **[2] Choose which songs to get** → **[2] Specific
 maps / songs**. Either way it opens a picker where you can check whole
 editions or individual songs within them, search by title/artist/codename,
 and filter by Difficulty/Effort.
@@ -85,7 +86,8 @@ stored as `KEEPSONGS` in `config.txt`.
 
 **Unticking songs you already downloaded:** the tool asks once, for
 everything you unticked - **Delete the files**, **Keep the files, stop
-updating**, or **Cancel** to leave your picks unchanged.
+updating**, or **Cancel** to leave your picks unchanged. Songs you marked
+**Keep my version** are never deleted by this prompt.
 
 **Quick Launch:** after a successful check/update, both front-ends offer to
 launch `Legacy.exe` directly instead of just telling you to do it yourself —
@@ -145,6 +147,9 @@ itself without you clicking that button first, and you can turn the
 automatic check off in Settings if you'd rather check manually via the
 [Releases page](https://github.com/VenB304/LegacyDownloader/releases).
 
+In the console menu the same notice appears and pressing **U** starts the
+update (Windows only).
+
 On Linux, the self-updater checks for new releases the same way but never
 applies them automatically, since the release zip doesn't ship a Linux
 `rclone` binary — see [Running on Linux](#running-on-linux) below.
@@ -200,6 +205,7 @@ antivirus tools:
 - `bin/rclone.exe` *(gitignored — see below)*
 - `README.txt` — end-user instructions (ships inside the distributable bundle)
 - `LICENSE` — MIT license for this tool's own code (not the game content it downloads)
+- `THIRD-PARTY-NOTICES.txt` — the license notice for the bundled `rclone.exe`
 
 ## Running from a clone
 
