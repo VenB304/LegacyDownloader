@@ -423,10 +423,21 @@ function Show-LaunchPrompt {
     $btnLaunch.Left = 380 - 20 - $btnLaunch.Width
     $btnClose.Left = $btnLaunch.Left - 8 - $btnClose.Width
 
+    # The body is fixed at 44px (3 lines) in the layout above, which clips the
+    # last words of longer translations (Filipino wraps to 4 lines and lost
+    # "na." - found from the tutorial screenshots). Measure the wrapped text
+    # and grow the label, the buttons' row and the form to fit; unchanged
+    # (44 / 100 / 148) whenever it already fits.
+    $bodyWrapped = [System.Windows.Forms.TextRenderer]::MeasureText($lblBody.Text, $lblBody.Font, (New-Object System.Drawing.Size(288, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height + 4
+    $lblBody.AutoSize = $false
+    $lblBody.Height = [Math]::Max(44, $bodyWrapped)
+    $btnRowY = [Math]::Max(100, $lblBody.Bottom + 12)
+    $btnClose.Top = $btnRowY; $btnLaunch.Top = $btnRowY
+
     $btnLaunch.Add_Click({ param($s, $e) $f.Tag = 'launch'; $f.Close() })
     $btnClose.Add_Click({ param($s, $e) $f.Tag = ''; $f.Close() })
 
-    $f.ClientSize = New-Object System.Drawing.Size(380, 148)
+    $f.ClientSize = New-Object System.Drawing.Size(380, ($btnRowY + 32 + 16))
     $f.AcceptButton = $btnLaunch
     $f.CancelButton = $btnClose
     $f.Controls.AddRange(@($iconBox, $lblHead, $lblBody, $btnClose, $btnLaunch))
@@ -755,6 +766,21 @@ function Show-SettingsWindow {
     }
     $btnSave.Left = 460 - 16 - $btnSave.Width
     $btnCancel.Left = $btnSave.Left - 8 - $btnCancel.Width
+
+    # The two footer hints are one line in English but wrap to two in longer
+    # languages (German's runs off the right edge and collides with the hint
+    # below - found from the tutorial screenshots, not the self-test).
+    # AutoSize off + measured wrapped height, then everything below shifts:
+    # unchanged positions (426 / 446 / 490) whenever both fit on one line.
+    foreach ($h in @($hintRestart, $hintLog)) {
+        $h.AutoSize = $false
+        $wrapped = [System.Windows.Forms.TextRenderer]::MeasureText($h.Text, $h.Font, (New-Object System.Drawing.Size(428, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height + 2
+        $h.Height = [Math]::Max(16, $wrapped)
+    }
+    $hintLog.Top = $hintRestart.Bottom + 2
+    $btnSave.Top = $hintLog.Bottom + 4
+    $btnCancel.Top = $btnSave.Top
+    $f.ClientSize = New-Object System.Drawing.Size(460, ($btnSave.Top + 30 + 14))
 
     $btnSave.Add_Click({
         param($s, $e)
@@ -1587,11 +1613,13 @@ function Show-SongBrowserDialog {
     $colEditionLabel.SortMode = [System.Windows.Forms.DataGridViewColumnSortMode]::NotSortable
     [void]$clbEditions.Columns.Add($colEditionLabel)
 
-    $btnColumns = New-Btn (T 'gui.songbrowser_btn_columns') 596 42 94 22 $false
+    # 25px tall at y=40 (was 22 at y=42): descenders (g, p, y) clip at 22px, seen in
+    # the Filipino/Dutch tutorial screenshots. Same size as the Keep button.
+    $btnColumns = New-Btn (T 'gui.songbrowser_btn_columns') 596 40 94 25 $false
     $btnColumns.Anchor = 'Top,Right'
-    $btnCheckShown = New-Btn (T 'gui.songbrowser_btn_check_shown') 698 42 130 22 $false
+    $btnCheckShown = New-Btn (T 'gui.songbrowser_btn_check_shown') 698 40 130 25 $false
     $btnCheckShown.Anchor = 'Top,Right'
-    $btnUncheckShown = New-Btn (T 'gui.songbrowser_btn_uncheck_shown') 836 42 150 22 $false
+    $btnUncheckShown = New-Btn (T 'gui.songbrowser_btn_uncheck_shown') 836 40 150 25 $false
     $btnUncheckShown.Anchor = 'Top,Right'
 
     # The fixed widths above were sized for the English text and clip
