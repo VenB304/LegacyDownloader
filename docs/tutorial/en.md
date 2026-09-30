@@ -171,11 +171,11 @@ touched by an update, modded or not.
 
 The progress bar and the log box below it update live — you'll see the game
 and each song pack listed as they finish, one by one. **Don't close the
-window while this is running.** When everything's done, you'll see:
-
-> **You're all set!** Open `Legacy.exe` in your game folder to play.
-
-That's your confirmation it worked — go start the game.
+window while this is running.** When everything's done, you'll see a
+**Ready to Play** prompt with a **Launch Game** button — click it to open
+`Legacy.exe` and close Legacy Downloader in one step. (Turn on
+**Automatically launch the game and close** in Settings if you'd rather
+skip this prompt entirely and go straight to playing every time.)
 
 ## 8. Coming back later for new songs
 
@@ -189,7 +189,13 @@ anything new since your last visit.
   delete those files too, or just stop getting updates for them while
   keeping what you already have.
 - **Change language**: the flag dropdown, top-right, any time.
-- **Adjust settings**: click **Settings** on the main window for auto-check, auto-launch, a download speed limit, and an advanced custom share URL.
+- **Adjust settings**: click **Settings** on the main window for auto-check,
+  auto-launch, a download speed limit, checking for LegacyDownloader updates
+  automatically, and an advanced custom share URL.
+- **Updating Legacy Downloader itself**: when a new version is available, a
+  button appears next to Settings on the main window. Click it and the tool
+  updates itself in place and reopens automatically — no manual re-download
+  needed.
 
 ---
 

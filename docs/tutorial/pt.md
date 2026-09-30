@@ -182,12 +182,12 @@ tocadas por uma atualização, modificada ou não.
 A barra de progresso e a caixa de registro abaixo dela se atualizam ao
 vivo — você verá o jogo e cada pacote de músicas listados conforme
 terminam, um por um. **Não feche a janela enquanto isso estiver
-rodando.** Quando tudo estiver pronto, você verá:
-
-> **Você está atualizado! Abra Legacy.exe na sua pasta do jogo para
-> jogar.**
-
-Essa é sua confirmação de que funcionou — vá iniciar o jogo.
+rodando.** Quando tudo estiver pronto, você verá uma janela **"Pronto para
+jogar"** com um botão **"Iniciar jogo"** — clique nele para abrir
+`Legacy.exe` e fechar o Legacy Downloader em um só clique. (Ative
+**"Iniciar o jogo automaticamente e fechar, assim que nada mais for
+necessário"** em Configurações se preferir pular essa confirmação e ir
+direto para o jogo toda vez.)
 
 ## 8. Voltando depois por novas músicas
 
@@ -202,7 +202,14 @@ Verificar atualizações"** pega tudo que é novo desde sua última visita.
   receber atualizações para eles mantendo o que você já tem.
 - **Mudar idioma**: o menu suspenso da bandeira, no canto superior
   direito, a qualquer momento.
-- **Ajustar configurações**: clique em **Configurações** na janela principal para verificação automática, inicialização automática, um limite de velocidade de download e uma URL de compartilhamento personalizada avançada.
+- **Ajustar configurações**: clique em **Configurações** na janela
+  principal para verificação automática, inicialização automática, um
+  limite de velocidade de download, verificação automática de atualizações do
+  LegacyDownloader e uma URL de compartilhamento personalizada avançada.
+- **Atualizar o próprio Legacy Downloader**: quando uma nova versão estiver
+  disponível, um botão aparece ao lado de **Configurações** na janela
+  principal. Clique nele e a ferramenta se atualiza no mesmo local e reabre
+  automaticamente — nenhum novo download manual necessário.
 
 ---
 

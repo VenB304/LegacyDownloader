@@ -183,12 +183,11 @@ vengono mai toccate da un aggiornamento, modificato o no.
 La barra di avanzamento e il registro sottostante si aggiornano in tempo
 reale — vedrai il gioco e ogni pacchetto di canzoni elencati man mano che
 finiscono, uno alla volta. **Non chiudere la finestra mentre questo è in
-corso.** Quando tutto è finito, vedrai:
-
-> **Sei aggiornato! Apri Legacy.exe nella tua cartella di gioco per
-> giocare.**
-
-Questa è la tua conferma che ha funzionato — vai ad avviare il gioco.
+corso.** Quando tutto è finito, vedrai un avviso **"Pronto per giocare"** con un
+pulsante **"Avvia gioco"** — fai clic per aprire `Legacy.exe` e chiudere Legacy
+Downloader in un solo clic. (Attiva **"Avvia automaticamente il gioco e chiudi,
+non appena non serve più nulla"** nelle Impostazioni se preferisci saltare del
+tutto questo avviso e iniziare a giocare direttamente ogni volta.)
 
 ## 8. Tornare più tardi per nuove canzoni
 
@@ -204,7 +203,14 @@ tua ultima visita.
   di riceverne gli aggiornamenti tenendo ciò che hai già.
 - **Cambiare lingua**: il menu a tendina della bandiera, in alto a destra,
   in qualsiasi momento.
-- **Regolare le impostazioni**: fai clic su **Impostazioni** nella finestra principale per il controllo automatico, l'avvio automatico, un limite di velocità di download e un URL di condivisione personalizzato avanzato.
+- **Regolare le impostazioni**: fai clic su **Impostazioni** nella finestra
+  principale per il controllo automatico, l'avvio automatico, un limite di
+  velocità di download, il controllo automatico degli aggiornamenti di
+  LegacyDownloader e un URL di condivisione personalizzato avanzato.
+- **Aggiornare Legacy Downloader stesso**: quando è disponibile una nuova
+  versione, appare un pulsante accanto a **Impostazioni** nella finestra
+  principale. Fai clic su di esso e lo strumento si aggiorna sul posto e si
+  riapre automaticamente — nessun nuovo download manuale necessario.
 
 ---
 

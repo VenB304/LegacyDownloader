@@ -182,11 +182,11 @@ aangeraakt door een update, gemod of niet.
 De voortgangsbalk en het logvak eronder werken live bij — je ziet het
 spel en elk songpakket vermeld zodra ze klaar zijn, één voor één.
 **Sluit het venster niet terwijl dit bezig is.** Als alles klaar is, zie
-je:
-
-> **Je bent klaar! Open Legacy.exe in je spelmap om te spelen.**
-
-Dat is je bevestiging dat het gelukt is — ga het spel starten.
+je een melding **"Klaar om te spelen"** met een knop **"Spel starten"** —
+klik erop om `Legacy.exe` te openen en Legacy Downloader in één stap te
+sluiten. (Schakel **"Het spel automatisch starten en sluiten, zodra er niets
+meer nodig is"** in bij Instellingen als je deze melding liever helemaal
+overslaat en elke keer meteen wilt spelen.)
 
 ## 8. Later terugkomen voor nieuwe nummers
 
@@ -202,7 +202,14 @@ updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
   hebt.
 - **Taal wijzigen**: de vlag-vervolgkeuzelijst, rechtsboven, op elk
   moment.
-- **Instellingen aanpassen**: klik op **Instellingen** in het hoofdvenster voor automatisch controleren, automatisch starten, een downloadsnelheidslimiet en een geavanceerde aangepaste share-URL.
+- **Instellingen aanpassen**: klik op **Instellingen** in het hoofdvenster
+  voor automatisch controleren, automatisch starten, een
+  downloadsnelheidslimiet, automatisch op LegacyDownloader-updates controleren
+  en een geavanceerde aangepaste share-URL.
+- **Legacy Downloader zelf bijwerken**: wanneer er een nieuwe versie
+  beschikbaar is, verschijnt er een knop naast **Instellingen** in het
+  hoofdvenster. Klik erop en de tool werkt zichzelf ter plekke bij en opent
+  daarna automatisch opnieuw — handmatig opnieuw downloaden is niet nodig.
 
 ---
 

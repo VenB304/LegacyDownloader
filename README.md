@@ -20,12 +20,16 @@ out of date on every run), folder-level detection, a dry-run preview
 before anything downloads, and protected files so a patched `Legacy.exe`
 or Kinect DLL is never silently overwritten.
 
-> **Upgrading from an older version?** Delete everything from your old
+> **Upgrading from an older version?** If you're already on V10 or later,
+> LegacyDownloader can update itself in place — see
+> [Keeping the tool itself updated](#keeping-the-tool-itself-updated) below.
+> If you're upgrading from V9.x or earlier, delete everything from your old
 > install folder *except* `config.txt`, then extract the new zip into that
 > same folder - `config.txt` (your game folder, editions, and language) is
 > picked up automatically. Extracting the new zip on top of an old install
 > **without** deleting the old files first leaves the old launchers sitting
-> next to the new ones, since unzipping never removes files.
+> next to the new ones, since unzipping never removes files. This is the
+> last time you'll need to do it manually.
 
 ## Getting started
 
@@ -71,6 +75,13 @@ maps / songs**. Either way it opens a picker where you can check whole
 editions or individual songs within them, search by title/artist/codename,
 and filter by Difficulty/Effort.
 
+**Quick Launch:** after a successful check/update, both front-ends offer to
+launch `Legacy.exe` directly instead of just telling you to do it yourself —
+in the GUI, a "Ready to Play" prompt with a **Launch Game** button; in the
+console menu, a one-line prompt to press L then Enter. Turn on **Automatically
+launch the game and close** in Settings to skip this prompt entirely and go
+straight from opening the tool to playing.
+
 ## Software requirements
 
 Legacy Offline PC itself needs a handful of Microsoft runtimes/drivers
@@ -103,9 +114,26 @@ window) for a few extra options:
 - A custom share URL, if the default one ever needs to change — paste
   either a Nextcloud share link (the friendly one Nextcloud itself gives
   you) or the raw WebDAV link, either works
+- Check for LegacyDownloader updates automatically — see
+  [Keeping the tool itself updated](#keeping-the-tool-itself-updated) below
 
 Bandwidth limit and share URL changes take effect the next time you start
 the tool, not immediately.
+
+## Keeping the tool itself updated
+
+LegacyDownloader can check for its own newer releases and update itself in
+place — no more manually downloading a new zip and extracting it over your
+old folder. When an update is available, a button appears next to Settings
+on the main window (e.g. **"V10.1 Update Available"**); clicking it closes
+the tool, installs the update, and reopens automatically. Nothing installs
+itself without you clicking that button first, and you can turn the
+automatic check off in Settings if you'd rather check manually via the
+[Releases page](https://github.com/VenB304/LegacyDownloader/releases).
+
+On Linux, the self-updater checks for new releases the same way but never
+applies them automatically, since the release zip doesn't ship a Linux
+`rclone` binary — see [Running on Linux](#running-on-linux) below.
 
 ## Language
 

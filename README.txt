@@ -27,10 +27,14 @@ things to choose between.)
 UPGRADING FROM AN OLDER VERSION
 --------------------------------
 
-Delete everything from your old install folder EXCEPT "config.txt", then
-extract this new zip into that same folder - config.txt (your game
-folder, editions, and language) is picked up automatically, no re-setup
-needed.
+If you're already on V10 or later, LegacyDownloader can update itself in
+place - see "KEEPING THE TOOL ITSELF UPDATED" below.
+
+If you're upgrading from V9.x or earlier: delete everything from your old
+install folder EXCEPT "config.txt", then extract this new zip into that
+same folder - config.txt (your game folder, editions, and language) is
+picked up automatically, no re-setup needed. This is the last time you'll
+need to do it manually.
 
 If you extract this zip on top of an old install WITHOUT deleting the
 old files first, the old launcher(s) will just sit there unused next to
@@ -68,6 +72,13 @@ AFTER SETUP
 
 The GUI stays open and shows your current status. Hit "Download /
 Check for updates" whenever you want new songs.
+
+After a successful check/update, both the GUI and console offer to
+launch Legacy.exe directly instead of just telling you to do it
+yourself - in the GUI, a "Ready to Play" prompt with a "Launch Game"
+button; in the console menu, a one-line prompt to press L then Enter.
+Turn on "Automatically launch the game and close" in Settings to skip
+this prompt entirely.
 
 In the console menu you'll see:
 
@@ -137,9 +148,28 @@ window) for a few extra options:
   - A custom share URL, if the default one ever needs to change - paste
     either a Nextcloud share link (the friendly one Nextcloud itself
     gives you) or the raw WebDAV link, either works
+  - Check for LegacyDownloader updates automatically - see
+    "KEEPING THE TOOL ITSELF UPDATED" below
 
 Bandwidth limit and share URL changes take effect the next time you
 start the tool, not immediately.
+
+
+KEEPING THE TOOL ITSELF UPDATED
+--------------------------------
+
+LegacyDownloader can check for its own newer releases and update itself
+in place - no more manually downloading a new zip and extracting it over
+your old folder. When an update is available, a button appears next to
+Settings on the main window; clicking it closes the tool, installs the
+update, and reopens automatically. Nothing installs itself without you
+clicking that button first, and you can turn the automatic check off in
+Settings if you'd rather check manually at:
+https://github.com/VenB304/LegacyDownloader/releases
+
+On Linux, the self-updater checks for new releases the same way but
+never applies them automatically, since the release zip doesn't ship a
+Linux rclone binary.
 
 
 LANGUAGE

@@ -185,12 +185,11 @@ kailanman ginagalaw ng update, minodify man o hindi.
 Ang progress bar at ang log box sa ibaba nito ay nag-a-update nang live —
 makikita mong nakalista ang laro at bawat song pack habang natatapos, isa-isa.
 **Huwag isara ang window habang tumatakbo ito.** Kapag tapos na ang lahat,
-makikita mo ito:
-
-> **Handa ka na!** Buksan ang `Legacy.exe` sa iyong folder ng laro para
-> maglaro.
-
-Iyon ang kumpirmasyon mo na gumana ito — simulan mo na ang laro.
+makikita mo ang prompt na **Handa Nang Maglaro** na may button na
+**Buksan ang Laro** — i-click ito para buksan ang `Legacy.exe` at isara ang
+Legacy Downloader sa isang hakbang. (I-on ang **Awtomatikong buksan ang laro
+at isara ito, kapag wala nang kailangan pa** sa Mga Setting kung mas gusto mong
+laktawan ang prompt na ito at dumiretso agad sa paglalaro sa bawat pagkakataon.)
 
 ## 8. Pagbalik mamaya para sa bagong kanta
 
@@ -206,7 +205,13 @@ noong huli mong pagbisita.
   o itigil na lang ang pagkuha ng update para sa mga ito habang itinatago
   ang mayroon ka na.
 - **Baguhin ang wika**: ang flag dropdown, sa kanang-itaas, anumang oras.
-- **Ayusin ang mga setting**: i-click ang **Mga Setting** sa main window para sa auto-check, auto-launch, limitasyon sa bilis ng download, at advanced na custom share URL.
+- **Ayusin ang mga setting**: i-click ang **Mga Setting** sa main window para sa
+  auto-check, auto-launch, limitasyon sa bilis ng download, awtomatikong
+  mag-check ng update ng LegacyDownloader, at advanced na custom share URL.
+- **Pag-update sa Legacy Downloader mismo**: kapag may bagong bersyon na
+  available, may lalabas na button sa tabi ng **Mga Setting** sa main window.
+  I-click ito at ia-update ng tool ang sarili nito doon mismo at awtomatikong
+  magbubukas ulit — hindi na kailangang mag-download ulit nang manu-mano.
 
 ---
 

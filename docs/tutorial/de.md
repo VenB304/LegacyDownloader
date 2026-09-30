@@ -184,13 +184,12 @@ einem Update nie angerührt, ob modifiziert oder nicht.
 Der Fortschrittsbalken und das Protokollfeld darunter aktualisieren sich
 live — du siehst das Spiel und jedes Song-Paket aufgelistet, sobald sie
 fertig sind, eins nach dem anderen. **Schließe das Fenster nicht, während
-das läuft.** Wenn alles fertig ist, siehst du:
-
-> **Du bist aktuell! Öffne Legacy.exe in deinem Spielordner, um zu
-> spielen.**
-
-Das ist deine Bestätigung, dass alles geklappt hat — geh und starte das
-Spiel.
+das läuft.** Wenn alles fertig ist, siehst du eine
+**„Bereit zum Spielen"**-Abfrage mit einem Button **„Spiel starten"** —
+klicke darauf, um `Legacy.exe` zu öffnen und Legacy Downloader mit einem
+Klick zu schließen. (Aktiviere **„Spiel automatisch starten und schließen,
+sobald nichts mehr nötig ist"** in den Einstellungen, wenn du diese Abfrage
+lieber ganz überspringen und jedes Mal direkt losspielen möchtest.)
 
 ## 8. Später wiederkommen für neue Songs
 
@@ -205,7 +204,14 @@ Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
   sollen oder ob nur die Updates dafür gestoppt werden sollen, während du
   behältst, was du schon hast.
 - **Sprache ändern**: das Flaggen-Dropdown oben rechts, jederzeit.
-- **Einstellungen anpassen**: klicke auf **Einstellungen** im Hauptfenster für automatische Prüfung, automatisches Starten, ein Download-Geschwindigkeitslimit und eine erweiterte eigene Share-URL.
+- **Einstellungen anpassen**: klicke auf **Einstellungen** im Hauptfenster
+  für automatische Prüfung, automatisches Starten, ein
+  Download-Geschwindigkeitslimit, automatisches Suchen nach
+  LegacyDownloader-Updates und eine erweiterte eigene Share-URL.
+- **Legacy Downloader selbst aktualisieren**: wenn eine neue Version verfügbar
+  ist, erscheint ein Button neben **Einstellungen** im Hauptfenster. Klicke
+  darauf und das Tool aktualisiert sich direkt an Ort und Stelle und öffnet
+  sich automatisch wieder — kein manueller erneuter Download nötig.
 
 ---
 

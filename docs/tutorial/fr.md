@@ -184,12 +184,12 @@ touchés par une mise à jour, moddée ou non.
 La barre de progression et le journal en dessous se mettent à jour en
 direct — vous verrez le jeu et chaque pack de chansons listés au fur et à
 mesure qu'ils se terminent, un par un. **Ne fermez pas la fenêtre pendant
-que cela s'exécute.** Une fois tout terminé, vous verrez :
-
-> **Vous êtes à jour. Ouvrez Legacy.exe dans votre dossier de jeu pour
-> jouer.**
-
-C'est votre confirmation que tout a fonctionné — allez lancer le jeu.
+que cela s'exécute.** Une fois tout terminé, vous verrez une invite
+**« Prêt à jouer »** avec un bouton **« Lancer le jeu »** — cliquez dessus pour
+ouvrir `Legacy.exe` et fermer Legacy Downloader en un clic. (Activez
+**« Lancer automatiquement le jeu et fermer, une fois qu'il n'y a plus rien à faire »**
+dans les Paramètres si vous préférez ignorer cette invite et commencer à
+jouer directement à chaque fois.)
 
 ## 8. Revenir plus tard pour de nouvelles chansons
 
@@ -206,7 +206,14 @@ dernière visite.
   jour tout en gardant ce que vous avez déjà.
 - **Changer de langue** : le menu déroulant du drapeau, en haut à droite, à
   tout moment.
-- **Ajuster les paramètres** : cliquez sur **Paramètres** dans la fenêtre principale pour la vérification automatique, le lancement automatique, une limite de vitesse de téléchargement, et une URL de partage personnalisée avancée.
+- **Ajuster les paramètres** : cliquez sur **Paramètres** dans la fenêtre
+  principale pour la vérification automatique, le lancement automatique, une
+  limite de vitesse de téléchargement, la vérification automatique des mises à
+  jour de LegacyDownloader, et une URL de partage personnalisée avancée.
+- **Mettre à jour Legacy Downloader lui-même** : quand une nouvelle version est
+  disponible, un bouton apparaît à côté de **Paramètres** dans la fenêtre
+  principale. Cliquez dessus et l'outil se met à jour sur place et se rouvre
+  automatiquement — aucun retéléchargement manuel nécessaire.
 
 ---
 
