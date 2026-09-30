@@ -601,6 +601,30 @@ function Invoke-AppUpdateNow($UpdateInfo) {
     $script:Form.Close()
 }
 
+function Invoke-CaptureState {
+    # Dev-only screenshot hook (tools\capture-tutorial-screenshots.ps1 sets
+    # LEGACY_CAPTURE_STATE in the child process it launches; nothing else
+    # does, and an unset variable makes this a no-op). Opens one window state
+    # that otherwise needs a real completed download or a real newer release
+    # to reach, and which an out-of-process capture script can't drive
+    # (the self-test fakes a pending update the same way, but only from
+    # inside this process). Never launches Legacy.exe or starts an update.
+    switch ($env:LEGACY_CAPTURE_STATE) {
+        'quicklaunch' {
+            $script:Cfg.AutoLaunch = $false
+            Show-LaunchPrompt
+        }
+        'update' {
+            $curVer = Get-AppVersion
+            $major = 0
+            [void][int]::TryParse((($curVer -replace '^[vV]', '') -split '\.')[0], [ref]$major)
+            $script:PendingUpdate = [PSCustomObject]@{ Available = $true; Checked = $true; CurrentVersion = $curVer; LatestVersion = ('V' + ($major + 1)); DownloadUrl = ''; ZipName = ''; ErrMsg = '' }
+            Refresh-UpdateStatusButton
+            [void](Show-UpdateConfirmDialog $script:PendingUpdate)
+        }
+    }
+}
+
 function Refresh-UpdateStatusButton {
     if ($null -eq $script:BtnUpdateAvailable) { return }
     if ($null -eq $script:PendingUpdate -or -not $script:PendingUpdate.Available) {
@@ -4270,6 +4294,7 @@ function Build-MainForm {
             param($s, $e)
             if ($script:AutoRunDone) { return }
             $script:AutoRunDone = $true
+            if ($env:LEGACY_CAPTURE_STATE) { Invoke-CaptureState; return }
             if ($script:FirstRunMode -eq 'get' -and -not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
                 if (Test-GameFolder $script:Cfg.GamePath) { On-Check } else { Start-FirstRunBaseDownload }
                 return
