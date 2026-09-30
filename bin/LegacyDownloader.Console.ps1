@@ -254,7 +254,7 @@ function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$Song
     # Linux support): AUTO-mode downloads were unaffected (Invoke-AllMapsSync
     # only ever does Join-Path $GamePath 'maps', no embedded separator) but
     # downloading a SPECIFIC edition would silently write to the wrong path.
-    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongIncludeArgs $SongCodes) -Label "edition-$Edition" | Out-Null
+    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongFilterArgs -Edition $Edition -Songs $SongCodes -GamePath $GamePath) -Label "edition-$Edition" | Out-Null
     Write-Host ""
 }
 
@@ -271,7 +271,7 @@ function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
         }
     }
     Write-Host (T 'sync.all_editions')
-    Invoke-RcloneCopy "$Conn`maps" $mapsDir -Label 'allmaps' | Out-Null
+    Invoke-RcloneCopy "$Conn`maps" $mapsDir (Get-SongFilterArgs -GamePath $GamePath) -Label 'allmaps' | Out-Null
     Write-Host ""
 }
 
@@ -432,7 +432,7 @@ function Show-UpdatePreview {
     }
 }
 
-function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters) {
+function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters, [string]$GamePath = '') {
     # Maps/songs picker. Default view is a tree - one row per edition with a
     # tri-state mark (x / [ ] / [square]-partial) and Right/Left to expand
     # it into its songs, each with their own checkbox. Typing a search, or
@@ -456,6 +456,14 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
     $selectedKeys    = $ctx.SelectedKeys
     $rowByKey = @{}
     foreach ($r in $rows) { $rowByKey["$($r.Edition)|$($r.Code)"] = $r }
+
+    # "Keep my version" locks (KEEPSONGS), toggled with F7 on a song row. Only
+    # a song that's really on disk can be kept (built lazily on first use).
+    # Returned as KeepSongs when the picker is confirmed.
+    $keepSet = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $keepSeed = Get-SongFilterMap (Load-Config).KeepSongs
+    foreach ($ked in $keepSeed.Keys) { foreach ($kc in $keepSeed[$ked]) { [void]$keepSet.Add("$ked|$kc") } }
+    $localKeys = $null
 
     $expanded         = New-Object System.Collections.Generic.HashSet[string]
     $search           = ''
@@ -566,6 +574,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             # inside a bare sub-expression. $(...) (the subexpression
             # operator) does accept a full statement, if included.
             Write-Host $(if ($active) { T 'songbrowser.help' } else { T 'songbrowser.tree_help' })
+            Write-Host (T 'songbrowser.keep_help')
             $editionLabel = if ($editionFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EditionDisplay $editionFilter }
             $diffLabel    = if ($difficultyFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-DifficultyTier $difficultyFilter }
             $effortLabel  = if ($effortFilter -eq 'ALL') { T 'songbrowser.filter_all' } else { Format-EffortTier $effortFilter }
@@ -575,7 +584,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
             Write-Host ""
 
             $consoleHeight = try { [Console]::WindowHeight } catch { 30 }
-            $viewportRows = [Math]::Max(5, $consoleHeight - 10)
+            $viewportRows = [Math]::Max(5, $consoleHeight - 11)
             if ($cursor -lt $viewStart) { $viewStart = $cursor }
             if ($cursor -ge $viewStart + $viewportRows) { $viewStart = $cursor - $viewportRows + 1 }
             if ($viewStart -lt 0) { $viewStart = 0 }
@@ -612,12 +621,13 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
                     } else {
                         $r = $rowByKey["$($row.Edition)|$($row.Code)"]
                         $mark = if ($selectedKeys.Contains("$($row.Edition)|$($row.Code)")) { 'x' } else { ' ' }
+                        $keptStar = if ($keepSet.Contains("$($row.Edition)|$($row.Code)")) { '*' } else { ' ' }
                         $title = if ($r) { Get-SongTitleForDisplay $r $ctx.DuplicateKeys } else { $row.Code }
                         if ($active) {
-                            $line = "{0}{1}  [{2}] {3,-40} {4,-22} {5,-14}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(40, $title.Length))), (([string]$r.Artist).Substring(0, [Math]::Min(22, ([string]$r.Artist).Length))), (Format-EditionDisplay $row.Edition)
+                            $line = "{0}{1}  [{2}]{6}{3,-40} {4,-22} {5,-14}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(40, $title.Length))), (([string]$r.Artist).Substring(0, [Math]::Min(22, ([string]$r.Artist).Length))), (Format-EditionDisplay $row.Edition), $keptStar
                         } else {
                             $artist = if ($r) { [string]$r.Artist } else { '' }
-                            $line = "{0}{1}  [{2}] {3,-42} {4}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(42, $title.Length))), $artist
+                            $line = "{0}{1}  [{2}]{5}{3,-42} {4}" -f $pointer, $indent, $mark, ($title.Substring(0, [Math]::Min(42, $title.Length))), $artist, $keptStar
                         }
                         Write-Host $line
                     }
@@ -683,6 +693,20 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
                 $effortFilter = $opts[($idx + 1) % $opts.Count]
                 $cursor = 0; $viewStart = 0; continue
             }
+            if ($key.Key -eq 'F7') {
+                if ($cursor -lt $visible.Count -and $visible[$cursor].Kind -eq 'Song') {
+                    $k = "$($visible[$cursor].Edition)|$($visible[$cursor].Code)"
+                    if ($null -eq $localKeys) {
+                        $localKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+                        $localMap = Get-LocalSongMap $GamePath
+                        foreach ($led in $localMap.Keys) { foreach ($lc in $localMap[$led]) { [void]$localKeys.Add("$led|$lc") } }
+                    }
+                    if ($keepSet.Contains($k)) { [void]$keepSet.Remove($k) }
+                    elseif ($localKeys.Contains($k)) { [void]$keepSet.Add($k) }
+                    else { Pause-Brief (T 'gui.songbrowser_keep_none_local') 2 }
+                }
+                continue
+            }
             if ($key.Key -eq 'Backspace') {
                 # Only reset the cursor when Backspace actually changed
                 # something - pressing it in the tree view (search already
@@ -700,7 +724,13 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters)
                         if (-not (Confirm-YesNo (T 'maps.go_back_list'))) { return @{ Action = 'Cancel' } }
                         continue
                     }
-                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; Catalog = $catalog }
+                    $keepByEd = [ordered]@{}
+                    foreach ($kk in ($keepSet | Sort-Object)) {
+                        $ki = $kk.IndexOf('|'); $ked = $kk.Substring(0, $ki)
+                        if (-not $keepByEd.Contains($ked)) { $keepByEd[$ked] = @() }
+                        $keepByEd[$ked] += $kk.Substring($ki + 1).ToLowerInvariant()
+                    }
+                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; KeepSongs = (Format-SongFilters $keepByEd); Catalog = $catalog }
                 }
                 if ($cursor -eq $cancelIdx) { return @{ Action = 'Cancel' } }
                 if ($cursor -lt $visible.Count) {
@@ -890,9 +920,13 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
             continue
         }
 
-        $browse = Show-SongBrowser -CurrentEditions $CurrentEditions -CurrentSongFilters $CurrentSongFilters
+        $browse = Show-SongBrowser -CurrentEditions $CurrentEditions -CurrentSongFilters $CurrentSongFilters -GamePath $GamePath
         Write-Host ""
         if ($browse.Action -ne 'Confirm') { continue }
+        # Keep-my-version locks are saved at the picker's Done, like the
+        # selection itself is (see below) - and before the preview, so the
+        # scan and any download that follows already honor them.
+        Save-Config @{ KeepSongs = [string]$browse.KeepSongs }
 
         # The picker's own "Done" is the real confirmation - captured here so
         # it survives regardless of what happens with the preview/download

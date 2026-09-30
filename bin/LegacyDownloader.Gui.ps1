@@ -1081,7 +1081,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
 
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
         if (@($Plan.Songs).Count -gt 0) {
-            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = @() }
+            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = @(Get-SongFilterArgs -GamePath $gp -KeepSongs $script:Cfg.KeepSongs) }
         }
     } else {
         $planEditions = @($Plan.Songs | Where-Object { $_.Count -gt 0 } | ForEach-Object { [string]$_.Edition })
@@ -1090,7 +1090,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         }
         foreach ($ed in $planEditions) {
             $dispLabel = Format-EditionDisplay $ed
-            $extra = Get-SongIncludeArgs (Get-EffectiveSongs $ed $script:Cfg.SongFilters)
+            $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp -KeepSongs $script:Cfg.KeepSongs)
             $jobs += @{ Label = $dispLabel; Source = ($script:Conn + "maps/$ed"); Dest = (Join-Path $gp "maps\$ed"); Extra = $extra }
         }
     }
@@ -1586,6 +1586,19 @@ function Show-SongBrowserDialog {
     $btnColumns.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnColumns.Text, $btnColumns.Font).Width + $pad
     $btnColumns.Left = $btnCheckShown.Left - 8 - $btnColumns.Width
 
+    # "Keep my version": acts on the HIGHLIGHTED rows (not the ticked ones -
+    # ticking means "track this song"). Sits at the left end of this row,
+    # over the song list, well clear of the right-pinned buttons above.
+    # 25px tall (the neighbours are 22): a descender ('y' in "Keep my version")
+    # clips at 22px with this font.
+    $btnKeep = New-Btn (T 'gui.songbrowser_btn_keep') 268 40 150 25 $false
+    $btnKeep.Width = [System.Windows.Forms.TextRenderer]::MeasureText($btnKeep.Text, $btnKeep.Font).Width + $pad
+    $btnKeep.Enabled = $false
+    $keepTip = New-Object System.Windows.Forms.ToolTip
+    $keepTip.AutoPopDelay = 12000
+    $keepTip.SetToolTip($btnKeep, (T 'gui.songbrowser_keep_tip'))
+    $updateKeepButton = { $btnKeep.Enabled = ($null -ne $script:SbCtx -and $lv.SelectedItems.Count -gt 0) }
+
     $lv = New-Object System.Windows.Forms.ListView
     $lv.SetBounds(268, 66, 718, 500)
     $lv.Anchor = 'Top,Left,Right,Bottom'
@@ -1620,8 +1633,35 @@ function Show-SongBrowserDialog {
         Artist     = @{ Header = (T 'gui.songbrowser_col_artist');     Width = 150; Value = { param($r) if ($r.IsUnknown) { '' } else { [string]$r.Artist } } }
         Difficulty = @{ Header = (T 'gui.songbrowser_col_difficulty'); Width = 80;  Value = { param($r) if ($r.IsUnknown) { '' } else { Format-DifficultyTier $r.Difficulty } } }
         Effort     = @{ Header = (T 'gui.songbrowser_col_effort');     Width = 80;  Value = { param($r) if ($r.IsUnknown) { '' } else { Format-EffortTier $r.Effort } } }
+        # "Keep my version" flag. The only field backed by MUTABLE state
+        # (everything else is fixed once the catalog loads and cached in
+        # $script:SbFieldCache), so $refreshList fills it from $script:SbKeep
+        # directly and the Keep button updates the visible cell in place.
+        Kept       = @{ Header = (T 'gui.songbrowser_col_kept');       Width = 68;  Value = { param($r) '' } }
     }
     $script:SbVisibleFieldKeys = @($fieldByKey.Keys)
+
+    # "Keep my version" locks (KEEPSONGS): "Edition|Code" keys, seeded from
+    # config and written back into the dialog's result on OK. Persisted
+    # entries are never pruned here - a lock on a song that's currently
+    # unchecked (or deleted) is harmless and comes back into force if the
+    # song is ticked/re-downloaded later. $script:SbLocalKeys (what's really
+    # on disk) is built lazily on the first Keep click, not at dialog open.
+    $keptMark = [string][char]0x2713
+    $script:SbKeep = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $keepMapSeed = Get-SongFilterMap $script:Cfg.KeepSongs
+    foreach ($ked in $keepMapSeed.Keys) { foreach ($kc in $keepMapSeed[$ked]) { [void]$script:SbKeep.Add("$ked|$kc") } }
+    $script:SbLocalKeys = $null
+    $formatKeepSongs = {
+        $byEd = [ordered]@{}
+        foreach ($k in ($script:SbKeep | Sort-Object)) {
+            $i = $k.IndexOf('|')
+            $ked = $k.Substring(0, $i)
+            if (-not $byEd.Contains($ked)) { $byEd[$ked] = @() }
+            $byEd[$ked] += $k.Substring($i + 1).ToLowerInvariant()
+        }
+        Format-SongFilters $byEd
+    }
 
     # Format-DifficultyTier/Format-EffortTier are pure functions over a tiny
     # domain (tiers 1-4, efforts 0-4, plus "unrated") but were being called
@@ -1780,7 +1820,7 @@ function Show-SongBrowserDialog {
     $btnCancel = New-Btn (T 'gui.btn_cancel') 906 574 80 30 $false
     $btnCancel.Anchor = 'Bottom,Right'
 
-    $f.Controls.AddRange(@($txtSearch, $btnClearSearch, $btnDifficulty, $btnEffort, $lblEditions, $clbEditions, $btnColumns, $btnCheckShown, $btnUncheckShown, $lv, $barLoading, $lblStatus, $btnOk, $btnCancel))
+    $f.Controls.AddRange(@($txtSearch, $btnClearSearch, $btnDifficulty, $btnEffort, $lblEditions, $clbEditions, $btnKeep, $btnColumns, $btnCheckShown, $btnUncheckShown, $lv, $barLoading, $lblStatus, $btnOk, $btnCancel))
     $btnClearSearch.BringToFront()
     foreach ($c in @($txtSearch, $btnDifficulty, $btnEffort, $clbEditions, $btnColumns, $btnCheckShown, $btnUncheckShown)) { $c.Enabled = $false }
 
@@ -2004,7 +2044,7 @@ function Show-SongBrowserDialog {
             # generic -TypeName re-resolves that type on every single call,
             # and with up to ~1000 rows that's ~1000 avoidable type
             # resolutions for a 5-element array each time.
-            $values = foreach ($k in $script:SbVisibleFieldKeys) { $rowCache[$k] }
+            $values = foreach ($k in $script:SbVisibleFieldKeys) { if ($k -eq 'Kept') { if ($script:SbKeep.Contains($key)) { $keptMark } else { '' } } else { $rowCache[$k] } }
             # ListViewItem(string[]) takes every subitem's text in one call
             # instead of one .SubItems.Add() interop call per field -
             # ::new(), not New-Object $ctor($array): New-Object's
@@ -2026,6 +2066,7 @@ function Show-SongBrowserDialog {
         $lv.EndUpdate()
         & $deferGuardReset { $script:SbSyncingList = $false }
         & $updateStatusLabel
+        & $updateKeepButton
     }
 
     $populateFromCatalog = {
@@ -2181,6 +2222,28 @@ function Show-SongBrowserDialog {
     $btnCancel.Add_Click({ param($s, $e) $f.Tag = ''; $f.Close() })
     $f.AcceptButton = $btnOk
     $f.CancelButton = $btnCancel
+
+    $lv.Add_SelectedIndexChanged({ & $updateKeepButton })
+    $btnKeep.Add_Click({
+        param($s, $e)
+        if ($null -eq $script:SbCtx -or $lv.SelectedItems.Count -eq 0) { return }
+        if ($null -eq $script:SbLocalKeys) {
+            $script:SbLocalKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            $localMap = Get-LocalSongMap $script:Cfg.GamePath
+            foreach ($led in $localMap.Keys) { foreach ($lc in $localMap[$led]) { [void]$script:SbLocalKeys.Add("$led|$lc") } }
+        }
+        # Only a song that's really on disk has "my version" to protect.
+        $targets = @($lv.SelectedItems | Where-Object { $script:SbLocalKeys.Contains([string]$_.Tag) })
+        if ($targets.Count -eq 0) { Warn-Box (T 'gui.songbrowser_keep_none_local') (T 'gui.window_title'); return }
+        # All already kept -> this click releases them; otherwise keeps the lot.
+        $release = $true
+        foreach ($it in $targets) { if (-not $script:SbKeep.Contains([string]$it.Tag)) { $release = $false; break } }
+        $keptIdx = [Array]::IndexOf($script:SbVisibleFieldKeys, 'Kept')
+        foreach ($it in $targets) {
+            if ($release) { [void]$script:SbKeep.Remove([string]$it.Tag) } else { [void]$script:SbKeep.Add([string]$it.Tag) }
+            if ($keptIdx -ge 0) { $it.SubItems[$keptIdx].Text = if ($release) { '' } else { $keptMark } }
+        }
+    })
 
     $script:SbRemoteMap = $null
     $applyUnknownSongs = {
@@ -2419,6 +2482,37 @@ function Show-SongBrowserDialog {
                 Write-Host "  SELFTEST FAILURE: ticking a song's checkbox threw: $($_.Exception.Message)" -ForegroundColor Red
             }
             try {
+                # Keep my version: highlight a row, treat it as on disk,
+                # click Keep, then click again to release.
+                $ktItem = $lv.Items[0]
+                $ktKey = [string]$ktItem.Tag
+                if ($null -eq $script:SbLocalKeys) { $script:SbLocalKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase) }
+                [void]$script:SbLocalKeys.Add($ktKey)
+                $keptCol = [Array]::IndexOf($script:SbVisibleFieldKeys, 'Kept')
+                $disabledWithoutSelection = -not $btnKeep.Enabled
+                $lv.SelectedItems.Clear()
+                $ktItem.Selected = $true
+                [System.Windows.Forms.Application]::DoEvents()
+                $enabledOnSelect = $btnKeep.Enabled
+                $btnKeep.PerformClick()
+                $keptAfterClick = $script:SbKeep.Contains($ktKey)
+                $cellOn = ($keptCol -ge 0 -and $ktItem.SubItems[$keptCol].Text -eq $keptMark)
+                $keepString = [string](& $formatKeepSongs)
+                $edPart = $ktKey.Substring(0, $ktKey.IndexOf('|'))
+                $codePart = $ktKey.Substring($ktKey.IndexOf('|') + 1).ToLowerInvariant()
+                $stringOk = ((Get-SongFilterMap $keepString)[$edPart] -contains $codePart)
+                $btnKeep.PerformClick()
+                $releasedAfterSecondClick = -not $script:SbKeep.Contains($ktKey)
+                $cellOff = ($keptCol -ge 0 -and $ktItem.SubItems[$keptCol].Text -eq '')
+                $noOverlap = ($btnKeep.Right + 8 -le $btnColumns.Left)
+                Write-Host "  keep my version: disabled w/o selection: $disabledWithoutSelection, enabled on select: $enabledOnSelect, kept after click: $keptAfterClick, cell marked: $cellOn, saved string has it: $stringOk, released on 2nd click: $releasedAfterSecondClick, cell cleared: $cellOff, button clear of Columns: $noOverlap"
+                if (-not ($disabledWithoutSelection -and $enabledOnSelect -and $keptAfterClick -and $cellOn -and $stringOk -and $releasedAfterSecondClick -and $cellOff -and $noOverlap)) {
+                    Write-Host "  SELFTEST FAILURE: keep my version behaved unexpectedly" -ForegroundColor Red
+                }
+            } catch {
+                Write-Host "  SELFTEST FAILURE: keep my version threw: $($_.Exception.Message)" -ForegroundColor Red
+            }
+            try {
                 $sw = [System.Diagnostics.Stopwatch]::StartNew()
                 & $setEditionChecked 1 $true
                 [System.Windows.Forms.Application]::DoEvents()
@@ -2589,7 +2683,10 @@ function Show-SongBrowserDialog {
     $ret = $null
     if ($f.Tag -eq 'ok') {
         $ret = Resolve-SongSelection -Context $script:SbCtx -SelectedKeys $script:SbCtx.SelectedKeys
-        if ($null -ne $ret) { $ret.Catalog = $script:SbCatalog }
+        if ($null -ne $ret) {
+            $ret.Catalog = $script:SbCatalog
+            $ret.KeepSongs = [string](& $formatKeepSongs)
+        }
     }
     $f.Dispose()
     return $ret
@@ -3899,7 +3996,7 @@ function On-SongModeChanged {
             $script:RbEverything.Checked = $true
             return
         }
-        Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
+        Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters; KeepSongs = [string]$res.KeepSongs }
         $script:Cfg = Load-Config
     }
     Refresh-Tracking
@@ -3913,7 +4010,7 @@ function On-SelectMapsSongs {
     # Cancel at the delete/keep prompt discards the whole selection, same as
     # cancelling the picker itself - nothing deleted, nothing saved.
     if (-not (Invoke-SongRemovalCleanup -OldEditionList $oldEditionList -OldSongFilters $script:Cfg.SongFilters -Res $res)) { return }
-    Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters }
+    Save-Config @{ Editions = $res.Editions; SongFilters = $res.SongFilters; KeepSongs = [string]$res.KeepSongs }
     $script:Cfg = Load-Config
     $script:RbSpecific.Checked = $true
     Refresh-Tracking

@@ -444,6 +444,7 @@ function Load-Config {
     $lang     = ''
     $shareUrl = ''
     $songFilters = ''
+    $keepSongs = ''
     $autoLaunch = $false
     $autoCheck = $false
     $bwLimit = ''
@@ -460,6 +461,7 @@ function Load-Config {
         if ($key -eq 'LANG')        { $lang = $value }
         if ($key -eq 'SHAREURL')    { $shareUrl = $value }
         if ($key -eq 'SONGFILTERS') { $songFilters = $value }
+        if ($key -eq 'KEEPSONGS')   { $keepSongs = $value }
         if ($key -eq 'AUTOLAUNCH')  { $autoLaunch = ($value -eq 'true') }
         if ($key -eq 'AUTOCHECK')   { $autoCheck = ($value -eq 'true') }
         if ($key -eq 'BWLIMIT')     { $bwLimit = $value }
@@ -469,7 +471,7 @@ function Load-Config {
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
     return [PSCustomObject]@{
         GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl
-        SongFilters = $songFilters; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck; BwLimit = $bwLimit
+        SongFilters = $songFilters; KeepSongs = $keepSongs; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck; BwLimit = $bwLimit
         CheckAppUpdates = $checkAppUpdates
     }
 }
@@ -480,7 +482,7 @@ function Save-Config([hashtable]$Values = @{}) {
     # pile of per-key special cases (the old positional-parameter version
     # needed a separate ContainsKey/Read-ConfigValue trick for every value
     # added after GamePath/Editions). Recognized keys: GamePath, Editions,
-    # Lang, ShareUrl, SongFilters, AutoLaunch, AutoCheck, BwLimit,
+    # Lang, ShareUrl, SongFilters, KeepSongs, AutoLaunch, AutoCheck, BwLimit,
     # CheckAppUpdates.
     $current = if (Test-Path -LiteralPath $script:ConfigPath) { Load-Config } else { $null }
     function Resolve-Field([string]$Key, $Default) {
@@ -493,6 +495,7 @@ function Save-Config([hashtable]$Values = @{}) {
     $Lang        = Resolve-Field 'Lang' 'en'
     $ShareUrl    = Resolve-Field 'ShareUrl' ''
     $SongFilters = Resolve-Field 'SongFilters' ''
+    $KeepSongs   = Resolve-Field 'KeepSongs' ''
     $AutoLaunch  = Resolve-Field 'AutoLaunch' $false
     $AutoCheck   = Resolve-Field 'AutoCheck' $false
     $BwLimit     = Resolve-Field 'BwLimit' ''
@@ -537,6 +540,13 @@ function Save-Config([hashtable]$Values = @{}) {
         "# edition:code1|code2;edition2:code3. An edition with no entry here"
         "# means 'every song in it'."
         "SONGFILTERS=$SongFilters"
+        ""
+        "# KEEPSONGS (set from the Search songs... screen with 'Keep my"
+        "# version') - songs you have your own modified copy of. They stay"
+        "# tracked, but an update never overwrites your file. Same format as"
+        "# SONGFILTERS: edition:code1|code2;edition2:code3. Only takes effect"
+        "# while the file exists locally."
+        "KEEPSONGS=$KeepSongs"
         ""
         "# AUTOLAUNCH (also settable from Settings) - when true, automatically"
         "# launches Legacy.exe and closes this tool right after a successful"
@@ -1175,6 +1185,85 @@ function Get-SongIncludeArgs([string[]]$Codes) {
     return $out
 }
 
+function ConvertTo-RcloneGlobLiteral([string]$Text) {
+    # rclone filter patterns are globs; backslash-escape the metacharacters so
+    # a song code or edition folder name is always matched literally.
+    return [regex]::Replace($Text, '[\\*?\[\]{}]', { param($m) '\' + $m.Value })
+}
+
+function Get-KeptSongCodes {
+    # The codes from KEEPSONGS ("Keep my version") for $Edition whose file
+    # really exists in maps\<edition>. A lock only protects a file the user
+    # actually has - a kept song that isn't on disk (deleted, or never
+    # downloaded) is simply fetched again, and is protected from then on.
+    param(
+        [Parameter(Mandatory = $true)][string]$Edition,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GamePath,
+        [string]$KeepSongs = ''
+    )
+    if ([string]::IsNullOrEmpty($GamePath)) { return @() }
+    $map = Get-SongFilterMap $KeepSongs
+    if (-not $map.Contains($Edition)) { return @() }
+    $dir = Join-Path (Join-Path $GamePath 'maps') $Edition
+    if (-not (Test-Path -LiteralPath $dir)) { return @() }
+    $present = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    foreach ($f in @(Get-ChildItem -LiteralPath $dir -Filter '*_pc.ipk' -File -ErrorAction SilentlyContinue)) {
+        [void]$present.Add(($f.BaseName -replace '_pc$', ''))
+    }
+    return @($map[$Edition] | Where-Object { $present.Contains($_) })
+}
+
+function Get-SongFilterArgs {
+    # The rclone filter args for one transfer, combining the wanted-songs
+    # subset (SONGFILTERS) with the "Keep my version" locks (KEEPSONGS).
+    #   -Edition <name>: the source is maps/<edition>; -Songs is that
+    #     edition's effective subset ($null/empty = every song).
+    #   -Edition omitted: the source is the whole maps tree (Everything /
+    #     AUTO mode); only lock exclusions apply.
+    # With no kept song present this is EXACTLY Get-SongIncludeArgs (or
+    # nothing), so users without locks see no change at all. With locks it
+    # has to use ordered --filter rules: rclone ignores a plain --exclude
+    # whenever any --include is present (measured against the bundled
+    # rclone.exe), and --filter rules are first-match-wins in the order
+    # given - lock exclusions first, then the includes, then an explicit
+    # "- *" (--filter does NOT add the implicit exclude-everything-else that
+    # --include does).
+    # -KeepSongs omitted = read it from config.txt, so the background scan
+    # job and the download queue pick it up without extra plumbing.
+    param(
+        [string]$Edition = '',
+        [string[]]$Songs = $null,
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$GamePath,
+        $KeepSongs = $null
+    )
+    if ($null -eq $KeepSongs) { $KeepSongs = [string](Load-Config).KeepSongs }
+    $KeepSongs = [string]$KeepSongs
+
+    if ($Edition -ne '') {
+        $kept = @(Get-KeptSongCodes -Edition $Edition -GamePath $GamePath -KeepSongs $KeepSongs)
+        if ($kept.Count -eq 0) { return @(Get-SongIncludeArgs $Songs) }
+        $out = @()
+        foreach ($c in $kept) { $out += @('--filter', "- /$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk") }
+        $wanted = @($Songs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        if ($wanted.Count -gt 0) {
+            foreach ($c in $wanted) { $out += @('--filter', "+ $(ConvertTo-RcloneGlobLiteral $c.Trim().ToLowerInvariant())_pc.ipk") }
+            $out += @('--filter', '- *')
+        }
+        $out += '--ignore-case'
+        return $out
+    }
+
+    $out = @()
+    $map = Get-SongFilterMap $KeepSongs
+    foreach ($ed in @($map.Keys)) {
+        foreach ($c in @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)) {
+            $out += @('--filter', "- /$(ConvertTo-RcloneGlobLiteral $ed)/$(ConvertTo-RcloneGlobLiteral $c)_pc.ipk")
+        }
+    }
+    if ($out.Count -gt 0) { $out += '--ignore-case' }
+    return $out
+}
+
 function ConvertTo-RatingTier([string]$Raw) {
     # e.g. "2 - <tier name, accented>" -> 2. Blank/unparseable -> $null ("not rated").
     if ([string]::IsNullOrWhiteSpace($Raw)) { return $null }
@@ -1602,6 +1691,7 @@ function Get-UpdatePlan {
         [Parameter(Mandatory = $true)][string]$GamePath,
         [Parameter(Mandatory = $true)][string]$Editions,
         [string]$SongFilters = '',
+        $KeepSongs = $null,
         [switch]$IgnoreWrongLevel
     )
 
@@ -1645,7 +1735,7 @@ function Get-UpdatePlan {
     $songs         = @()
 
     if ($Editions.ToUpper() -eq 'AUTO') {
-        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + $script:ScanArgs) -Label 'scan-allmaps'
+        $mapRun = Invoke-RcloneCapture (@('copy', "$script:Conn`maps", $mapsDir) + (Get-SongFilterArgs -GamePath $GamePath -KeepSongs $KeepSongs) + $script:ScanArgs) -Label 'scan-allmaps'
         if ($mapRun.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
         $m = Parse-DryRun $mapRun.Lines
         $songBytes = $m.Bytes
@@ -1685,7 +1775,7 @@ function Get-UpdatePlan {
         # per-edition scan.
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) {
-            $includeArgs = Get-SongIncludeArgs (Get-EffectiveSongs $ed $SongFilters)
+            $includeArgs = Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $SongFilters) -GamePath $GamePath -KeepSongs $KeepSongs
             $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs) -Label "scan-edition-$ed"
             if ($r.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
             $p = Parse-DryRun $r.Lines
@@ -2483,7 +2573,7 @@ Export-ModuleMember -Function `
     Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `
     Test-ProtectedBaseFile, Get-ProtectedFileHashRecord, Update-ProtectedFileHashes, `
     Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl, `
-    Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, `
+    Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, Get-SongFilterArgs, Get-KeptSongCodes, `
     Get-SongCatalog, Get-CachedSongCatalog, Get-SongDisplay, Get-SongDisplayMap, Format-DifficultyTier, Format-EffortTier, `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
     Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, `
