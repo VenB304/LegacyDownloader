@@ -450,6 +450,10 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters,
     }
 
     $ctx = Initialize-SongSelectionContext -Catalog $catalog -CurrentEditions $CurrentEditions -CurrentSongFilters $CurrentSongFilters
+    # Also offer what is on the share but missing from the community sheet
+    # (a whole edition such as 3111, or single songs); an unreachable share
+    # just leaves the sheet's list as it was.
+    $null = Add-ShareOnlySongs -Context $ctx -RemoteMap (Get-RemoteSongMap)
     $rows            = $ctx.Rows
     $byEdition       = $ctx.ByEdition
     $catalogEditions = $ctx.CatalogEditions

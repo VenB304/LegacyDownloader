@@ -7,8 +7,9 @@ and its song "editions" from the public ovosimpatico Nextcloud share, using
 Ships with a WinForms GUI (default) and a text-menu console front-end,
 both available in 13 languages and both able to pick individual songs
 within an edition — not just whole editions — with search and
-Difficulty/Effort filters, and surface songs that are on the live share
-but missing from the community sheet. A **Requirements** checker
+Difficulty/Effort filters, and surface songs (and whole editions, such
+as Just Dance Wii) that are on the live share but missing from the
+community sheet. A **Requirements** checker
 verifies the Kinect SDKs and Visual C++ runtimes the game itself needs
 are installed and can fetch/install whatever's missing (Windows only —
 see [Software requirements](#software-requirements) below). Runs

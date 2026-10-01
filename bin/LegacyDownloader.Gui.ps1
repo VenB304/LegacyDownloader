@@ -2177,6 +2177,27 @@ function Show-SongBrowserDialog {
         & $updateKeepButton
     }
 
+    $rebuildEditionRows = {
+        # (Re)builds the edition list ("All" + one row per edition in the
+        # context) and keeps the edition the user had selected, if it is still
+        # there. Called when the catalog loads and again if the share scan adds
+        # an edition the sheet doesn't have (e.g. 3111). The guard keeps
+        # RowEnter from refiltering mid-rebuild; refreshEditionCheckboxes
+        # below re-arms and later clears it.
+        $script:SbSyncingEditions = $true
+        $script:SbEditionCodes = @($script:SbCtx.CatalogEditions)
+        $clbEditions.Rows.Clear()
+        [void]$clbEditions.Rows.Add([System.Windows.Forms.CheckState]::Unchecked, '')
+        foreach ($ed in $script:SbEditionCodes) { [void]$clbEditions.Rows.Add([System.Windows.Forms.CheckState]::Unchecked, (Format-EditionDisplay $ed)) }
+        $selIndex = 0
+        if ($null -ne $script:SbFilterEdition) {
+            $found = [Array]::IndexOf($script:SbEditionCodes, [string]$script:SbFilterEdition)
+            if ($found -ge 0) { $selIndex = $found + 1 } else { $script:SbFilterEdition = $null }
+        }
+        & $refreshEditionCheckboxes
+        & $selectEditionRow $selIndex
+    }
+
     $populateFromCatalog = {
         param($catalog)
         $script:SbCatalog = $catalog
@@ -2192,14 +2213,8 @@ function Show-SongBrowserDialog {
         # overhead documented on its own inner dispatch, over up to ~1000
         # rows.
         foreach ($r in $script:SbCtx.Rows) { $computeFieldCache.Invoke($r) }
-        $script:SbEditionCodes = @($script:SbCtx.CatalogEditions)
         $script:SbFilterEdition = $null
-
-        $clbEditions.Rows.Clear()
-        [void]$clbEditions.Rows.Add([System.Windows.Forms.CheckState]::Unchecked, '')
-        foreach ($ed in $script:SbEditionCodes) { [void]$clbEditions.Rows.Add([System.Windows.Forms.CheckState]::Unchecked, (Format-EditionDisplay $ed)) }
-        & $refreshEditionCheckboxes
-        & $selectEditionRow 0
+        & $rebuildEditionRows
 
         & $refreshList
         & $updateSortArrows
@@ -2353,67 +2368,30 @@ function Show-SongBrowserDialog {
     $applyUnknownSongs = {
         # Merges share-only songs (present in the actual live share, absent
         # from the community sheet) into the already-loaded catalog context.
-        # Scoped to editions the sheet already covers - an edition missing
-        # from the sheet ENTIRELY would need its own new clbEditions row,
-        # and that's a bigger structural change than "this edition has one
-        # extra unmapped song".
+        # Covers both extra songs in editions the sheet has AND whole editions
+        # the sheet lacks (3111, Just Dance Wii) - the latter get their own
+        # row in the edition list via $rebuildEditionRows (V11.3).
         #
         # Can be called from either background job's completion handler,
         # whichever finishes second - it's a no-op until BOTH the catalog
         # ($script:SbCtx) and the remote listing ($script:SbRemoteMap) are
         # ready, so calling it early from the faster of the two is safe.
         if ($null -eq $script:SbCtx -or $null -eq $script:SbRemoteMap) { return }
-        $newRows = New-Object System.Collections.Generic.List[object]
-        foreach ($ed in $script:SbCtx.CatalogEditions) {
-            if (-not $script:SbRemoteMap.Contains($ed)) { continue }
-            # ::new(), not New-Object: New-Object unrolls an array argument
-            # into one constructor argument per element instead of binding
-            # it to the single IEnumerable<T> parameter, and throws "Cannot
-            # find an overload... argument count: <N>" as a result.
-            #
-            # OrdinalIgnoreCase, not the default comparer: Ven found a real
-            # case, edition 2's sheet codename "firework" vs. the actual
-            # share file "Firework_pc.ipk" - a case-sensitive match treated
-            # that as a brand new, unmapped song and showed a spurious
-            # second "Firework" row alongside the real "Firework — Katy
-            # Perry" one from the sheet. An evaluation pass against the
-            # live share found exactly one such case-only mismatch across
-            # the whole catalog (this one) plus 18 genuinely unmatched
-            # files with no sheet entry at all in any casing - those 18
-            # are correctly still real share-only rows; only the
-            # comparison needed to stop being case-sensitive. This matches
-            # the convention Get-SongIncludeArgs already uses elsewhere
-            # (lowercases + rclone --ignore-case) - codenames are meant to
-            # be compared case-insensitively throughout this codebase.
-            $existing = [System.Collections.Generic.HashSet[string]]::new([string[]]$script:SbCtx.ByEdition[$ed], [System.StringComparer]::OrdinalIgnoreCase)
-            foreach ($code in $script:SbRemoteMap[$ed]) {
-                if ($existing.Contains($code)) { continue }
-                [void]$existing.Add($code)
-                [void]$script:SbCtx.ByEdition[$ed].Add($code)
-                if (($script:SbCtx.WasAuto -or $script:SbCtx.TrackedList -contains $ed) -and -not $script:SbCtx.FilterMap.Contains($ed)) {
-                    [void]$script:SbCtx.SelectedKeys.Add("$ed|$code")
-                }
-                # Title/Artist/Difficulty/Effort stay $null on purpose - the
-                # Title field falls back to the code, and Artist/Difficulty/
-                # Effort's formatters render blank (not "Not rated") for
-                # IsUnknown rows, since "not rated" is itself sheet data we
-                # don't have here.
-                $newRow = [PSCustomObject]@{ Edition = $ed; Code = $code; Title = $null; Artist = $null; Difficulty = $null; Effort = $null; IsUnknown = $true }
-                $computeFieldCache.Invoke($newRow)
-                $newRows.Add($newRow)
-            }
-        }
+        $editionCountBefore = @($script:SbCtx.CatalogEditions).Count
+        # Add-ShareOnlySongs (Core) does the merge: extra songs in editions the
+        # sheet covers (case-insensitive code match - sheet "firework" vs share
+        # "Firework_pc.ipk" is one song) AND whole editions the sheet has no
+        # rows for (e.g. 3111). Title/Artist/Difficulty/Effort stay $null on
+        # purpose - Title falls back to the code, and the other formatters
+        # render blank (not "Not rated") for IsUnknown rows.
+        $newRows = @(Add-ShareOnlySongs -Context $script:SbCtx -RemoteMap $script:SbRemoteMap)
         if ($newRows.Count -eq 0) { return }
-        # Not "@($script:SbCtx.Rows) + @($newRows)" - PowerShell's array +
-        # operator throws "Argument types do not match" here (Rows' element
-        # type and a fresh [PSCustomObject][] apparently aren't compatible
-        # enough for it), so build the combined array through a List
-        # instead, which has no such restriction.
-        $combinedRows = [System.Collections.Generic.List[object]]::new()
-        $combinedRows.AddRange([object[]]$script:SbCtx.Rows)
-        $combinedRows.AddRange([object[]]$newRows)
-        $script:SbCtx.Rows = $combinedRows.ToArray()
-        & $refreshEditionCheckboxes
+        foreach ($newRow in $newRows) { $computeFieldCache.Invoke($newRow) }
+        if (@($script:SbCtx.CatalogEditions).Count -ne $editionCountBefore) {
+            & $rebuildEditionRows
+        } else {
+            & $refreshEditionCheckboxes
+        }
         & $refreshList
     }
 

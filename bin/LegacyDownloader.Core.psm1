@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V11.2'
+$script:AppVersion = 'V11.3'
 
 function Get-AppVersion { return $script:AppVersion }
 
@@ -838,6 +838,7 @@ function Get-EditionTitle([string]$Edition) {
             1928 { return "Just Dance: Disney Party" }
             1929 { return "Just Dance: Disney Party 2" }
             2009 { return "Michael Jackson: The Experience" }
+            3111 { return "Just Dance Wii" }
             3112 { return "Just Dance Wii 2" }
             4118 { return "Just Dance Wii U" }
             4514 { return "Just Dance China" }
@@ -1699,7 +1700,66 @@ function Initialize-SongSelectionContext {
         SelectedKeys    = $selectedKeys
         DuplicateKeys   = $duplicateKeys
         WasAuto         = $wasAuto
+        # Editions that exist on the share but have no row in the community
+        # sheet at all (filled in by Add-ShareOnlySongs, e.g. 3111).
+        ShareOnlyEditions = (New-Object System.Collections.Generic.HashSet[string])
     }
+}
+
+function Add-ShareOnlySongs {
+    # Folds what is really on the share (Get-RemoteSongMap's edition -> codes
+    # map) into a song-selection context built from the community sheet, so
+    # the picker also offers songs the sheet doesn't know about. Two cases:
+    #   * an edition the sheet covers, plus share files it doesn't list: the
+    #     extra codes are added to that edition (codes compare case-
+    #     insensitively - sheet "firework" vs share "Firework_pc.ipk" is the
+    #     same song);
+    #   * an edition on the share that the sheet has NO rows for at all (JD
+    #     Wii, 3111): the whole edition is added, flagged in
+    #     Context.ShareOnlyEditions.
+    # Mutates the context (ByEdition, CatalogEditions, Rows, SelectedKeys,
+    # ShareOnlyEditions) and returns ONLY the rows it added (IsUnknown = $true,
+    # no Title/Artist - callers render the code). Seeds SelectedKeys the same
+    # way Initialize-SongSelectionContext does for catalog songs: tracked (or
+    # AUTO) with no filter = every code, with a filter = only the listed ones.
+    param(
+        [Parameter(Mandatory = $true)]$Context,
+        [AllowNull()]$RemoteMap
+    )
+    $added = New-Object System.Collections.Generic.List[object]
+    if ($null -eq $RemoteMap) { return @() }
+    foreach ($ed in @($RemoteMap.Keys)) {
+        $edName = [string]$ed
+        if ([string]::IsNullOrWhiteSpace($edName) -or -not (Test-SafeEditionName $edName)) { continue }
+        $isNewEdition = -not $Context.ByEdition.ContainsKey($edName)
+        if ($isNewEdition) { $Context.ByEdition[$edName] = New-Object System.Collections.Generic.List[string] }
+        $existing = [System.Collections.Generic.HashSet[string]]::new([string[]]@($Context.ByEdition[$edName]), [System.StringComparer]::OrdinalIgnoreCase)
+        $isTracked = $Context.WasAuto -or ($Context.TrackedList -contains $edName)
+        $hasFilter = $Context.FilterMap.Contains($edName)
+        foreach ($code in @($RemoteMap[$ed])) {
+            $codeName = [string]$code
+            if ([string]::IsNullOrWhiteSpace($codeName) -or $existing.Contains($codeName)) { continue }
+            [void]$existing.Add($codeName)
+            [void]$Context.ByEdition[$edName].Add($codeName)
+            # An edition with a sheet-known filter was already seeded by
+            # Initialize-SongSelectionContext; a share-only edition never was.
+            if ($isTracked -and ((-not $hasFilter) -or ($isNewEdition -and (@($Context.FilterMap[$edName]) -contains $codeName)))) {
+                [void]$Context.SelectedKeys.Add("$edName|$codeName")
+            }
+            $added.Add([PSCustomObject]@{ Edition = $edName; Code = $codeName; Title = $null; Artist = $null; Difficulty = $null; Effort = $null; IsUnknown = $true })
+        }
+        if ($isNewEdition) {
+            if ($Context.ByEdition[$edName].Count -eq 0) { [void]$Context.ByEdition.Remove($edName) }
+            else { [void]$Context.ShareOnlyEditions.Add($edName) }
+        }
+    }
+    if ($added.Count -eq 0) { return @() }
+    $combined = New-Object System.Collections.Generic.List[object]
+    $combined.AddRange([object[]]@($Context.Rows))
+    $combined.AddRange($added)
+    $Context.Rows = $combined.ToArray()
+    $Context.CatalogEditions = @($Context.ByEdition.Keys | Sort-EditionNames)
+    return $added.ToArray()
 }
 
 function Resolve-SongSelection {
@@ -1740,7 +1800,11 @@ function Resolve-SongSelection {
         $allCodes = @($Context.ByEdition[$ed])
         $checkedCodes = @($allCodes | Where-Object { $SelectedKeys.Contains("$ed|$_") })
         if ($checkedCodes.Count -eq 0) { continue }
-        $hasCheckedUnknown = $unknownCodesByEdition.ContainsKey($ed) -and (@($checkedCodes | Where-Object { $unknownCodesByEdition[$ed].Contains($_) })).Count -gt 0
+        # An edition the sheet has NO rows for (every row is share-only) has no
+        # "catalog subset" for an explicit list to protect: all-checked is simply
+        # the whole folder, so it stays 'ALL' and picks up songs added later.
+        $isShareOnlyEdition = $null -ne $Context.ShareOnlyEditions -and $Context.ShareOnlyEditions.Contains($ed)
+        $hasCheckedUnknown = (-not $isShareOnlyEdition) -and $unknownCodesByEdition.ContainsKey($ed) -and (@($checkedCodes | Where-Object { $unknownCodesByEdition[$ed].Contains($_) })).Count -gt 0
         $resultMap[$ed] = if ($checkedCodes.Count -eq $allCodes.Count -and -not $hasCheckedUnknown) { 'ALL' } else { $checkedCodes }
     }
     if ($resultMap.Count -eq 0) { return $null }
@@ -2818,7 +2882,7 @@ function Invoke-RequirementInstall {
 Export-ModuleMember -Function `
     Initialize-LegacyCore, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
-    Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Get-LocalEditions, Get-LocalSongCount, `
+    Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Add-ShareOnlySongs, Get-LocalEditions, Get-LocalSongCount, `
     Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
