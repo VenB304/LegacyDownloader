@@ -81,6 +81,7 @@
   "maps.removal_headline": "您取消勾選了已在電腦上的歌曲。要如何處理它們的檔案？",
   "maps.removal_hint": "保留的檔案會留在遊戲資料夾中，但不再更新。",
   "maps.removal_kept_note": "標記為「保留我的版本」的歌曲永遠不會在此處被刪除。",
+  "maps.removal_custom_note": "你自己加入的自訂歌曲（歌曲伺服器上沒有的檔案）永遠不會在此處被刪除。官方歌曲的修改版副本只有標記為「保留我的版本」才會受到保護。",
   "maps.removal_item_edition": "{edition} - 所有歌曲",
   "maps.removal_item_songs": "{edition} - {count} 首歌曲",
   "maps.removal_btn_delete": "刪除檔案",

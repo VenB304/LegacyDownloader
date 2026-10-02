@@ -722,7 +722,7 @@ function Show-SongBrowser([string]$CurrentEditions, [string]$CurrentSongFilters,
                         if (-not (Confirm-YesNo (T 'maps.go_back_list'))) { return @{ Action = 'Cancel' } }
                         continue
                     }
-                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; KeepSongs = (Format-KeepKeySet $keepSet); Catalog = $catalog }
+                    return @{ Action = 'Confirm'; Editions = $resolved.Editions; SongFilters = $resolved.SongFilters; KeepSongs = (Format-KeepKeySet $keepSet); Catalog = $catalog; Known = $ctx.ByEdition }
                 }
                 if ($cursor -eq $cancelIdx) { return @{ Action = 'Cancel' } }
                 if ($cursor -lt $visible.Count) {
@@ -949,17 +949,21 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         # way to answer for all of them or back out). Cancel returns $null =
         # "no change": nothing deleted, the new selection is discarded and
         # the pending download below never runs.
-        $removalItems = @(Get-SongRemovalPromptItems -Plan $removalPlan -GamePath $GamePath -KeepSongs $browse.KeepSongs)
+        # -KnownSongs: only songs the sheet or the share list are ever deleted; a
+        # custom map the user added to an edition folder is left alone.
+        $removalItems = @(Get-SongRemovalPromptItems -Plan $removalPlan -GamePath $GamePath -KeepSongs $browse.KeepSongs -KnownSongs $browse.Known)
         if ($removalItems.Count -gt 0) {
             Write-Host ""
             Write-Host (T 'maps.removal_headline')
             Write-Host (T 'maps.removal_hint')
             foreach ($ri in $removalItems) {
                 $riDisp = Format-EditionDisplay $ri.Edition
-                $riLine = if ($ri.Whole) { T 'maps.removal_item_edition' @{ edition = $riDisp } } else { T 'maps.removal_item_songs' @{ edition = $riDisp; count = $ri.Count } }
+                # "all songs" is only true when nothing in the folder is spared.
+                $riLine = if ($ri.Whole -and [int]$ri.CustomCount -eq 0) { T 'maps.removal_item_edition' @{ edition = $riDisp } } else { T 'maps.removal_item_songs' @{ edition = $riDisp; count = $ri.Count } }
                 Write-Host ("  - " + $riLine)
             }
             if (@($removalItems | Where-Object { $_.KeptCount -gt 0 }).Count -gt 0) { Write-Host (T 'maps.removal_kept_note') }
+            if (@($removalItems | Where-Object { $_.CustomCount -gt 0 }).Count -gt 0) { Write-Host (T 'maps.removal_custom_note') }
             Write-Host ""
             Write-Host ("[1] " + (T 'maps.removal_btn_delete'))
             Write-Host ("[2] " + (T 'maps.removal_btn_keep'))
@@ -980,7 +984,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
                     if ($r.Failed) {
                         $failKey = if ($r.Whole) { 'maps.cant_delete' } else { 'maps.cant_delete_songs' }
                         Write-Host (T $failKey @{ edition = $r.Edition }) -ForegroundColor Yellow
-                    } elseif ($r.Whole) {
+                    } elseif ($r.Whole -and $r.CustomLeft -eq 0 -and $r.KeptLeft -eq 0) {
                         Write-Host (T 'maps.deleted' @{ edition = $r.Edition })
                     } else {
                         Write-Host (T 'maps.songs_deleted' @{ count = $r.Count; edition = $r.Edition })

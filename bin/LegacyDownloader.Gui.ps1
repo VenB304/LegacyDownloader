@@ -2768,6 +2768,9 @@ function Show-SongBrowserDialog {
         if ($null -ne $ret) {
             $ret.Catalog = $script:SbCatalog
             $ret.KeepSongs = [string](& $formatKeepSongs)
+            # edition -> every code the sheet or the share knows (share-only
+            # songs merged in); what a later "Delete the files" may remove.
+            $ret.Known = $script:SbCtx.ByEdition
         }
     }
     $f.Dispose()
@@ -3988,7 +3991,9 @@ function Show-RemovalPromptDialog($Items) {
     $lb.IntegralHeight = $false
     foreach ($it in @($Items)) {
         $disp = Format-EditionDisplay $it.Edition
-        $line = if ($it.Whole) { T 'maps.removal_item_edition' @{ edition = $disp } } else { T 'maps.removal_item_songs' @{ edition = $disp; count = $it.Count } }
+        # "all songs" is only true when nothing in the folder is spared; with the
+        # user's own files left behind, say how many songs will really go.
+        $line = if ($it.Whole -and [int]$it.CustomCount -eq 0) { T 'maps.removal_item_edition' @{ edition = $disp } } else { T 'maps.removal_item_songs' @{ edition = $disp; count = $it.Count } }
         [void]$lb.Items.Add($line)
     }
     $rows = [Math]::Min([Math]::Max($lb.Items.Count, 1), 8)
@@ -4007,6 +4012,18 @@ function Show-RemovalPromptDialog($Items) {
         $lblKept.Height = (Get-WrappedTextHeight $lblKept.Text $lblKept.Font $inner) + 4
         $y += $lblKept.Height
     }
+    # Same for the user's own files: a dropped edition's folder may hold custom
+    # songs that aren't on the share - the delete leaves them alone.
+    $customTotal = 0
+    foreach ($it in @($Items)) { $customTotal += [int]$it.CustomCount }
+    $lblCustom = $null
+    if ($customTotal -gt 0) {
+        $lblCustom = New-Label (T 'maps.removal_custom_note') $pad $y $inner 20
+        $lblCustom.AutoSize = $false
+        $lblCustom.ForeColor = $script:ColorMuted
+        $lblCustom.Height = (Get-WrappedTextHeight $lblCustom.Text $lblCustom.Font $inner) + 4
+        $y += $lblCustom.Height
+    }
     $y += 8
 
     $btnCancel.Left = $clientW - $pad - $btnCancel.Width
@@ -4023,6 +4040,7 @@ function Show-RemovalPromptDialog($Items) {
     $f.CancelButton = $btnCancel
     $f.Controls.AddRange(@($lblHead, $lblHint, $lb, $btnDelete, $btnKeep, $btnCancel))
     if ($null -ne $lblKept) { $f.Controls.Add($lblKept) }
+    if ($null -ne $lblCustom) { $f.Controls.Add($lblCustom) }
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
@@ -4052,7 +4070,9 @@ function Invoke-SongRemovalCleanup([string[]]$OldEditionList, [string]$OldSongFi
     # -KeepSongs from the picker's result, not config: the new locks aren't
     # saved until after this prompt, and a song marked Keep in THIS picker
     # session must already be protected from the Delete choice.
-    $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath -KeepSongs $Res.KeepSongs)
+    # -KnownSongs: only songs the sheet or the share list are ever deleted; a
+    # custom map the user added to an edition folder is left alone.
+    $items = @(Get-SongRemovalPromptItems -Plan $plan -GamePath $script:Cfg.GamePath -KeepSongs $Res.KeepSongs -KnownSongs $Res.Known)
     if ($items.Count -eq 0) { return $true }
 
     $choice = Show-RemovalPromptDialog $items
@@ -4457,8 +4477,9 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "`n=== Show-RemovalPromptDialog (every language; 1 item and 12 items) ==="
     try {
         $savedLangCode = Get-LanguageCode
-        $sampleWhole = [PSCustomObject]@{ Edition = '2015'; Whole = $true; Codes = @(); Count = 0 }
-        $sampleSongs = [PSCustomObject]@{ Edition = '2016'; Whole = $false; Codes = @('a', 'b', 'c'); Count = 3 }
+        # The whole-edition sample spares custom files and a kept song, so both notes render and are fit-checked.
+        $sampleWhole = [PSCustomObject]@{ Edition = '2015'; Whole = $true; Codes = @('x', 'y'); Count = 2; KeptCount = 1; CustomCount = 2; CustomNames = @('mine_pc.ipk', 'notes.txt') }
+        $sampleSongs = [PSCustomObject]@{ Edition = '2016'; Whole = $false; Codes = @('a', 'b', 'c'); Count = 3; KeptCount = 0; CustomCount = 0; CustomNames = @() }
         $twelve = @(1..6 | ForEach-Object { $sampleWhole; $sampleSongs })
         $overflows = 0
         foreach ($lg in $script:Langs) {
@@ -4478,7 +4499,7 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "`n=== Lock + removal logic (Core, throwaway temp folder) ==="
     $tg = Join-Path ([System.IO.Path]::GetTempPath()) ('ld_selftest_' + [guid]::NewGuid().ToString('N'))
     try {
-        foreach ($f0 in '2015\a_pc.ipk', '2015\mine_pc.ipk', '2016\solo_pc.ipk') {
+        foreach ($f0 in '2015\a_pc.ipk', '2015\mine_pc.ipk', '2015\mycustom_pc.ipk', '2016\solo_pc.ipk') {
             $p0 = Join-Path (Join-Path $tg 'maps') $f0
             New-Item -ItemType Directory -Force (Split-Path $p0) | Out-Null
             [System.IO.File]::WriteAllText($p0, 'x')
@@ -4486,10 +4507,14 @@ if ($env:LEGACY_GUI_SELFTEST) {
         $lk = '2015:mine;2016:solo'
         $bad = @()
         if (@(Get-SongRemovalPromptItems -Plan $null -GamePath $tg -KeepSongs '').Count -ne 0) { $bad += 'null plan must give no prompt items' }
-        $pi = @(Get-SongRemovalPromptItems -Plan @([pscustomobject]@{ Edition = '2015'; RemovedCodes = $null; WholeEditionRemoved = $true }, [pscustomobject]@{ Edition = '2016'; RemovedCodes = $null; WholeEditionRemoved = $true }) -GamePath $tg -KeepSongs $lk)
+        $kn = @{ '2015' = @('a', 'mine'); '2016' = @('solo') }   # mycustom is NOT a known song
+        $pi = @(Get-SongRemovalPromptItems -Plan @([pscustomobject]@{ Edition = '2015'; RemovedCodes = $null; WholeEditionRemoved = $true }, [pscustomobject]@{ Edition = '2016'; RemovedCodes = $null; WholeEditionRemoved = $true }) -GamePath $tg -KeepSongs $lk -KnownSongs $kn)
         if ($pi.Count -ne 1 -or $pi[0].Edition -ne '2015' -or $pi[0].KeptCount -ne 1) { $bad += 'a kept-only edition must not be offered; 2015 must report 1 kept song' }
+        elseif ($pi[0].CustomCount -ne 1 -or $pi[0].Count -ne 1) { $bad += 'the custom song must be counted as spared, only the known one as deletable' }
+        if (@(Get-SongRemovalPromptItems -Plan @([pscustomobject]@{ Edition = '2015'; RemovedCodes = $null; WholeEditionRemoved = $true }) -GamePath $tg -KeepSongs '').Count -ne 0) { $bad += 'with nothing known, a whole-edition removal must offer nothing' }
         $null = Invoke-SongRemovalDelete -Items $pi -GamePath $tg -KeepSongs $lk
         if ((Test-Path (Join-Path $tg 'maps\2015\a_pc.ipk')) -or -not (Test-Path (Join-Path $tg 'maps\2015\mine_pc.ipk'))) { $bad += 'delete must remove the normal song and keep the kept one' }
+        if (-not (Test-Path (Join-Path $tg 'maps\2015\mycustom_pc.ipk'))) { $bad += 'a custom song that is not on the share must survive a whole-edition delete' }
         $ur = @(Invoke-SongRemovalDelete -Items @([pscustomobject]@{ Edition = '..'; Whole = $true; Codes = @(); Count = 0 }) -GamePath (Join-Path $tg 'maps') -KeepSongs '')
         if (-not (Test-Path (Join-Path $tg 'maps')) -or -not $ur[0].Failed) { $bad += "an edition of '..' must be refused" }
         if ((@(Get-SongFilterArgs -Edition '2015' -Songs @('a') -GamePath $tg -KeepSongs '') -join ' ') -ne (@(Get-SongIncludeArgs @('a')) -join ' ')) { $bad += 'no locks must equal the plain include args' }

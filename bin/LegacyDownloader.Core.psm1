@@ -1859,21 +1859,54 @@ function Get-SongRemovalPlan {
     return $plan
 }
 
+function Add-DeletionLog {
+    # Appends one timestamped line per entry to bin\logs\deleted-files.txt: the
+    # permanent record of every file the song-removal prompt deleted (or tried
+    # to), and of what it deliberately left in place. A delete leaves no trace
+    # anywhere else, so without this a "my song disappeared" report can't be
+    # checked afterwards. It is a .txt on purpose: Invoke-RcloneLogRotation only
+    # prunes *.log, so run logs piling up can never push this record out. Capped
+    # (keeps the newest ~2000 lines once past 512 KB). Never throws.
+    param([string[]]$Lines)
+    if ($null -eq $Lines -or $Lines.Count -eq 0) { return }
+    try {
+        $dir = Get-RcloneLogDir
+        if ([string]::IsNullOrEmpty($dir)) { return }
+        $path = Join-Path $dir 'deleted-files.txt'
+        $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        $utf8 = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::AppendAllText($path, ((@($Lines) | ForEach-Object { "$stamp  $_" }) -join "`r`n") + "`r`n", $utf8)
+        if ((Get-Item -LiteralPath $path).Length -gt 524288) {
+            $tail = @(Get-Content -LiteralPath $path -Tail 2000 -Encoding UTF8)
+            [System.IO.File]::WriteAllLines($path, $tail, $utf8)
+        }
+    } catch { }
+}
+
 function Get-SongRemovalPromptItems {
     # Narrows a Get-SongRemovalPlan result down to what there is actually
-    # something to ask about: entries with real, DELETABLE files on disk. A
-    # dropped edition counts if its maps\<edition> folder holds anything
-    # besides songs the user marked Keep my version; a narrowed edition counts
-    # only if at least one of its unchecked songs is really there and isn't
-    # kept. KeptCount says how many kept songs sit in an entry, so the
-    # front-ends can tell the user they will be left alone. Front-ends show
-    # the items in ONE prompt, then hand them to Invoke-SongRemovalDelete.
+    # something to ask about: entries with real, DELETABLE song files on disk.
+    # A narrowed edition counts only if at least one of its unchecked songs is
+    # really there and isn't kept. A dropped edition counts if its maps\<edition>
+    # folder holds at least one song the song sheet or the share knows
+    # (-KnownSongs: edition -> codes, the picker's ByEdition) that isn't marked
+    # Keep my version.
+    #
+    # Only KNOWN songs are ever deleted. Anything else in a dropped edition's
+    # folder - a custom map the user added themselves, any other file, any
+    # sub-folder - is left alone and counted in CustomCount (names in
+    # CustomNames, for the log), so the front-ends can say so. -KnownSongs
+    # $null means "nothing is known", which deletes nothing: failing safe.
+    # KeptCount says how many Keep-my-version songs sit in an entry. Codes is
+    # the exact song codes (as named on disk) Invoke-SongRemovalDelete will
+    # remove. Front-ends show the items in ONE prompt, then hand them over.
     param(
         # AllowNull too: Get-SongRemovalPlan emits nothing (not an empty array)
         # when there is nothing to remove, so a caller's $plan is $null then.
         [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Plan,
         [Parameter(Mandatory = $true)][string]$GamePath,
-        $KeepSongs = $null
+        $KeepSongs = $null,
+        [AllowNull()]$KnownSongs = $null
     )
     $KeepSongs = Resolve-KeepSongsRaw $KeepSongs
     $items = @()
@@ -1885,14 +1918,28 @@ function Get-SongRemovalPromptItems {
         if (-not (Test-Path -LiteralPath $localDir -PathType Container)) { continue }
         $kept = @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)
         if ($entry.WholeEditionRemoved) {
-            $fileCount = @(Get-ChildItem -LiteralPath $localDir -File -Recurse -ErrorAction SilentlyContinue).Count
-            if ($fileCount -gt 0 -and ($fileCount - $kept.Count) -le 0) { continue }   # only kept songs in there
-            $items += [PSCustomObject]@{ Edition = $ed; Whole = $true; Codes = @(); Count = 0; KeptCount = $kept.Count }
+            $known = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            if ($null -ne $KnownSongs -and $KnownSongs.Contains($ed)) { foreach ($c in @($KnownSongs[$ed])) { [void]$known.Add([string]$c) } }
+            $codes = New-Object System.Collections.Generic.List[string]
+            $custom = New-Object System.Collections.Generic.List[string]
+            foreach ($e in @(Get-ChildItem -LiteralPath $localDir -Force -ErrorAction SilentlyContinue)) {
+                if (-not $e.PSIsContainer) {
+                    if ($e.Extension -ieq '.ipk' -and $e.BaseName -match '_pc$') {
+                        $code = $e.BaseName -replace '_pc$', ''
+                        if ($known.Contains($code)) { if ($kept -notcontains $code) { $codes.Add($code) }; continue }
+                    } elseif ($e.Name -match '^(?<code>.+)_pc\.ipk\.[^.]+\.partial$' -and $known.Contains($Matches['code'])) {
+                        continue   # an interrupted download of a known song: cleaned up together with it
+                    }
+                }
+                $custom.Add($e.Name)
+            }
+            if ($codes.Count -eq 0) { continue }   # nothing deletable (only kept songs and/or the user's own files)
+            $items += [PSCustomObject]@{ Edition = $ed; Whole = $true; Codes = @($codes); Count = $codes.Count; KeptCount = $kept.Count; CustomCount = $custom.Count; CustomNames = @($custom) }
         } else {
             $existing = @($entry.RemovedCodes | Where-Object { Test-Path -LiteralPath (Join-Path $localDir "${_}_pc.ipk") })
             $deletable = @($existing | Where-Object { $kept -notcontains $_ })
             if ($deletable.Count -gt 0) {
-                $items += [PSCustomObject]@{ Edition = $ed; Whole = $false; Codes = $deletable; Count = $deletable.Count; KeptCount = ($existing.Count - $deletable.Count) }
+                $items += [PSCustomObject]@{ Edition = $ed; Whole = $false; Codes = $deletable; Count = $deletable.Count; KeptCount = ($existing.Count - $deletable.Count); CustomCount = 0; CustomNames = @() }
             }
         }
     }
@@ -1900,16 +1947,21 @@ function Get-SongRemovalPromptItems {
 }
 
 function Invoke-SongRemovalDelete {
-    # Deletes the local files behind Get-SongRemovalPromptItems entries: a
-    # dropped edition's files, or just the unchecked <code>_pc.ipk files of a
-    # narrowed one. Songs marked Keep my version are NEVER deleted here - the
-    # lock protects the user's own modified copy from deletion as well as from
-    # updates (a whole edition is then emptied around them and its folder
-    # stays). Every path is confined to maps\<one folder>: an unsafe edition
-    # name is refused, not joined. Returns one result per item (Edition,
-    # Whole, Count = files removed, KeptLeft = kept songs left in place,
-    # Failed = $true if anything couldn't be removed, e.g. the game has it
-    # open) so each front-end can word its own messages. Never throws.
+    # Deletes the song files named by Get-SongRemovalPromptItems entries: each
+    # item's Codes as <code>_pc.ipk inside maps\<edition>. A dropped edition
+    # also loses the interrupted-download leftovers (*.partial) of those songs
+    # and, only if that leaves the folder completely empty, the folder itself -
+    # anything else in there (the user's own custom songs, other files,
+    # sub-folders) stays, and so does the folder. Songs marked Keep my version
+    # are NEVER deleted here - the lock protects the user's own modified copy
+    # from deletion as well as from updates. Every path is confined to
+    # maps\<one folder>: an unsafe edition name is refused, not joined. Every
+    # file removed (or failed, or deliberately left) is written to
+    # bin\logs\deleted-files.txt (Add-DeletionLog). Returns one result per item
+    # (Edition, Whole, Count = song files removed, KeptLeft = kept songs left
+    # in place, CustomLeft = the user's own files left in place, Failed = $true
+    # if anything couldn't be removed, e.g. the game has it open) so each
+    # front-end can word its own messages. Never throws.
     param(
         [Parameter(Mandatory = $true)][AllowNull()][AllowEmptyCollection()]$Items,
         [Parameter(Mandatory = $true)][string]$GamePath,
@@ -1918,10 +1970,11 @@ function Invoke-SongRemovalDelete {
     $KeepSongs = Resolve-KeepSongsRaw $KeepSongs
     $mapsDir = Join-Path $GamePath 'maps'
     $results = @()
+    $log = New-Object System.Collections.Generic.List[string]
     foreach ($item in @($Items)) {
         if ($null -eq $item) { continue }
         $ed = [string]$item.Edition
-        $failed = $false; $removed = 0; $keptLeft = 0
+        $failed = $false; $removed = 0; $keptLeft = 0; $customLeft = 0
         $localDir = $null
         if (Test-SafeEditionName $ed) {
             $localDir = Join-Path $mapsDir $ed
@@ -1931,33 +1984,53 @@ function Invoke-SongRemovalDelete {
         }
         if ($null -eq $localDir) {
             $failed = $true
+            $log.Add("REFUSED   unsafe edition name '$ed' - nothing removed")
         } else {
             $kept = @(Get-KeptSongCodes -Edition $ed -GamePath $GamePath -KeepSongs $KeepSongs)
-            if ($item.Whole) {
-                if ($kept.Count -eq 0) {
-                    try { Remove-Item -LiteralPath $localDir -Recurse -Force -ErrorAction Stop; $removed = 1 } catch { $failed = $true }
-                } else {
-                    foreach ($f in @(Get-ChildItem -LiteralPath $localDir -File -Recurse -Force -ErrorAction SilentlyContinue)) {
-                        if ($f.BaseName -match '_pc$' -and $f.Extension -ieq '.ipk' -and ($kept -contains ($f.BaseName -replace '_pc$', ''))) { $keptLeft++; continue }
-                        try { Remove-Item -LiteralPath $f.FullName -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
-                    }
-                    # tidy sub-folders the deletions emptied (never the edition folder itself: kept songs live there)
-                    foreach ($d in @(Get-ChildItem -LiteralPath $localDir -Directory -Recurse -Force -ErrorAction SilentlyContinue | Sort-Object { $_.FullName.Length } -Descending)) {
-                        if (@(Get-ChildItem -LiteralPath $d.FullName -Force -ErrorAction SilentlyContinue).Count -eq 0) { Remove-Item -LiteralPath $d.FullName -Force -ErrorAction SilentlyContinue }
-                    }
-                }
-            } else {
-                foreach ($code in $item.Codes) {
-                    if ($kept -contains $code) { $keptLeft++; continue }
-                    $target = Join-Path $localDir "${code}_pc.ipk"
-                    if (Test-Path -LiteralPath $target) {
-                        try { Remove-Item -LiteralPath $target -Force -ErrorAction Stop; $removed++ } catch { $failed = $true }
+            $kind = if ($item.Whole) { 'edition removed from tracking' } else { 'songs unticked' }
+            $deletedCodes = New-Object System.Collections.Generic.HashSet[string]([System.StringComparer]::OrdinalIgnoreCase)
+            $keptSeen = New-Object System.Collections.Generic.HashSet[string]([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($code in @($item.Codes)) {
+                $target = Join-Path $localDir "${code}_pc.ipk"
+                if ($kept -contains $code) { if ($keptSeen.Add([string]$code)) { $keptLeft++; $log.Add("KEPT      $target  (Keep my version)") }; continue }
+                if (Test-Path -LiteralPath $target) {
+                    $size = 0; try { $size = (Get-Item -LiteralPath $target -Force).Length } catch { }
+                    try {
+                        Remove-Item -LiteralPath $target -Force -ErrorAction Stop
+                        $removed++; [void]$deletedCodes.Add([string]$code)
+                        $log.Add("DELETED   $target  ($size bytes)  [$kind]")
+                    } catch {
+                        $failed = $true
+                        $log.Add("FAILED    $target  [$kind] $($_.Exception.Message)")
                     }
                 }
             }
+            if ($item.Whole) {
+                # Kept songs were filtered out when the item was built (they are never in
+                # Codes), so report the ones sitting in the folder from the lock list itself.
+                foreach ($kc in $kept) { if ($keptSeen.Add([string]$kc)) { $keptLeft++; $log.Add("KEPT      $(Join-Path $localDir "${kc}_pc.ipk")  (Keep my version)") } }
+                foreach ($e in @(Get-ChildItem -LiteralPath $localDir -File -Force -ErrorAction SilentlyContinue)) {
+                    if ($e.Name -match '^(?<code>.+)_pc\.ipk\.[^.]+\.partial$' -and $deletedCodes.Contains($Matches['code'])) {
+                        try { Remove-Item -LiteralPath $e.FullName -Force -ErrorAction Stop; $log.Add("DELETED   $($e.FullName)  (interrupted download)") }
+                        catch { $failed = $true; $log.Add("FAILED    $($e.FullName)  (interrupted download) $($_.Exception.Message)") }
+                    }
+                }
+                # Whatever is still in the folder is the user's own (or kept): count it
+                # fresh from disk, and remove the folder only if nothing at all is left.
+                $left = @(Get-ChildItem -LiteralPath $localDir -Force -ErrorAction SilentlyContinue)
+                if ($left.Count -eq 0) {
+                    try { Remove-Item -LiteralPath $localDir -Force -ErrorAction Stop; $log.Add("REMOVED   empty folder $localDir") } catch { $failed = $true }
+                } else {
+                    $customLeft = @($left | Where-Object { -not ($_.Extension -ieq '.ipk' -and $_.BaseName -match '_pc$' -and ($kept -contains ($_.BaseName -replace '_pc$', ''))) }).Count
+                    $names = @($left | ForEach-Object { $_.Name })
+                    $shown = if ($names.Count -gt 40) { (($names | Select-Object -First 40) -join ', ') + ", ... (+$($names.Count - 40) more)" } else { $names -join ', ' }
+                    $log.Add("LEFT      $localDir  $($left.Count) item(s) not deleted: $shown")
+                }
+            }
         }
-        $results += [PSCustomObject]@{ Edition = $ed; Whole = [bool]$item.Whole; Count = $removed; KeptLeft = $keptLeft; Failed = $failed }
+        $results += [PSCustomObject]@{ Edition = $ed; Whole = [bool]$item.Whole; Count = $removed; KeptLeft = $keptLeft; CustomLeft = $customLeft; Failed = $failed }
     }
+    Add-DeletionLog $log.ToArray()
     return $results
 }
 

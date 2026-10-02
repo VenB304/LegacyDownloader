@@ -88,7 +88,13 @@ stored as `KEEPSONGS` in `config.txt`.
 **Unticking songs you already downloaded:** the tool asks once, for
 everything you unticked - **Delete the files**, **Keep the files, stop
 updating**, or **Cancel** to leave your picks unchanged. Songs you marked
-**Keep my version** are never deleted by this prompt.
+**Keep my version** are never deleted by this prompt. Neither are your own
+custom songs: when you drop a whole edition, only songs the song server (or
+the community sheet) knows are deleted, and anything else in that folder -
+a custom map, other files, sub-folders - is left in place. A modified copy of
+an *official* song counts as an official song, so mark it **Keep my version**
+first. Everything the prompt deletes (and what it left alone) is recorded in
+`bin\logs\deleted-files.txt`.
 
 **Quick Launch:** after a successful check/update, both front-ends offer to
 launch `Legacy.exe` directly instead of just telling you to do it yourself —

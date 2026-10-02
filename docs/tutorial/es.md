@@ -203,7 +203,7 @@ Simplemente ejecuta `LegacyDownloader-GUI.bat` de nuevo cuando quieras. Recuerda
 tu carpeta y tus canciones elegidas, y hacer clic en **«Descargar / Buscar
 actualizaciones»** obtiene todo lo nuevo desde tu última visita.
 
-- **Añadir o quitar canciones**: haz clic otra vez en **Elegir mapas / canciones**, marca o desmarca lo que quieras y pulsa Aceptar. Si desmarcas canciones que ya descargaste —una edición entera o solo unas pocas— se te pregunta una sola vez: **Borrar los archivos** elimina esos archivos, **Conservar los archivos y no actualizar** los deja en el disco pero deja de actualizarlos, y **Cancelar** deja tu selección sin cambios. Las canciones que marcaste con «Conservar mi versión» nunca se borran aquí.
+- **Añadir o quitar canciones**: haz clic otra vez en **Elegir mapas / canciones**, marca o desmarca lo que quieras y pulsa Aceptar. Si desmarcas canciones que ya descargaste —una edición entera o solo unas pocas— se te pregunta una sola vez: **Borrar los archivos** elimina esos archivos, **Conservar los archivos y no actualizar** los deja en el disco pero deja de actualizarlos, y **Cancelar** deja tu selección sin cambios. Las canciones que marcaste con «Conservar mi versión» nunca se borran aquí. Tus propias canciones personalizadas (archivos que no están en el servidor de canciones) nunca se borran aquí. Una copia modificada de una canción oficial solo está protegida si la marcaste con «Conservar mi versión». Todo lo que se borra queda registrado en `bin\logs\deleted-files.txt`.
 - **Cambiar de idioma**: el menú desplegable de la bandera, arriba a la
   derecha, en cualquier momento.
 - **Ajustar la configuración**: haz clic en **Configuración** en la ventana

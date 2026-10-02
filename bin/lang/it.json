@@ -81,6 +81,7 @@
   "maps.removal_headline": "Hai deselezionato canzoni già presenti sul tuo computer. Cosa fare con i loro file?",
   "maps.removal_hint": "I file conservati restano nella cartella del gioco, ma non verranno più aggiornati.",
   "maps.removal_kept_note": "Le canzoni che hai contrassegnato con «Mantieni la mia versione» non vengono mai eliminate qui.",
+  "maps.removal_custom_note": "Le tue canzoni personalizzate (file che non sono sul server delle canzoni) non vengono mai eliminate qui. Una copia modificata di una canzone ufficiale è protetta solo se l’hai contrassegnata con «Mantieni la mia versione».",
   "maps.removal_item_edition": "{edition} - tutte le canzoni",
   "maps.removal_item_songs": "{edition} - {count} canzone/i",
   "maps.removal_btn_delete": "Elimina i file",

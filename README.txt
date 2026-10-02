@@ -75,7 +75,10 @@ From the main window's "Songs" section you then choose what you want
 
   - If you untick songs you already downloaded, the tool asks once,
     for everything you unticked: "Delete the files", "Keep the files,
-    stop updating", or "Cancel" to leave your picks unchanged.
+    stop updating", or "Cancel" to leave your picks unchanged. Your own
+    custom songs (files in that folder that are not on the song server)
+    are never deleted, and everything it deletes is recorded in
+    bin\logs\deleted-files.txt.
 
 
 AFTER SETUP
@@ -129,8 +132,11 @@ It only ever adds or updates files - it never deletes anything on its
 own. If you untick songs or editions you'd previously downloaded, it
 asks once whether to delete those files, keep them and stop updating
 them, or cancel and leave your picks unchanged. Songs you marked "Keep
-my version" are never deleted by this prompt. Nothing is ever removed
-without you being asked first.
+my version" are never deleted by this prompt, and neither are your own
+custom songs (only songs the song server knows are deleted). A modified
+copy of an official song counts as an official song, so mark it "Keep my
+version" first. Nothing is ever removed without you being asked first, and
+every deletion is recorded in bin\logs\deleted-files.txt.
 
 
 SOFTWARE REQUIREMENTS

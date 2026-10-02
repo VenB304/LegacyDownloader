@@ -81,6 +81,7 @@
   "maps.removal_headline": "パソコンに保存済みの曲のチェックを外しました。それらのファイルをどうしますか?",
   "maps.removal_hint": "保持したファイルはゲームフォルダに残りますが、今後は更新されません。",
   "maps.removal_kept_note": "「自分のバージョンを保持」にした曲は、ここでは削除されません。",
+  "maps.removal_custom_note": "ご自身で追加したカスタム曲（曲サーバーにないファイル）は、ここでは削除されません。公式曲を改変したコピーは、「自分のバージョンを保持」にした場合のみ保護されます。",
   "maps.removal_item_edition": "{edition} - すべての曲",
   "maps.removal_item_songs": "{edition} - {count}曲",
   "maps.removal_btn_delete": "ファイルを削除",

@@ -81,6 +81,7 @@
   "maps.removal_headline": "이미 컴퓨터에 있는 노래의 선택을 해제했습니다. 해당 파일을 어떻게 하시겠습니까?",
   "maps.removal_hint": "유지한 파일은 게임 폴더에 남지만 더 이상 업데이트되지 않습니다.",
   "maps.removal_kept_note": "‘내 버전 유지’로 표시한 노래는 여기서 삭제되지 않습니다.",
+  "maps.removal_custom_note": "직접 추가한 커스텀 노래(노래 서버에 없는 파일)는 여기서 삭제되지 않습니다. 공식 노래를 수정한 사본은 ‘내 버전 유지’로 표시한 경우에만 보호됩니다.",
   "maps.removal_item_edition": "{edition} - 모든 노래",
   "maps.removal_item_songs": "{edition} - 노래 {count}개",
   "maps.removal_btn_delete": "파일 삭제",

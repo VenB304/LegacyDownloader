@@ -81,6 +81,7 @@
   "maps.removal_headline": "Je hebt nummers uitgevinkt die al op je computer staan. Wat moet er met hun bestanden gebeuren?",
   "maps.removal_hint": "Bestanden die je bewaart blijven in je spelmap staan, maar worden niet meer bijgewerkt.",
   "maps.removal_kept_note": "Nummers die je met “Mijn versie behouden” hebt gemarkeerd, worden hier nooit verwijderd.",
+  "maps.removal_custom_note": "Je eigen aangepaste nummers (bestanden die niet op de nummerserver staan) worden hier nooit verwijderd. Een aangepaste kopie van een officieel nummer is alleen beschermd als je die met “Mijn versie behouden” hebt gemarkeerd.",
   "maps.removal_item_edition": "{edition} - alle nummers",
   "maps.removal_item_songs": "{edition} - {count} nummer(s)",
   "maps.removal_btn_delete": "Bestanden verwijderen",

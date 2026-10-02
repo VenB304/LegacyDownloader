@@ -81,6 +81,7 @@
   "maps.removal_headline": "Vous avez décoché des chansons déjà présentes sur votre ordinateur. Que faire de leurs fichiers ?",
   "maps.removal_hint": "Les fichiers conservés restent dans le dossier du jeu, mais ne seront plus mis à jour.",
   "maps.removal_kept_note": "Les chansons que vous avez marquées « Garder ma version » ne sont jamais supprimées ici.",
+  "maps.removal_custom_note": "Vos propres chansons personnalisées (fichiers absents du serveur de chansons) ne sont jamais supprimées ici. Une copie modifiée d’une chanson officielle n’est protégée que si vous l’avez marquée « Garder ma version ».",
   "maps.removal_item_edition": "{edition} - toutes les chansons",
   "maps.removal_item_songs": "{edition} - {count} chanson(s)",
   "maps.removal_btn_delete": "Supprimer les fichiers",

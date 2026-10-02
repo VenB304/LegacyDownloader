@@ -81,6 +81,7 @@
   "maps.removal_headline": "Has desmarcado canciones que ya están en tu equipo. ¿Qué debe pasar con sus archivos?",
   "maps.removal_hint": "Los archivos que conserves seguirán en la carpeta del juego, pero ya no se actualizarán.",
   "maps.removal_kept_note": "Las canciones que marcaste con «Conservar mi versión» nunca se borran aquí.",
+  "maps.removal_custom_note": "Tus propias canciones personalizadas (archivos que no están en el servidor de canciones) nunca se borran aquí. Una copia modificada de una canción oficial solo está protegida si la marcaste con «Conservar mi versión».",
   "maps.removal_item_edition": "{edition} - todas las canciones",
   "maps.removal_item_songs": "{edition} - {count} canción(es)",
   "maps.removal_btn_delete": "Borrar los archivos",
