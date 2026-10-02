@@ -2019,7 +2019,7 @@ function Invoke-SongRemovalDelete {
                 # fresh from disk, and remove the folder only if nothing at all is left.
                 $left = @(Get-ChildItem -LiteralPath $localDir -Force -ErrorAction SilentlyContinue)
                 if ($left.Count -eq 0) {
-                    try { Remove-Item -LiteralPath $localDir -Force -ErrorAction Stop; $log.Add("REMOVED   empty folder $localDir") } catch { $failed = $true }
+                    try { Remove-Item -LiteralPath $localDir -Force -ErrorAction Stop; $log.Add("REMOVED   empty folder $localDir") } catch { $failed = $true; $log.Add("FAILED    $localDir  (empty folder) $($_.Exception.Message)") }
                 } else {
                     $customLeft = @($left | Where-Object { -not ($_.Extension -ieq '.ipk' -and $_.BaseName -match '_pc$' -and ($kept -contains ($_.BaseName -replace '_pc$', ''))) }).Count
                     $names = @($left | ForEach-Object { $_.Name })
