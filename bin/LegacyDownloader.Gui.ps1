@@ -899,6 +899,12 @@ function Show-SettingsWindow {
     $txtShareUrl.SetBounds(16, 38, 396, 24)
     $txtShareUrl.Text = [string]$script:Cfg.ShareUrl
     $hintShareUrl = New-Hint (T 'gui.settings_shareurl_hint') 16 66 396
+    # The hint is one line in English but wraps to two in some languages (Portuguese,
+    # Russian): its box used to be one line tall, so the second line was cut off
+    # mid-sentence. Measure the wrapped height and let the group grow to hold it.
+    $hintShareUrl.AutoSize = $false
+    $hintShareUrl.Height = [Math]::Max(16, (Get-WrappedTextHeight $hintShareUrl.Text $hintShareUrl.Font 396) + 2)
+    $grpAdvanced.Height = [Math]::Max(90, $hintShareUrl.Bottom + 10)
     $grpAdvanced.Controls.AddRange(@($lblShareUrl, $txtShareUrl, $hintShareUrl))
 
     # --- Updates (Feature 3) - its own group rather than folded into
@@ -1046,6 +1052,13 @@ function Show-SettingsWindow {
         for ($gi = 1; $gi -lt $stack.Count; $gi++) { if ($stack[$gi].Top -lt $stack[$gi - 1].Bottom) { $stackOk = $false } }
         $backupFits = ($txtBkMax.Right -le ($grpBackups.Width - 8)) -and ($hintBk.Bottom -le $grpBackups.Height) -and ($lblBkDays.Right -le $txtBkDays.Left) -and ($lblBkMax.Right -le $txtBkMax.Left)
         $windowFits = ($btnSave.Bottom -le $f.ClientSize.Height) -and ($grpUpdates.Bottom -le $hintRestart.Top)
+        # Every wrapped hint must fit the box it is drawn in (the share-URL hint clipped in pt/ru for several releases).
+        $hintsAllFit = $true
+        foreach ($hc in @($hintShareUrl, $hintBk, $hintBwLimit, $hintAutoLaunch)) {
+            if ((Get-WrappedTextHeight $hc.Text $hc.Font $hc.Width) -gt $hc.Height) { $hintsAllFit = $false }
+        }
+        if ($hintShareUrl.Bottom -gt $grpAdvanced.Height) { $hintsAllFit = $false }
+        if (-not $hintsAllFit) { Write-Host "  SELFTEST FAILURE: a Settings hint is taller than its box (text would be cut off)" -ForegroundColor Red }
         Write-Host "  settings groups stack without overlap: $stackOk; backup rows fit: $backupFits; window holds everything: $windowFits (backup group $($grpBackups.Top)-$($grpBackups.Bottom), window $($f.ClientSize.Height) high, scrolling: $([bool]$scroll))"
         if (-not ($stackOk -and $backupFits -and $windowFits)) { Write-Host "  SELFTEST FAILURE: settings window layout overlaps or overflows" -ForegroundColor Red }
         if ($scroll) {
