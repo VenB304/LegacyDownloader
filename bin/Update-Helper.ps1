@@ -89,9 +89,16 @@ function Invoke-WithRetry([scriptblock]$Action, [string]$Description) {
 }
 
 function Start-App {
-    $bat = if ($RelaunchTarget -eq 'gui') { Join-Path $InstallDir 'LegacyDownloader-GUI.bat' } else { Join-Path $InstallDir 'LegacyDownloader-Console.bat' }
-    if (-not (Test-Path -LiteralPath $bat)) { Write-Log "FAILED to relaunch: $bat not found"; return }
-    Start-Process -FilePath $bat -WorkingDirectory $InstallDir | Out-Null
+    # The launch itself lives in Relaunch.ps1, NOT here. Do not start any
+    # process from this file: a script that swaps/deletes folders and then
+    # launches something is flagged by Bitdefender-engine antivirus (found by
+    # bisecting the V11.5 zip on VirusTotal; every way of launching from this
+    # file was flagged, moving it into its own script was clean). See AGENTS.md
+    # lesson 24. Runs from whichever bin\ is live now: the new release after a
+    # swap, the restored previous one after a rollback.
+    $script = Join-Path $InstallDir 'bin\Relaunch.ps1'
+    if (-not (Test-Path -LiteralPath $script)) { Write-Log "FAILED to relaunch: $script not found"; return }
+    try { & $script -InstallDir $InstallDir -RelaunchTarget $RelaunchTarget } catch { Write-Log "FAILED to relaunch: $($_.Exception.Message)" }
 }
 
 Write-Log "=== Update helper started ==="

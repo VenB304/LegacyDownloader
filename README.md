@@ -53,8 +53,9 @@ first-run welcome screen, which opens the tutorial in your current language.
 ## Usage
 
 **GUI (default):** double-click `LegacyDownloader-GUI.bat`. It launches
-`bin\LegacyDownloader.ps1` with a hidden window, so no console window is
-left running behind the GUI.
+`bin\LegacyDownloader.ps1` with a minimised PowerShell window, so no console
+window is left open in front of the GUI (you will see a small PowerShell
+button on the taskbar while the app runs; closing the app closes it).
 
 **Text/console menu:** double-click `LegacyDownloader-Console.bat`, or
 run `bin\LegacyDownloader.ps1 -Console` from a terminal.
@@ -212,7 +213,8 @@ antivirus tools:
 - `bin/LegacyDownloader.Core.psm1` — all pure logic (no `Write-Host` / `Read-Host`)
 - `bin/LegacyDownloader.Console.ps1` — text/menu front-end
 - `bin/LegacyDownloader.Gui.ps1` — WinForms GUI front-end
-- `bin/Update-Helper.ps1` — the self-updater's swap step (waits for the tool to exit, swaps `bin\` in place, reopens; rolls back on any failure)
+- `bin/Update-Helper.ps1` — the self-updater's swap step (waits for the tool to exit, swaps `bin\` in place; rolls back on any failure)
+- `bin/Relaunch.ps1` — reopens the tool once the swap (or a rollback) is finished; kept separate from the swap step on purpose
 - `bin/LegacyDownloader.ico` — the app icon
 - `bin/lang/*.json` — string tables for all 13 languages
 - `docs/tutorial/*.md` — end-user tutorials with screenshots, in all 13 languages

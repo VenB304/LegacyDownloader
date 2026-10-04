@@ -6,7 +6,7 @@
 #   * the text menu (LegacyDownloader.Console.ps1) - with -Console, or when
 #     the GUI script isn't there
 #
-# The GUI is normally launched with a hidden console (see
+# The GUI is normally launched with a minimised console (see
 # LegacyDownloader-GUI.bat, one level up), so anything fatal here has to
 # surface as a message box, not a Write-Host / Read-Host the user will
 # never see.
