@@ -249,7 +249,7 @@ navigated with number keys:
 - **It says "up to date" but I'm missing songs** — open **Select maps /
   songs** and check you've actually ticked the ones you want (or pick
   **Everything**).
-- **An update replaced a song I modified** — before updating, open **Select maps / songs**, click the song's row, and click **Keep my version** (see step 5). Kept songs are never overwritten.
+- **An update replaced a song I modified** — before updating, open **Select maps / songs**, click the song's row, and click **Keep my version** (see step 5). Kept songs are never overwritten. If it already happened, the old file is in your backup folder: open **Settings** → **Open backup folder** and copy it back into the matching folder under `maps`.
 - **Still stuck?** Post in the Legacy Downloader thread on Discord with a
   screenshot of what you're seeing and which step you were on — someone
   will help.

@@ -266,7 +266,7 @@ cijfertoetsen:
 - **Er staat "up-to-date", maar ik mis nummers** — open **"Kaarten /
   nummers selecteren"** en controleer of je echt de gewenste hebt
   aangevinkt (of kies **"Alles"**).
-- **Een update verving een nummer dat ik had aangepast** — open vóór het updaten **Kaarten / nummers selecteren**, klik op de rij van het nummer en dan op **Mijn versie behouden** (zie stap 5). Bewaarde nummers worden nooit overschreven.
+- **Een update verving een nummer dat ik had aangepast** — open vóór het updaten **Kaarten / nummers selecteren**, klik op de rij van het nummer en dan op **Mijn versie behouden** (zie stap 5). Bewaarde nummers worden nooit overschreven. Is het al gebeurd, dan staat het oude bestand in de back-upmap: **Instellingen** → **Back-upmap openen**, en kopieer het terug naar de bijbehorende map onder `maps`.
 - **Nog steeds vastzitten?** Plaats een bericht in de Legacy Downloader-
   topic op Discord met een screenshot van wat je ziet en bij welke stap je
   bent — iemand helpt je.

@@ -270,7 +270,7 @@ Zifferntasten:
 - **Es sagt „aktuell", aber mir fehlen Songs** — öffne **„Karten / Songs
   auswählen"** und prüfe, ob du wirklich die gewünschten angehakt hast
   (oder wähle **„Alles"**).
-- **Ein Update hat einen von mir veränderten Song ersetzt** — öffne vor dem Update **Karten / Songs auswählen**, klicke auf die Zeile des Songs und dann auf **Meine Version behalten** (siehe Schritt 5). Behaltene Songs werden nie überschrieben.
+- **Ein Update hat einen von mir veränderten Song ersetzt** — öffne vor dem Update **Karten / Songs auswählen**, klicke auf die Zeile des Songs und dann auf **Meine Version behalten** (siehe Schritt 5). Behaltene Songs werden nie überschrieben. Ist es schon passiert, liegt die alte Datei im Sicherungsordner: **Einstellungen** → **Sicherungsordner öffnen**, dann kopiere sie zurück in den passenden Ordner unter `maps`.
 - **Immer noch festgefahren?** Poste im Legacy-Downloader-Thread auf
   Discord einen Screenshot von dem, was du siehst, und bei welchem
   Schritt du bist — jemand hilft dir.

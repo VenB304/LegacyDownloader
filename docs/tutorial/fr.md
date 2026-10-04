@@ -271,7 +271,7 @@ place. Mêmes fonctionnalités, navigation avec les touches numériques :
 - **Il dit « à jour » mais il me manque des chansons** — ouvrez
   **« Sélectionner des cartes / chansons »** et vérifiez que vous avez bien
   coché celles que vous voulez (ou choisissez **« Tout »**).
-- **Une mise à jour a remplacé une chanson que j'avais modifiée** — avant de mettre à jour, ouvrez **Sélectionner des cartes / chansons**, cliquez sur la ligne de la chanson, puis sur **Garder ma version** (voir l'étape 5). Les chansons gardées ne sont jamais écrasées.
+- **Une mise à jour a remplacé une chanson que j'avais modifiée** — avant de mettre à jour, ouvrez **Sélectionner des cartes / chansons**, cliquez sur la ligne de la chanson, puis sur **Garder ma version** (voir l'étape 5). Les chansons gardées ne sont jamais écrasées. Si c'est déjà arrivé, l'ancien fichier se trouve dans le dossier de sauvegarde : **Paramètres** → **Ouvrir le dossier de sauvegarde**, puis copiez-le dans le dossier correspondant sous `maps`.
 - **Toujours bloqué ?** Postez dans le fil Legacy Downloader sur Discord
   avec une capture d'écran de ce que vous voyez et à quelle étape vous
   êtes — quelqu'un vous aidera.

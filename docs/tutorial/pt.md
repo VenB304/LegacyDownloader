@@ -270,7 +270,7 @@ navegando com as teclas numéricas:
 - **Diz "atualizado" mas estou sem músicas** — abra **"Selecionar mapas /
   músicas"** e verifique se você realmente marcou as que quer (ou escolha
   **"Tudo"**).
-- **Uma atualização substituiu uma música que eu modifiquei** — antes de atualizar, abra **Selecionar mapas / músicas**, clique na linha da música e depois em **Manter minha versão** (veja o passo 5). Músicas mantidas nunca são sobrescritas.
+- **Uma atualização substituiu uma música que eu modifiquei** — antes de atualizar, abra **Selecionar mapas / músicas**, clique na linha da música e depois em **Manter minha versão** (veja o passo 5). Músicas mantidas nunca são sobrescritas. Se já aconteceu, o arquivo antigo está na pasta de backups: **Configurações** → **Abrir pasta de backups**, e copie-o de volta para a pasta correspondente em `maps`.
 - **Ainda travado?** Poste no tópico do Legacy Downloader no Discord com
   uma captura de tela do que você está vendo e em qual passo você está —
   alguém vai ajudar.

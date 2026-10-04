@@ -271,6 +271,6 @@ lugar. Mismas funciones, navegando con teclas numéricas:
 - **Dice «al día» pero me faltan canciones** — abre **«Elegir mapas /
   canciones»** y comprueba que realmente has marcado las que quieres (o
   elige **«Todo»**).
-- **Una actualización sustituyó una canción que modifiqué** — antes de actualizar, abre **Elegir mapas / canciones**, haz clic en la fila de la canción y pulsa **Conservar mi versión** (ver paso 5). Las canciones conservadas nunca se sobrescriben.
+- **Una actualización sustituyó una canción que modifiqué** — antes de actualizar, abre **Elegir mapas / canciones**, haz clic en la fila de la canción y pulsa **Conservar mi versión** (ver paso 5). Las canciones conservadas nunca se sobrescriben. Si ya ocurrió, el archivo antiguo está en la carpeta de copias de seguridad: **Configuración** → **Abrir carpeta de copias de seguridad**, y cópialo de vuelta a la carpeta correspondiente dentro de `maps`.
 - **¿Sigues atascado?** Publica en el hilo de Legacy Downloader en Discord
   con una captura de lo que ves y en qué paso estás — alguien te ayudará.

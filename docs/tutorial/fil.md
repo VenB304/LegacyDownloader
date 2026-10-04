@@ -269,7 +269,7 @@ gamit ang number keys:
 - **Sinasabing "updated" pero kulang ako ng kanta** — buksan ang
   **Pumili ng mapa / kanta** at tingnan kung na-check mo talaga ang mga
   gusto mo (o piliin ang **"Lahat"**).
-- **Napalitan ng update ang kantang binago ko** — bago mag-update, buksan ang **Pumili ng mapa / kanta**, i-click ang row ng kanta, at i-click ang **Itago ang bersyon ko** (tingnan ang hakbang 5). Hindi kailanman pinapalitan ang mga itinagong kanta.
+- **Napalitan ng update ang kantang binago ko** — bago mag-update, buksan ang **Pumili ng mapa / kanta**, i-click ang row ng kanta, at i-click ang **Itago ang bersyon ko** (tingnan ang hakbang 5). Hindi kailanman pinapalitan ang mga itinagong kanta. Kung nangyari na ito, nasa folder ng backup ang lumang file: **Mga Setting** → **Buksan ang folder ng backup**, tapos kopyahin ito pabalik sa katugmang folder sa ilalim ng `maps`.
 - **Natitigil pa rin?** Mag-post sa Legacy Downloader thread sa Discord na
   may screenshot ng nakikita mo at kung aling hakbang ka — may tutulong
   sa'yo.

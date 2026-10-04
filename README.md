@@ -108,7 +108,8 @@ nothing is lost. Backups older than 30 days are deleted, and so are the oldest
 ones once the folder passes 5 GB (the newest set is always kept) - both
 limits, and the backup itself, can be changed in Settings. To get a song back,
 copy it from the backup folder into the matching folder under `maps`. Backups
-only ever hold files an update replaced, never files it deleted.
+only ever hold files an update replaced, never files it deleted, and every
+backup that gets cleaned up is listed in `bin\logs\deleted-files.txt`.
 
 **Quick Launch:** after a successful check/update, both front-ends offer to
 launch `Legacy.exe` directly instead of just telling you to do it yourself —

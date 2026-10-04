@@ -269,7 +269,7 @@ con i tasti numerici:
 - **Dice "aggiornato" ma mi mancano canzoni** — apri **"Seleziona mappe /
   canzoni"** e controlla di aver davvero selezionato quelle che vuoi (o
   scegli **"Tutto"**).
-- **Un aggiornamento ha sostituito una canzone che avevo modificato** — prima di aggiornare, apri **Seleziona mappe / canzoni**, clicca sulla riga della canzone e poi su **Mantieni la mia versione** (vedi passo 5). Le canzoni mantenute non vengono mai sovrascritte.
+- **Un aggiornamento ha sostituito una canzone che avevo modificato** — prima di aggiornare, apri **Seleziona mappe / canzoni**, clicca sulla riga della canzone e poi su **Mantieni la mia versione** (vedi passo 5). Le canzoni mantenute non vengono mai sovrascritte. Se è già successo, il vecchio file è nella cartella dei backup: **Impostazioni** → **Apri la cartella dei backup**, poi copialo nella cartella corrispondente dentro `maps`.
 - **Ancora bloccato?** Scrivi nel thread di Legacy Downloader su Discord
   con uno screenshot di cosa vedi e a che punto sei arrivato — qualcuno
   ti aiuterà.
