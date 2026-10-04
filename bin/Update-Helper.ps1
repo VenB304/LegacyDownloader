@@ -92,7 +92,7 @@ function Start-App {
     # The launch itself lives in Relaunch.ps1, NOT here. Do not start any
     # process from this file: a script that swaps/deletes folders and then
     # launches something is flagged by Bitdefender-engine antivirus (found by
-    # bisecting the V11.5 zip on VirusTotal; every way of launching from this
+    # bisecting the release zip on VirusTotal; every way of launching from this
     # file was flagged, moving it into its own script was clean). See AGENTS.md
     # lesson 24. Runs from whichever bin\ is live now: the new release after a
     # swap, the restored previous one after a rollback.
