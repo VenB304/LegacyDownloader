@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V11.4'
+$script:AppVersion = 'V11.5'
 
 function Get-AppVersion { return $script:AppVersion }
 
@@ -2711,6 +2711,23 @@ function Get-RequirementsStatus {
     return $out
 }
 
+function Test-InstallerSignature {
+    # $true only when the file carries a VALID Authenticode signature whose
+    # signer is Microsoft Corporation. Every requirement installer we download
+    # is a Microsoft file, so anything else (unsigned, tampered, signed by
+    # someone else, a broken chain) must not be run: the download came over the
+    # network into a user-writable temp folder and is about to be launched,
+    # often elevated. Never throws - any error means "not verified".
+    param([Parameter(Mandatory = $true)][string]$Path)
+    try {
+        $sig = Get-AuthenticodeSignature -LiteralPath $Path -ErrorAction Stop
+        if ($sig.Status -ne 'Valid' -or $null -eq $sig.SignerCertificate) { return $false }
+        return [bool]($sig.SignerCertificate.Subject -match '(^|,\s*)(CN|O)=Microsoft Corporation(,|$)')
+    } catch {
+        return $false
+    }
+}
+
 function Get-RequirementInstaller {
     # Ensures a local, runnable installer file for $Item exists, either by
     # using the already-bundled copy or by downloading it from its own
@@ -2835,6 +2852,10 @@ function Get-RequirementInstaller {
             $resp.Dispose()
         }
         if (-not (Test-Path -LiteralPath $dest) -or (Get-Item -LiteralPath $dest).Length -eq 0) { throw "empty download" }
+        # Never hand an unverified file to the caller: it gets run, often elevated.
+        # A failed check takes the same path as a failed download (the file is
+        # deleted below and the caller shows the official download link).
+        if (-not (Test-InstallerSignature -Path $dest)) { throw "installer is not signed by Microsoft Corporation" }
         return [PSCustomObject]@{ Ok = $true; Path = $dest; OfficialUrl = $Item.OfficialUrl; Downloaded = $true }
     } catch {
         Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
@@ -2968,7 +2989,7 @@ Export-ModuleMember -Function `
     Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, Test-SafeEditionName, `
     Get-KeepKeySet, Format-KeepKeySet, Get-LocalSongKeySet, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
-    Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Install-Requirement, `
+    Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Test-InstallerSignature, Install-Requirement, `
     Invoke-RequirementInstall, Start-LegacyExe, `
     Compare-AppVersions, Get-LatestReleaseInfo, Test-AppUpdateAvailable, `
     Invoke-AppUpdateDownloadAndStage, Start-AppUpdateHelper, `
