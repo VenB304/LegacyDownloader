@@ -243,6 +243,14 @@ function Invoke-BaseSync([string]$GamePath, [string[]]$ExtraExcludes = @()) {
     Write-Host ""
 }
 
+# One backup set per run: any song file an update REPLACES is moved into
+# <game>\.legacydownloader-backups\<stamp>\ instead of being destroyed.
+$script:RunBackupStamp = $null
+function Get-RunBackupStamp {
+    if (-not $script:RunBackupStamp) { $script:RunBackupStamp = New-BackupStamp }
+    return $script:RunBackupStamp
+}
+
 function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$SongCodes = $null) {
     Write-Host (T 'sync.edition' @{ edition = (Format-EditionDisplay $Edition) })
     # Join-Path twice, not "maps\$Edition" as one segment - Join-Path only
@@ -254,7 +262,7 @@ function Invoke-EditionSync([string]$GamePath, [string]$Edition, [string[]]$Song
     # Linux support): AUTO-mode downloads were unaffected (Invoke-AllMapsSync
     # only ever does Join-Path $GamePath 'maps', no embedded separator) but
     # downloading a SPECIFIC edition would silently write to the wrong path.
-    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (Get-SongFilterArgs -Edition $Edition -Songs $SongCodes -GamePath $GamePath) -Label "edition-$Edition" | Out-Null
+    Invoke-RcloneCopy "$Conn`maps/$Edition" (Join-Path (Join-Path $GamePath 'maps') $Edition) (@(Get-SongFilterArgs -Edition $Edition -Songs $SongCodes -GamePath $GamePath) + @(Get-BackupArgs -GamePath $GamePath -Stamp (Get-RunBackupStamp) -Edition $Edition)) -Label "edition-$Edition" | Out-Null
     Write-Host ""
 }
 
@@ -271,11 +279,12 @@ function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
         }
     }
     Write-Host (T 'sync.all_editions')
-    Invoke-RcloneCopy "$Conn`maps" $mapsDir (Get-SongFilterArgs -GamePath $GamePath) -Label 'allmaps' | Out-Null
+    Invoke-RcloneCopy "$Conn`maps" $mapsDir (@(Get-SongFilterArgs -GamePath $GamePath) + @(Get-BackupArgs -GamePath $GamePath -Stamp (Get-RunBackupStamp))) -Label 'allmaps' | Out-Null
     Write-Host ""
 }
 
 function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcludes = @(), [string]$SongFilters = '', [switch]$Confirmed) {
+    $script:RunBackupStamp = New-BackupStamp
     Invoke-BaseSync $GamePath $BaseExcludes
     if ($Editions.ToUpper() -eq 'AUTO') {
         Invoke-AllMapsSync $GamePath -Confirmed:$Confirmed
@@ -283,6 +292,8 @@ function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcl
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
         foreach ($ed in $list) { Invoke-EditionSync $GamePath $ed (Get-EffectiveSongs $ed $SongFilters) }
     }
+    # Keep the backup folder inside its age/size limits (never throws).
+    try { [void](Remove-OldBackups -GamePath $GamePath) } catch { }
     Write-Host (HR)
     Write-Host ("  " + (T 'common.done'))
     Write-Host (HR)
@@ -377,6 +388,16 @@ function Show-UpdatePreview {
         Write-Host (T 'preview.songs_up_to_date')
     }
 
+    $replaceCount = @($plan.Replacing).Count
+    if ($replaceCount -gt 0) {
+        Write-Host ""
+        Write-Host (T 'preview.replace_line' @{ count = $replaceCount }) -ForegroundColor Yellow
+        $bk = Load-Config
+        if ($bk.BackupSongs) { Write-Host (T 'preview.replace_backup_on' @{ days = $bk.BackupDays; gb = $bk.BackupMaxGB }) }
+        else { Write-Host (T 'preview.replace_backup_off') -ForegroundColor Yellow }
+        Write-Host (T 'preview.replace_keep_hint')
+    }
+
     Write-Host ""
     Write-Host (T 'preview.total' @{ files = $plan.TotalFiles; size = (Format-Bytes $plan.TotalBytes) })
     Write-Host ""
@@ -423,7 +444,10 @@ function Show-UpdatePreview {
             if ($plan.KeptSettings) { Write-Host (T 'preview.list_config') }
             if ($songFiles.Count -gt 0) {
                 Write-Host (T 'preview.list_songs')
-                foreach ($f in ($songFiles | Sort-Object)) { Write-Host "  $f" }
+                $replacingSet = [System.Collections.Generic.HashSet[string]]::new([string[]]@($plan.Replacing), [System.StringComparer]::OrdinalIgnoreCase)
+                foreach ($f in ($songFiles | Sort-Object)) {
+                    if ($replacingSet.Contains([string]$f)) { Write-Host ("  {0}  {1}" -f $f, (T 'preview.list_tag_replace')) } else { Write-Host "  $f" }
+                }
             }
             Write-Host ""
             continue
@@ -944,7 +968,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
         # below.
         $oldEditionList = @(if ($CurrentEditions.ToUpper() -eq 'AUTO') { Get-LocalEditions $GamePath } else { $CurrentEditions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' } })
         $newEditionList = @($browse.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
-        $removalPlan = @(Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog)
+        $removalPlan = @(Get-SongRemovalPlan -OldEditions $oldEditionList -OldSongFilters $CurrentSongFilters -NewEditions $newEditionList -NewSongFilters $browse.SongFilters -Catalog $browse.Catalog -KnownSongs $browse.Known)
         # One prompt for the whole batch (was one Y/N per edition, with no
         # way to answer for all of them or back out). Cancel returns $null =
         # "no change": nothing deleted, the new selection is discarded and

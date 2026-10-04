@@ -503,6 +503,9 @@ function Load-Config {
     $autoCheck = $false
     $bwLimit = ''
     $checkAppUpdates = $true
+    $backupSongs = $true
+    $backupDays = 30
+    $backupMaxGB = 5
     foreach ($line in Get-Content -LiteralPath $script:ConfigPath) {
         $trimmed = $line.Trim()
         if ($trimmed -eq '' -or $trimmed.StartsWith('#')) { continue }
@@ -520,6 +523,9 @@ function Load-Config {
         if ($key -eq 'AUTOCHECK')   { $autoCheck = ($value -eq 'true') }
         if ($key -eq 'BWLIMIT')     { $bwLimit = $value }
         if ($key -eq 'CHECKAPPUPDATES') { $checkAppUpdates = ($value -eq 'true') }
+        if ($key -eq 'BACKUPSONGS') { $backupSongs = ($value -ne 'false') }
+        if ($key -eq 'BACKUPDAYS')  { $n = 0; if ([int]::TryParse($value, [ref]$n) -and $n -ge 1 -and $n -le 365) { $backupDays = $n } }
+        if ($key -eq 'BACKUPMAXGB') { $n = 0; if ([int]::TryParse($value, [ref]$n) -and $n -ge 1 -and $n -le 1000) { $backupMaxGB = $n } }
     }
     if ([string]::IsNullOrWhiteSpace($editions)) { $editions = 'AUTO' }
     if ([string]::IsNullOrWhiteSpace($lang))     { $lang = 'en' }
@@ -527,6 +533,7 @@ function Load-Config {
         GamePath = $gamePath; Editions = $editions; Lang = $lang; ShareUrl = $shareUrl
         SongFilters = $songFilters; KeepSongs = $keepSongs; AutoLaunch = $autoLaunch; AutoCheck = $autoCheck; BwLimit = $bwLimit
         CheckAppUpdates = $checkAppUpdates
+        BackupSongs = $backupSongs; BackupDays = $backupDays; BackupMaxGB = $backupMaxGB
     }
 }
 
@@ -537,7 +544,7 @@ function Save-Config([hashtable]$Values = @{}) {
     # needed a separate ContainsKey/Read-ConfigValue trick for every value
     # added after GamePath/Editions). Recognized keys: GamePath, Editions,
     # Lang, ShareUrl, SongFilters, KeepSongs, AutoLaunch, AutoCheck, BwLimit,
-    # CheckAppUpdates.
+    # CheckAppUpdates, BackupSongs, BackupDays, BackupMaxGB.
     $current = if (Test-Path -LiteralPath $script:ConfigPath) { Load-Config } else { $null }
     function Resolve-Field([string]$Key, $Default) {
         if ($Values.ContainsKey($Key)) { return $Values[$Key] }
@@ -558,10 +565,16 @@ function Save-Config([hashtable]$Values = @{}) {
     # others, so the same conservative-default reasoning correctly lands on
     # the opposite default for this one.
     $CheckAppUpdates = Resolve-Field 'CheckAppUpdates' $true
+    $BackupSongs = Resolve-Field 'BackupSongs' $true
+    $BackupDays  = [int](Resolve-Field 'BackupDays' 30)
+    $BackupMaxGB = [int](Resolve-Field 'BackupMaxGB' 5)
+    if ($BackupDays -lt 1 -or $BackupDays -gt 365) { $BackupDays = 30 }
+    if ($BackupMaxGB -lt 1 -or $BackupMaxGB -gt 1000) { $BackupMaxGB = 5 }
     if ([string]::IsNullOrWhiteSpace($Lang)) { $Lang = 'en' }
     $AutoLaunchOut = if ($AutoLaunch) { 'true' } else { 'false' }
     $AutoCheckOut  = if ($AutoCheck)  { 'true' } else { 'false' }
     $CheckAppUpdatesOut = if ($CheckAppUpdates) { 'true' } else { 'false' }
+    $BackupSongsOut = if ($BackupSongs) { 'true' } else { 'false' }
     @(
         "# Legacy Downloader - configuration"
         "# You normally don't need to edit this by hand - use the program's"
@@ -624,6 +637,18 @@ function Save-Config([hashtable]$Values = @{}) {
         "# every other toggle above, this one is opt-out, since a version"
         "# check has no file-system or download side effects of its own."
         "CHECKAPPUPDATES=$CheckAppUpdatesOut"
+        ""
+        "# BACKUPSONGS / BACKUPDAYS / BACKUPMAXGB (also settable from Settings) -"
+        "# when an update would REPLACE a song file you already have (same file"
+        "# name, different size - e.g. your own modified copy of an official"
+        "# song), the old file is first moved into a folder named"
+        "# .legacydownloader-backups inside the game folder. Backups older than"
+        "# BACKUPDAYS days (1-365, default 30) are deleted, then the oldest are deleted"
+        "# until the total is under BACKUPMAXGB gigabytes (1-1000, default 5)."
+        "# BACKUPSONGS=false turns the backup off. Default true."
+        "BACKUPSONGS=$BackupSongsOut"
+        "BACKUPDAYS=$BackupDays"
+        "BACKUPMAXGB=$BackupMaxGB"
     ) | Set-Content -LiteralPath $script:ConfigPath -Encoding UTF8
 }
 
@@ -934,12 +959,19 @@ function Get-LocalSongMap([string]$GamePath) {
     if ([string]::IsNullOrEmpty($GamePath)) { return @{} }
     $mapsDir = Join-Path $GamePath 'maps'
     if (-not (Test-Path -LiteralPath $mapsDir)) { return @{} }
+    # Only the .ipk files DIRECTLY inside a maps\<edition> folder count, which
+    # is exactly the share's layout (maps/<edition>/<code>_pc.ipk). A recursive
+    # walk named an "edition" after ANY parent folder, so a stray .ipk dropped
+    # in maps\ itself (edition 'maps') or in a sub-folder (edition 'sub') showed
+    # up in the picker as a phantom edition.
     $map = @{}
-    Get-ChildItem -LiteralPath $mapsDir -Recurse -Filter '*.ipk' -File -ErrorAction SilentlyContinue | ForEach-Object {
-        $ed = $_.Directory.Name
-        $code = $_.BaseName -replace '_pc$', ''
-        if (-not $map.ContainsKey($ed)) { $map[$ed] = New-Object System.Collections.Generic.List[string] }
-        $map[$ed].Add($code)
+    foreach ($edDir in @(Get-ChildItem -LiteralPath $mapsDir -Directory -ErrorAction SilentlyContinue)) {
+        foreach ($f in @(Get-ChildItem -LiteralPath $edDir.FullName -Filter '*.ipk' -File -ErrorAction SilentlyContinue)) {
+            $ed = $edDir.Name
+            $code = $f.BaseName -replace '_pc$', ''
+            if (-not $map.ContainsKey($ed)) { $map[$ed] = New-Object System.Collections.Generic.List[string] }
+            $map[$ed].Add($code)
+        }
     }
     $out = @{}
     foreach ($ed in $map.Keys) { $out[$ed] = @($map[$ed] | Sort-Object) }
@@ -1251,9 +1283,15 @@ function Resolve-GameFolder([string]$Path) {
 }
 
 function Get-LocalSongCount([string]$GamePath) {
+    # Same rule as Get-LocalSongMap: only .ipk files directly inside a maps\<edition>
+    # folder count, so the main window's number and the picker always agree.
     $mapsDir = [System.IO.Path]::Combine($GamePath, 'maps')
     if (-not (Test-Path -LiteralPath $mapsDir)) { return 0 }
-    return @(Get-ChildItem -LiteralPath $mapsDir -Recurse -Filter '*.ipk' -File -ErrorAction SilentlyContinue).Count
+    $count = 0
+    foreach ($edDir in @(Get-ChildItem -LiteralPath $mapsDir -Directory -ErrorAction SilentlyContinue)) {
+        $count += @(Get-ChildItem -LiteralPath $edDir.FullName -Filter '*.ipk' -File -ErrorAction SilentlyContinue).Count
+    }
+    return $count
 }
 
 # ----------------------------------------------------------------------------
@@ -1829,12 +1867,24 @@ function Get-SongRemovalPlan {
         [string]$OldSongFilters = '',
         [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$NewEditions,
         [string]$NewSongFilters = '',
-        [Parameter(Mandatory = $true)]$Catalog
+        [Parameter(Mandatory = $true)]$Catalog,
+        # edition -> codes the sheet OR the share know (the picker's merged
+        # ByEdition). An edition only the share has (3111) is not in $Catalog, so
+        # without this it could never be narrowed: unticking some of its songs
+        # produced no removal entry and so no delete prompt.
+        [AllowNull()]$KnownSongs = $null
     )
     $byEdition = @{}
     foreach ($r in $Catalog) {
         if (-not $byEdition.ContainsKey($r.Edition)) { $byEdition[$r.Edition] = New-Object System.Collections.Generic.List[string] }
         $byEdition[$r.Edition].Add($r.Code)
+    }
+    if ($null -ne $KnownSongs) {
+        foreach ($ed in @($KnownSongs.Keys)) {
+            if ($byEdition.ContainsKey($ed)) { continue }
+            $byEdition[$ed] = New-Object System.Collections.Generic.List[string]
+            foreach ($c in @($KnownSongs[$ed])) { $byEdition[$ed].Add([string]$c) }
+        }
     }
     $oldFilterMap = Get-SongFilterMap $OldSongFilters
     $newFilterMap = Get-SongFilterMap $NewSongFilters
@@ -2034,6 +2084,142 @@ function Invoke-SongRemovalDelete {
     return $results
 }
 
+# ----------------------------------------------------------------------------
+# Backups of song files an update replaces
+# ----------------------------------------------------------------------------
+
+function Get-BackupRoot([string]$GamePath) {
+    # A folder INSIDE the game folder (same drive as maps\, so
+    # rclone's move into it is a rename, and outside maps\ because rclone refuses
+    # a --backup-dir that overlaps the destination).
+    if ([string]::IsNullOrWhiteSpace($GamePath)) { return $null }
+    return [System.IO.Path]::Combine($GamePath, '.legacydownloader-backups')
+}
+
+function New-BackupStamp { return (Get-Date -Format 'yyyyMMdd-HHmmss') }
+
+function Get-BackupArgs {
+    # rclone arguments that make "rclone copy" MOVE every file it would overwrite
+    # into <game>\.legacydownloader-backups\<stamp>\[<edition>\] instead of
+    # destroying it. Empty when backups are switched off. rclone creates the
+    # folder lazily, so a run that replaces nothing leaves nothing behind.
+    # -Edition is for the per-edition jobs, whose destination is maps\<edition>
+    # (the all-maps job's destination is maps\, so its files already carry the
+    # edition as their first path part).
+    param(
+        [Parameter(Mandatory = $true)][string]$GamePath,
+        [Parameter(Mandatory = $true)][string]$Stamp,
+        [string]$Edition = '',
+        $BackupSongs = $null
+    )
+    if ($null -eq $BackupSongs) { $BackupSongs = (Load-Config).BackupSongs }
+    if (-not $BackupSongs) { return @() }
+    $root = Get-BackupRoot $GamePath
+    if (-not $root -or $Stamp -notmatch '^\d{8}-\d{6}$') { return @() }
+    $dir = [System.IO.Path]::Combine($root, $Stamp)
+    if ($Edition -ne '') {
+        if (-not (Test-SafeEditionName $Edition)) { return @() }
+        $dir = [System.IO.Path]::Combine($dir, $Edition)
+    }
+    return @('--backup-dir', $dir)
+}
+
+function Measure-BackupFolder([string]$Path) {
+    # Total bytes of the files under $Path WITHOUT following any directory link
+    # (Get-ChildItem -Recurse and Remove-Item -Recurse follow junctions/symlinks in
+    # Windows PowerShell 5.1). HasLink = a junction/symlink was found anywhere inside:
+    # the caller must then not delete the folder recursively.
+    $bytes = [long]0; $hasLink = $false
+    $stack = New-Object System.Collections.Generic.Stack[string]
+    $stack.Push($Path)
+    while ($stack.Count -gt 0) {
+        $dir = $stack.Pop()
+        try {
+            foreach ($e in (New-Object System.IO.DirectoryInfo($dir)).EnumerateFileSystemInfos()) {
+                if (($e.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { $hasLink = $true; continue }
+                if (($e.Attributes -band [System.IO.FileAttributes]::Directory) -ne 0) { $stack.Push($e.FullName) }
+                else { $bytes += ([System.IO.FileInfo]$e).Length }
+            }
+        } catch { }
+    }
+    return [PSCustomObject]@{ Bytes = $bytes; HasLink = $hasLink }
+}
+
+function Get-BackupSets([string]$GamePath) {
+    # The backup sets on disk, oldest first: Name (the stamp), Date, Path, Bytes.
+    # Only folders whose name is exactly a stamp, and never a reparse point (a
+    # junction/symlink must not be followed by a recursive delete).
+    $root = Get-BackupRoot $GamePath
+    if (-not $root -or -not (Test-Path -LiteralPath $root -PathType Container)) { return @() }
+    # A backup folder that is itself a junction/symlink would make every "set" below a
+    # folder somewhere else: treat it as empty rather than manage (or delete) it.
+    if (((Get-Item -LiteralPath $root -Force).Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { return @() }
+    $sets = @()
+    foreach ($d in @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue)) {
+        if ($d.Name -notmatch '^\d{8}-\d{6}$') { continue }
+        if (($d.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
+        $when = [datetime]::MinValue
+        if (-not [datetime]::TryParseExact($d.Name, 'yyyyMMdd-HHmmss', [System.Globalization.CultureInfo]::InvariantCulture, [System.Globalization.DateTimeStyles]::None, [ref]$when)) { continue }
+        $m = Measure-BackupFolder $d.FullName
+        $sets += [PSCustomObject]@{ Name = $d.Name; Date = $when; Path = $d.FullName; Bytes = $m.Bytes; HasLink = $m.HasLink }
+    }
+    return @($sets | Sort-Object Date)
+}
+
+function Remove-OldBackups {
+    # Keeps the backup folder inside its limits: first deletes sets older than
+    # -Days days, then deletes the OLDEST remaining sets until the total is under
+    # -MaxGB gigabytes. The newest set is never deleted by the size rule - it is
+    # the run that just happened, holding exactly the files the user is most
+    # likely to want back - so one big run can leave the folder above the cap
+    # until the next run. Everything removed is logged (deleted-files.txt).
+    # Defaults come from config. Never throws. Returns what happened.
+    param([Parameter(Mandatory = $true)][string]$GamePath, $Days = $null, $MaxGB = $null)
+    $result = [PSCustomObject]@{ Removed = 0; FreedBytes = [long]0; Kept = 0; KeptBytes = [long]0 }
+    try {
+        if ($null -eq $Days -or $null -eq $MaxGB) { $cfg = Load-Config; if ($null -eq $Days) { $Days = $cfg.BackupDays }; if ($null -eq $MaxGB) { $MaxGB = $cfg.BackupMaxGB } }
+        $sets = New-Object System.Collections.Generic.List[object]
+        foreach ($s in @(Get-BackupSets $GamePath)) { $sets.Add($s) }
+        $log = New-Object System.Collections.Generic.List[string]
+        $removeSet = {
+            param($set, $why)
+            try {
+                # A set holding a junction/symlink is left alone: Remove-Item -Recurse would
+                # follow it and delete files outside the backup folder.
+                if ($set.HasLink) { $log.Add("SKIPPED   backup $($set.Path)  contains a link (not followed, not deleted)  [$why]"); return $false }
+                Remove-Item -LiteralPath $set.Path -Recurse -Force -ErrorAction Stop
+                $result.Removed++; $result.FreedBytes += $set.Bytes
+                $log.Add("PRUNED    backup $($set.Path)  ($($set.Bytes) bytes)  [$why]")
+                return $true
+            } catch {
+                $log.Add("FAILED    backup $($set.Path)  [$why] $($_.Exception.Message)")
+                return $false
+            }
+        }
+        $cutoff = (Get-Date).AddDays(-[double]$Days)
+        foreach ($s in $sets.ToArray()) {   # ToArray, not @($sets): @() over a generic List throws 'Argument types do not match' here
+            if ($s.Date -lt $cutoff) { if (& $removeSet $s "older than $Days days") { [void]$sets.Remove($s) } }
+        }
+        $limit = [long]([double]$MaxGB * 1GB)
+        $total = [long]0; foreach ($s in $sets) { $total += $s.Bytes }
+        while ($sets.Count -gt 1 -and $total -gt $limit) {
+            $oldest = $sets[0]
+            if (& $removeSet $oldest "over the $MaxGB GB cap") { $total -= $oldest.Bytes }
+            $sets.RemoveAt(0)
+        }
+        $result.Kept = $sets.Count
+        $keptBytes = [long]0; foreach ($s in $sets) { $keptBytes += $s.Bytes }
+        $result.KeptBytes = $keptBytes
+        Add-DeletionLog $log.ToArray()
+        # nothing left: remove the empty root folder too
+        $root = Get-BackupRoot $GamePath
+        if ($root -and (Test-Path -LiteralPath $root -PathType Container) -and @(Get-ChildItem -LiteralPath $root -Force -ErrorAction SilentlyContinue).Count -eq 0) {
+            Remove-Item -LiteralPath $root -Force -ErrorAction SilentlyContinue
+        }
+    } catch { }
+    return $result
+}
+
 function Get-SongDisplayMap {
     # code -> display label for one edition's songs, built from whatever the
     # catalog knows (falls back to the raw code for anything the sheet
@@ -2104,6 +2290,7 @@ function Get-UpdatePlan {
         BaseBytes     = [long]0
         Songs         = @()
         SongFilesFlat = @()
+        Replacing     = @()
         SongBytes     = [long]0
         TotalFiles    = 0
         TotalBytes    = [long]0
@@ -2243,10 +2430,33 @@ function Get-UpdatePlan {
     $plan.BaseBytes       = $base.Bytes
     $plan.Songs         = @($songs)
     $plan.SongFilesFlat = @($songFilesFlat)
+    # Song files this download would REPLACE rather than add: a file with that
+    # name is already on disk and differs in size (--size-only). Usually an
+    # official re-upload, but it is also what happens to the user's own modified
+    # copy of an official song, so the previews say so (and a backup is kept).
+    $sep = [System.IO.Path]::DirectorySeparatorChar
+    $plan.Replacing = @($songFilesFlat | Where-Object { Test-Path -LiteralPath ([System.IO.Path]::Combine($mapsDir, ([string]$_).Replace('/', $sep))) -PathType Leaf })
     $plan.SongBytes     = $songBytes
     $plan.TotalFiles    = $baseNormal.Count + $baseAsk.Count + @($songFilesFlat).Count
     $plan.TotalBytes    = $base.Bytes + $songBytes
     return $plan
+}
+
+function Get-ReplacingKeepItems {
+    # The song files a plan would REPLACE (Plan.Replacing, "<edition>/<file>")
+    # as keepable songs: one entry per <code>_pc.ipk with the "Edition|code" key
+    # the Keep my version lock (KEEPSONGS) uses. Other file types can be replaced
+    # (and are backed up) but have no per-song lock, so they are not listed.
+    param([Parameter(Mandatory = $true)]$Plan)
+    $items = @()
+    foreach ($rel in @($Plan.Replacing)) {
+        $parts = ([string]$rel) -split '[\\/]'
+        if ($parts.Count -ne 2) { continue }
+        if ($parts[1] -notmatch '^(?<code>.+)_pc\.ipk$') { continue }
+        $code = $Matches['code'].ToLowerInvariant()
+        $items += [PSCustomObject]@{ Key = ('{0}|{1}' -f $parts[0], $code); Edition = $parts[0]; Code = $code; Path = [string]$rel }
+    }
+    return $items
 }
 
 # ----------------------------------------------------------------------------
@@ -2988,6 +3198,7 @@ Export-ModuleMember -Function `
     Initialize-SongSelectionContext, Resolve-SongSelection, Get-SongRemovalPlan, `
     Get-SongRemovalPromptItems, Invoke-SongRemovalDelete, Test-SafeEditionName, `
     Get-KeepKeySet, Format-KeepKeySet, Get-LocalSongKeySet, `
+    Get-BackupRoot, New-BackupStamp, Get-BackupArgs, Get-BackupSets, Measure-BackupFolder, Remove-OldBackups, Get-ReplacingKeepItems, `
     Get-DuplicateTitleKeys, Get-SongTitleForDisplay, `
     Get-RequirementDefinitions, Get-RequirementsStatus, Get-RequirementInstaller, Test-InstallerSignature, Install-Requirement, `
     Invoke-RequirementInstall, Start-LegacyExe, `

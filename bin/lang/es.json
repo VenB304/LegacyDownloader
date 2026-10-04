@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - falló (código de salida {code})",
   "gui.requirements_install_cancelled": "{name} - instalación cancelada",
   "gui.requirements_download_failed": "No se pudo descargar {name}. Descárgalo tú mismo desde:\n{url}",
-  "gui.requirements_all_done": "Todo lo necesario está instalado."
+  "gui.requirements_all_done": "Todo lo necesario está instalado.",
+  "preview.replace_line": "{count} de estos reemplazan una copia distinta de la misma canción que ya está en tu disco (mismo nombre de archivo, distinto tamaño).",
+  "preview.replace_backup_on": "Las copias antiguas se respaldan primero y se conservan {days} días (como máximo {gb} GB).",
+  "preview.replace_backup_off": "Las copias de seguridad están desactivadas en Configuración, así que las copias antiguas se perderán.",
+  "preview.replace_keep_hint": "Para proteger una canción, márcala como «Conservar mi versión» en «Elegir mapas / canciones» antes de descargar.",
+  "preview.list_tag_replace": "reemplaza tu copia",
+  "gui.preview_replace_hint": "Estas canciones ya están en tu disco pero difieren de la copia del servidor, así que la descarga las reemplazará. Desmarca una canción para conservar tu propia versión: entonces nunca se reemplaza.",
+  "gui.settings_group_backups": "Copias de seguridad de canciones",
+  "gui.settings_backup_enable": "Respaldar un archivo de canción antes de que una actualización lo reemplace",
+  "gui.settings_backup_days": "Eliminar copias de seguridad de más de (días)",
+  "gui.settings_backup_max": "Conservar como máximo (GB)",
+  "gui.settings_backup_open": "Abrir carpeta de copias de seguridad",
+  "gui.settings_backup_none": "Todavía no hay copias de seguridad.",
+  "gui.settings_backup_hint": "Para recuperar una canción, cópiala desde la carpeta de copias de seguridad a la carpeta correspondiente dentro de maps.",
+  "gui.settings_backup_invalid_days": "Los días deben ser un número entero del 1 al 365.",
+  "gui.settings_backup_invalid_max": "El límite de tamaño debe ser un número entero del 1 al 1000 (GB)."
 }

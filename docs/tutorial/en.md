@@ -156,6 +156,8 @@ just wanted to see what's available. If nothing has changed since last
 time, it just says **"Everything is already up to date"** and stops there —
 nothing to click.
 
+**Songs that would be replaced.** If the server's copy of a song differs from the one already on your disk (same file name, different size) — an official update, or your own modified copy of an official song — the preview says so and lists those songs with checkboxes. **Checked** (the default) = replace it; the old file is first moved to a backup folder (`.legacydownloader-backups` inside your game folder). **Unchecked** = keep your version; the song is marked **Keep my version** and updates will never replace it.
+
 <details>
 <summary>If you've modified your game files (Kinect mod, patched exe) — click to expand</summary>
 
@@ -195,6 +197,7 @@ anything new since your last visit.
   automatically, and an advanced custom share URL.
 
   ![Settings window](images/08-settings-en.png)
+- **Song backups**: in **Settings**, **Song backups** controls whether replaced song files are backed up first (on by default), how many days backups are kept (30) and the most space they may use (5 GB); older backups are deleted automatically. **Open backup folder** shows them — to get a song back, copy it into the matching folder under `maps`.
 - **Updating Legacy Downloader itself**: when a new version is available, a
   button appears next to Settings on the main window. Click it and the tool
   updates itself in place and reopens automatically — no manual re-download

@@ -169,6 +169,8 @@ o en **«Cancelar»** si solo querías ver qué hay disponible. Si no ha
 cambiado nada desde la última vez, simplemente dice **«Todo está ya
 actualizado»** y se detiene ahí — no hay nada que pulsar.
 
+**Canciones que se reemplazarían.** Si la copia de una canción en el servidor difiere de la que ya tienes en el disco (mismo nombre de archivo, distinto tamaño) —una actualización oficial o tu propia copia modificada de una canción oficial—, la vista previa lo indica y muestra esas canciones con casillas. **Marcada** (por defecto) = se reemplaza; el archivo antiguo se mueve antes a una carpeta de copias de seguridad (`.legacydownloader-backups` dentro de tu carpeta del juego). **Desmarcada** = conservas tu versión; la canción se marca como **Conservar mi versión** y las actualizaciones nunca la reemplazarán.
+
 <details>
 <summary>Si has modificado tus archivos del juego (mod de Kinect, exe parcheado) — haz clic para desplegar</summary>
 
@@ -212,6 +214,7 @@ actualizaciones»** obtiene todo lo nuevo desde tu última visita.
   automáticamente y una URL de share personalizada avanzada.
 
   ![Ventana de ajustes](images/08-settings-es.png)
+- **Copias de seguridad de canciones**: en **Configuración**, **Copias de seguridad de canciones** controla si los archivos de canciones reemplazados se respaldan antes (activado por defecto), cuántos días se conservan las copias (30) y el espacio máximo que pueden ocupar (5 GB); las copias más antiguas se eliminan automáticamente. **Abrir carpeta de copias de seguridad** las muestra: para recuperar una canción, cópiala a la carpeta correspondiente dentro de `maps`.
 - **Actualizar el propio Legacy Downloader**: cuando hay una nueva versión
   disponible, aparece un botón junto a **Configuración** en la ventana
   principal. Haz clic en él y la herramienta se actualiza en el mismo sitio y

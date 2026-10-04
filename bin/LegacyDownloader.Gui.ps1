@@ -462,6 +462,47 @@ function Show-LaunchPrompt {
     }
 }
 
+function Get-MaxDialogClientHeight {
+    # The tallest client area a dialog may have on THIS screen, in the same logical
+    # pixels the layout uses (the app is DPI-unaware, so on a scaled display the OS
+    # enlarges the whole window afterwards and Screen reports the virtualised size):
+    # work area minus title bar, borders and a margin. LEGACY_TEST_MAX_CLIENT_HEIGHT
+    # lets the self-test simulate a small screen.
+    if ($env:LEGACY_TEST_MAX_CLIENT_HEIGHT) { return [int]$env:LEGACY_TEST_MAX_CLIENT_HEIGHT }
+    $scr = if ($script:Form -and -not $script:Form.IsDisposed) { [System.Windows.Forms.Screen]::FromControl($script:Form) } else { [System.Windows.Forms.Screen]::PrimaryScreen }
+    return [int]($scr.WorkingArea.Height - 80)
+}
+
+function Enable-DialogScroll {
+    # If the dialog's content is taller than the screen allows, move $Content into a
+    # scrolling panel and pin $Buttons in a bottom bar that never scrolls, so Save /
+    # Download / Cancel are always reachable. $BarTop = the y (in the full-height
+    # layout) where the button area starts. Returns @{ Content; Bar } or $null when
+    # the dialog already fits (the common case: nothing changes).
+    param($f, [System.Windows.Forms.Control[]]$Content, [System.Windows.Forms.Control[]]$Buttons, [int]$BarTop)
+    $full = $f.ClientSize.Height
+    $max = Get-MaxDialogClientHeight
+    if ($full -le $max) { return $null }
+    $w = $f.ClientSize.Width
+    $bar = New-Object System.Windows.Forms.Panel
+    $bar.Dock = [System.Windows.Forms.DockStyle]::Bottom
+    $bar.Height = $full - $BarTop
+    $bar.BackColor = $script:ColorBg
+    $pnl = New-Object System.Windows.Forms.Panel
+    $pnl.Dock = [System.Windows.Forms.DockStyle]::Fill
+    $pnl.AutoScroll = $true
+    $pnl.BackColor = $script:ColorBg
+    foreach ($b in $Buttons) { $b.Top = $b.Top - $BarTop; $bar.Controls.Add($b) }
+    foreach ($c in $Content) { $pnl.Controls.Add($c) }
+    $pnl.AutoScrollMinSize = New-Object System.Drawing.Size(0, $BarTop)
+    $f.Controls.Add($pnl)
+    $f.Controls.Add($bar)
+    $pnl.BringToFront()     # the Fill panel must be docked last, after the bottom bar
+    # Room for the vertical scroll bar so the content (laid out for the old width) does not trigger a horizontal one.
+    $f.ClientSize = New-Object System.Drawing.Size(($w + [System.Windows.Forms.SystemInformation]::VerticalScrollBarWidth), $max)
+    return @{ Content = $pnl; Bar = $bar }
+}
+
 function New-GroupBox([string]$Text, [int]$X, [int]$Y, [int]$W, [int]$H) {
     $g = New-Object System.Windows.Forms.GroupBox
     # A single '&' in a WinForms control's Text is swallowed as a mnemonic-
@@ -686,6 +727,23 @@ function Invoke-CaptureState {
             $script:Cfg.AutoLaunch = $false
             Show-LaunchPrompt
         }
+        'settings' {
+            Show-SettingsWindow
+        }
+        'preview' {
+            # A plan that REPLACES some songs (and one moddable base file), so the replaced-songs list and the backup note show.
+            $fake = [PSCustomObject]@{
+                Ok = $true; GamePresent = $true; MapsMissing = $false; WrongLevel = $false
+                BaseNormal = @('Legacy.exe'); BaseAsk = @('Legacy.exe'); BaseAskSuspected = @(); KeptSettings = $true
+                Songs = @([PSCustomObject]@{ Edition = '2016'; Count = 4; Files = @() }, [PSCustomObject]@{ Edition = '2020'; Count = 2; Files = @() })
+                SongFilesFlat = @('2016/adeyyo_pc.ipk', '2016/firework_pc.ipk', '2016/newsong_pc.ipk', '2016/another_pc.ipk', '2020/mobjump_pc.ipk', '2020/sweetbutpsycho_pc.ipk')
+                Replacing = @('2016/adeyyo_pc.ipk', '2016/firework_pc.ipk', '2020/sweetbutpsycho_pc.ipk')
+                TotalFiles = 7; TotalBytes = [long]812345678
+            }
+            $pvResult = Show-PreviewDialog $fake
+            # Test hook: lets a harness read what the dialog returned (nothing else sets this variable).
+            if ($env:LEGACY_CAPTURE_RESULT) { [System.IO.File]::WriteAllText($env:LEGACY_CAPTURE_RESULT, ((@{ Proceed = [bool]$pvResult.Proceed; Keep = @($pvResult.Keep); KeepReplaced = @($pvResult.KeepReplaced) }) | ConvertTo-Json -Compress)) }
+        }
         'update' {
             $curVer = Get-AppVersion
             $major = 0
@@ -780,6 +838,58 @@ function Show-SettingsWindow {
     $hintBwLimit = New-Hint (T 'gui.settings_bwlimit_hint') 16 48 380
     $grpDownloads.Controls.AddRange(@($lblBwLimit, $txtBwLimit, $lblBwUnit, $hintBwLimit))
 
+    # --- Song backups ---
+    # Rows are laid out from MEASURED label heights (a translation can wrap to a
+    # second line), so nothing clips and the groups below simply shift down.
+    $grpBackups = New-GroupBox (T 'gui.settings_group_backups') 16 228 428 100
+    $chkBackup = New-Object System.Windows.Forms.CheckBox
+    $chkBackup.Text = T 'gui.settings_backup_enable'
+    $chkBackup.Font = $script:FontBase
+    $chkBackup.ForeColor = $script:ColorText
+    $chkBackup.SetBounds(16, 18, 400, 34)
+    $chkBackup.Checked = [bool]$script:Cfg.BackupSongs
+    $rowY = 56
+    $lblBkDays = New-Label (T 'gui.settings_backup_days') 16 $rowY 300 22
+    $lblBkDays.AutoSize = $false
+    $lblBkDays.Height = [Math]::Max(22, (Get-WrappedTextHeight $lblBkDays.Text $lblBkDays.Font 300) + 4)
+    $txtBkDays = New-Object System.Windows.Forms.TextBox
+    $txtBkDays.Font = $script:FontBase
+    $txtBkDays.BackColor = [System.Drawing.Color]::White
+    $txtBkDays.TextAlign = [System.Windows.Forms.HorizontalAlignment]::Right
+    $txtBkDays.SetBounds(332, $rowY - 2, 60, 22)
+    $txtBkDays.Text = [string]$script:Cfg.BackupDays
+    $rowY += $lblBkDays.Height + 6
+    $lblBkMax = New-Label (T 'gui.settings_backup_max') 16 $rowY 300 22
+    $lblBkMax.AutoSize = $false
+    $lblBkMax.Height = [Math]::Max(22, (Get-WrappedTextHeight $lblBkMax.Text $lblBkMax.Font 300) + 4)
+    $txtBkMax = New-Object System.Windows.Forms.TextBox
+    $txtBkMax.Font = $script:FontBase
+    $txtBkMax.BackColor = [System.Drawing.Color]::White
+    $txtBkMax.TextAlign = [System.Windows.Forms.HorizontalAlignment]::Right
+    $txtBkMax.SetBounds(332, $rowY - 2, 60, 22)
+    $txtBkMax.Text = [string]$script:Cfg.BackupMaxGB
+    $rowY += $lblBkMax.Height + 8
+    $btnOpenBk = New-Btn (T 'gui.settings_backup_open') 16 $rowY 0 26 $false
+    $btnOpenBk.Width = [Math]::Max(120, [System.Windows.Forms.TextRenderer]::MeasureText($btnOpenBk.Text, $btnOpenBk.Font).Width + 28)
+    $rowY += 32
+    $hintBk = New-Hint (T 'gui.settings_backup_hint') 16 $rowY 396
+    $hintBk.AutoSize = $false
+    $hintBk.Height = [Math]::Max(16, (Get-WrappedTextHeight $hintBk.Text $hintBk.Font 396) + 2)
+    $grpBackups.Height = $hintBk.Bottom + 10
+    $grpBackups.Controls.AddRange(@($chkBackup, $lblBkDays, $txtBkDays, $lblBkMax, $txtBkMax, $btnOpenBk, $hintBk))
+    $setBackupEnabled = { $txtBkDays.Enabled = $chkBackup.Checked; $txtBkMax.Enabled = $chkBackup.Checked }
+    $chkBackup.Add_CheckedChanged({ & $setBackupEnabled })
+    & $setBackupEnabled
+    $btnOpenBk.Add_Click({
+        param($s, $e)
+        $bkRoot = Get-BackupRoot $script:Cfg.GamePath
+        if ($bkRoot -and (Test-Path -LiteralPath $bkRoot -PathType Container)) {
+            Start-Process -FilePath 'explorer.exe' -ArgumentList (ConvertTo-QuotedArg $bkRoot) | Out-Null
+        } else {
+            Info-Box (T 'gui.settings_backup_none') (T 'gui.settings_group_backups')
+        }
+    })
+
     # --- Advanced ---
     $grpAdvanced = New-GroupBox (T 'gui.settings_group_advanced') 16 228 428 90
     $lblShareUrl = New-Label (T 'gui.settings_shareurl_label') 16 18 396 18
@@ -814,7 +924,9 @@ function Show-SettingsWindow {
     # which overlapped the Updates group's own bottom border/checkbox -
     # caught live by Ven, not self-test, since self-test only asserts
     # button Left positions, not vertical layout).
-    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 408 428
+    $grpAdvanced.Top = $grpBackups.Bottom + 12
+    $grpUpdates.Top = $grpAdvanced.Bottom + 12
+    $hintRestart = New-Hint (T 'gui.settings_restart_hint') 16 ($grpUpdates.Bottom + 4) 428
     # Own row, stacked above the buttons - not a Settings toggle (see the
     # plan's "Always-on troubleshooting log" section: there's nothing to
     # configure, it's just always on), just letting the user know it exists.
@@ -887,14 +999,32 @@ function Show-SettingsWindow {
                 return
             }
         }
+        # Backup limits: whole numbers in range (TryParse so a huge value fails the
+        # same clean path instead of throwing). Only checked while backups are on.
+        $bkDays = [int]$script:Cfg.BackupDays; $bkMax = [int]$script:Cfg.BackupMaxGB
+        if ($chkBackup.Checked) {
+            if (-not [int]::TryParse($txtBkDays.Text.Trim(), [ref]$bkDays) -or $bkDays -lt 1 -or $bkDays -gt 365) {
+                Warn-Box (T 'gui.settings_backup_invalid_days') (T 'gui.err_title')
+                return
+            }
+            if (-not [int]::TryParse($txtBkMax.Text.Trim(), [ref]$bkMax) -or $bkMax -lt 1 -or $bkMax -gt 1000) {
+                Warn-Box (T 'gui.settings_backup_invalid_max') (T 'gui.err_title')
+                return
+            }
+        }
         Save-Config @{
             AutoCheck       = $chkAutoCheck.Checked
             AutoLaunch      = $chkAutoLaunch.Checked
             BwLimit         = $bwOut
             ShareUrl        = $txtShareUrl.Text.Trim()
             CheckAppUpdates = $chkCheckAppUpdates.Checked
+            BackupSongs     = $chkBackup.Checked
+            BackupDays      = $bkDays
+            BackupMaxGB     = $bkMax
         }
         $script:Cfg = Load-Config
+        # New limits apply now, not only after the next download (never throws).
+        try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
         $f.Tag = 'save'
         $f.Close()
     })
@@ -902,13 +1032,27 @@ function Show-SettingsWindow {
 
     $f.AcceptButton = $btnSave
     $f.CancelButton = $btnCancel
-    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpAdvanced, $grpUpdates, $hintRestart, $hintLog, $btnSave, $btnCancel))
+    $f.Controls.AddRange(@($grpStartup, $grpDownloads, $grpBackups, $grpAdvanced, $grpUpdates, $hintRestart, $hintLog, $btnSave, $btnCancel))
+    # Taller than the screen allows (small or scaled display)? Scroll the content, keep Save/Cancel pinned.
+    $scroll = Enable-DialogScroll $f @($grpStartup, $grpDownloads, $grpBackups, $grpAdvanced, $grpUpdates, $hintRestart, $hintLog) @($btnSave, $btnCancel) ($btnSave.Top - 8)
 
     if ($env:LEGACY_GUI_SELFTEST) {
         $f.Show()
         [System.Windows.Forms.Application]::DoEvents()
-        Write-Host "  Show-SettingsWindow: rendered, Cancel@$($btnCancel.Left) Save@$($btnSave.Left) (expect Cancel left of Save)"
+        Write-Host " Show-SettingsWindow: rendered, Cancel@$($btnCancel.Left) Save@$($btnSave.Left) (expect Cancel left of Save)"
         if ($btnCancel.Left -ge $btnSave.Left) { Write-Host "  SELFTEST FAILURE: Cancel is not left of Save" -ForegroundColor Red }
+        $stack = @($grpStartup, $grpDownloads, $grpBackups, $grpAdvanced, $grpUpdates)
+        $stackOk = $true
+        for ($gi = 1; $gi -lt $stack.Count; $gi++) { if ($stack[$gi].Top -lt $stack[$gi - 1].Bottom) { $stackOk = $false } }
+        $backupFits = ($txtBkMax.Right -le ($grpBackups.Width - 8)) -and ($hintBk.Bottom -le $grpBackups.Height) -and ($lblBkDays.Right -le $txtBkDays.Left) -and ($lblBkMax.Right -le $txtBkMax.Left)
+        $windowFits = ($btnSave.Bottom -le $f.ClientSize.Height) -and ($grpUpdates.Bottom -le $hintRestart.Top)
+        Write-Host "  settings groups stack without overlap: $stackOk; backup rows fit: $backupFits; window holds everything: $windowFits (backup group $($grpBackups.Top)-$($grpBackups.Bottom), window $($f.ClientSize.Height) high, scrolling: $([bool]$scroll))"
+        if (-not ($stackOk -and $backupFits -and $windowFits)) { Write-Host "  SELFTEST FAILURE: settings window layout overlaps or overflows" -ForegroundColor Red }
+        if ($scroll) {
+            $pinned = ($btnSave.Parent -eq $scroll.Bar) -and ($btnCancel.Parent -eq $scroll.Bar) -and ($scroll.Bar.Bottom -le $f.ClientSize.Height) -and ($f.ClientSize.Height -le (Get-MaxDialogClientHeight)) -and ($scroll.Content.AutoScrollMinSize.Height -gt $scroll.Content.ClientSize.Height)
+            Write-Host "  settings window scrolls on a small screen: Save/Cancel pinned in the bottom bar: $pinned"
+            if (-not $pinned) { Write-Host "  SELFTEST FAILURE: scrolling settings window does not keep Save/Cancel pinned and visible" -ForegroundColor Red }
+        }
         Start-Sleep -Milliseconds 100
         $f.Dispose()
         return
@@ -1143,6 +1287,9 @@ function Poll-Download {
 
 function Finish-Downloads {
     $script:DlTimer.Stop()
+    # Keep the backup folder inside its age/size limits now that this run's
+    # replaced files (if any) are in it. Never throws.
+    try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
     $script:Bar.Value = 100
     Set-Busy $false
@@ -1190,9 +1337,14 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         $jobs += @{ Label = (T 'gui.job_base'); Source = ($script:Conn + 'LegacyPC - Game'); Dest = $gp; Extra = $exArgs; Kind = 'base'; Keep = $KeepFiles }
     }
 
+    # One backup set per run: any song file an update REPLACES (same name, new
+    # size - e.g. the user's own modified copy of an official song) is moved here
+    # instead of being destroyed. Empty args when the backup is switched off.
+    $backupStamp = New-BackupStamp
+
     if ($script:Cfg.Editions.ToUpper() -eq 'AUTO') {
         if (@($Plan.Songs).Count -gt 0) {
-            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = @(Get-SongFilterArgs -GamePath $gp) }
+            $jobs += @{ Label = (T 'gui.job_allsongs'); Source = ($script:Conn + 'maps'); Dest = (Join-Path $gp 'maps'); Extra = (@(Get-SongFilterArgs -GamePath $gp) + @(Get-BackupArgs -GamePath $gp -Stamp $backupStamp)) }
         }
     } else {
         $planEditions = @($Plan.Songs | Where-Object { $_.Count -gt 0 } | ForEach-Object { [string]$_.Edition })
@@ -1201,7 +1353,7 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         }
         foreach ($ed in $planEditions) {
             $dispLabel = Format-EditionDisplay $ed
-            $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp)
+            $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp) + @(Get-BackupArgs -GamePath $gp -Stamp $backupStamp -Edition $ed)
             $jobs += @{ Label = $dispLabel; Source = ($script:Conn + "maps/$ed"); Dest = (Join-Path $gp "maps\$ed"); Extra = $extra }
         }
     }
@@ -1241,6 +1393,13 @@ function Build-PlanSummary($Plan) {
     } else {
         $lines += (T 'preview.songs_up_to_date')
     }
+    $replaceCount = @($Plan.Replacing).Count
+    if ($replaceCount -gt 0) {
+        $lines += ''
+        $lines += (T 'preview.replace_line' @{ count = $replaceCount })
+        if ($script:Cfg.BackupSongs) { $lines += (T 'preview.replace_backup_on' @{ days = $script:Cfg.BackupDays; gb = $script:Cfg.BackupMaxGB }) }
+        else { $lines += (T 'preview.replace_backup_off') }
+    }
     $lines += ''
     $lines += (T 'preview.total' @{ files = $Plan.TotalFiles; size = (Format-Bytes $Plan.TotalBytes) })
     return ($lines -join "`r`n")
@@ -1279,7 +1438,10 @@ function Show-FileListDialog($Plan, $KeepFiles) {
     if ($Plan.KeptSettings) { $lines += (T 'preview.list_config') }
     if (@($Plan.SongFilesFlat).Count -gt 0) {
         $lines += (T 'preview.list_songs')
-        foreach ($x in ($Plan.SongFilesFlat | Sort-Object)) { $lines += "  $x" }
+        $replacingSet = [System.Collections.Generic.HashSet[string]]::new([string[]]@($Plan.Replacing), [System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($x in ($Plan.SongFilesFlat | Sort-Object)) {
+            if ($replacingSet.Contains([string]$x)) { $lines += ("  {0}  ({1})" -f $x, (T 'preview.list_tag_replace')) } else { $lines += "  $x" }
+        }
     }
     $tb.Text = ($lines -join "`r`n")
 
@@ -1293,8 +1455,11 @@ function Show-FileListDialog($Plan, $KeepFiles) {
 }
 
 function Show-PreviewDialog($Plan) {
-    # returns @{ Proceed = $bool; Keep = @() }
-    $out = @{ Proceed = $false; Keep = @() }
+    # returns @{ Proceed = $bool; Keep = @(); KeepReplaced = @() }
+    # Keep = moddable base files the user chose to keep; KeepReplaced =
+    # "Edition|code" keys of songs the user unticked in the replaced-songs list
+    # (they get a Keep my version lock before the download starts).
+    $out = @{ Proceed = $false; Keep = @(); KeepReplaced = @() }
     $ba  = @($Plan.BaseAsk)
     $baSuspected = @($Plan.BaseAskSuspected)
 
@@ -1310,13 +1475,19 @@ function Show-PreviewDialog($Plan) {
     $summary = New-Object System.Windows.Forms.TextBox
     $summary.Multiline = $true; $summary.ReadOnly = $true
     $summary.ScrollBars = [System.Windows.Forms.ScrollBars]::Vertical
-    $summary.SetBounds(14, 14, 468, 180)
+    # Taller when files will be REPLACED: that adds a few (wrapped) lines of
+    # warning and the totals line must stay visible without scrolling.
+    # Sized from the measured text (every language wraps differently), 180-330 px.
+    $summaryText = Build-PlanSummary $Plan
+    $summaryNeeded = [System.Windows.Forms.TextRenderer]::MeasureText($summaryText, $script:FontMono, (New-Object System.Drawing.Size(438, 0)), [System.Windows.Forms.TextFormatFlags]::WordBreak).Height + 14
+    $summaryHeight = [Math]::Max(180, [Math]::Min(330, $summaryNeeded))
+    $summary.SetBounds(14, 14, 468, $summaryHeight)
     $summary.Font = $script:FontMono
     $summary.BackColor = $script:ColorCard
     $summary.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
-    $summary.Text = Build-PlanSummary $Plan
+    $summary.Text = $summaryText
 
-    $y = 204
+    $y = 24 + $summaryHeight
     $clb = $null
     if ($ba.Count -gt 0) {
         $hintText = T 'gui.preview_moddable_hint'
@@ -1347,6 +1518,33 @@ function Show-PreviewDialog($Plan) {
         $f.Controls.Add($clb)
     }
 
+    # Songs this download would REPLACE (a file with that name is already on disk
+    # and differs from the server's). Ticked (the default) = take the update, the
+    # old copy is backed up first; unticked = Keep my version. The default is to
+    # take the update, so someone who never reads this list is not frozen on old
+    # song files forever (the same lesson as the moddable base files above).
+    $repItems = @(Get-ReplacingKeepItems $Plan)
+    $clbRep = $null
+    if ($repItems.Count -gt 0) {
+        $repHintText = T 'gui.preview_replace_hint'
+        $repHintSize = [System.Windows.Forms.TextRenderer]::MeasureText(
+            $repHintText, $script:FontBase, (New-Object System.Drawing.Size(468, 0)),
+            [System.Windows.Forms.TextFormatFlags]::WordBreak)
+        $repHint = New-Label $repHintText 14 $y 468 ($repHintSize.Height + 6)
+        $y += $repHint.Height + 6
+        $clbRep = New-Object System.Windows.Forms.CheckedListBox
+        $clbRep.CheckOnClick = $true
+        $clbRep.Font = $script:FontBase
+        $clbRep.BackColor = $script:ColorCard
+        $clbRep.BorderStyle = [System.Windows.Forms.BorderStyle]::FixedSingle
+        $clbRep.HorizontalScrollbar = $true
+        $clbRep.SetBounds(14, $y, 468, ([Math]::Min(5, $repItems.Count) * 20 + 8))
+        foreach ($ri in $repItems) { [void]$clbRep.Items.Add(('{0}  /  {1}' -f (Format-EditionDisplay $ri.Edition), $ri.Code), $true) }
+        $y += $clbRep.Height + 12
+        $f.Controls.Add($repHint)
+        $f.Controls.Add($clbRep)
+    }
+
     # Widths are measured from the actual (translated) text so a longer
     # translation than English never gets clipped; Download stays centered
     # in whatever middle space is left between Files and Cancel.
@@ -1375,6 +1573,50 @@ function Show-PreviewDialog($Plan) {
     $f.AcceptButton = $btnDl
     $f.CancelButton = $btnCancel
     $f.Controls.AddRange(@($summary, $btnFiles, $btnDl, $btnCancel))
+    # Taller than the screen allows? Scroll the content (summary, lists), keep the buttons pinned.
+    $scroll = Enable-DialogScroll $f @(@($f.Controls | Where-Object { $_ -ne $btnFiles -and $_ -ne $btnDl -and $_ -ne $btnCancel })) @($btnFiles, $btnDl, $btnCancel) ($btnFiles.Top - 8)
+
+    if ($env:LEGACY_GUI_SELFTEST) {
+        $f.Show()
+        [System.Windows.Forms.Application]::DoEvents()
+        # Everything inside the client area, and no control overlapping one that sits below it.
+        # (When the dialog scrolls, the real controls sit inside the two panels; check those instead.)
+        # Each group of controls is checked in its OWN coordinate space (a scrolled dialog has two panels).
+        $groups = @()
+        if ($scroll) {
+            $groups += , @{ Controls = @($scroll.Content.Controls | ForEach-Object { $_ }); W = $scroll.Content.ClientSize.Width; H = $scroll.Content.AutoScrollMinSize.Height }
+            $groups += , @{ Controls = @($scroll.Bar.Controls | ForEach-Object { $_ }); W = $scroll.Bar.ClientSize.Width; H = $scroll.Bar.ClientSize.Height }
+        } else {
+            $groups += , @{ Controls = @($f.Controls | ForEach-Object { $_ }); W = $f.ClientSize.Width; H = $f.ClientSize.Height }
+        }
+        $ctls = @($groups | ForEach-Object { $_.Controls })
+        $inside = $true; $overlap = $false
+        foreach ($g in $groups) {
+            foreach ($c in $g.Controls) {
+                if ($c.Right -gt $g.W -or $c.Bottom -gt $g.H) { $inside = $false }
+                foreach ($d in $g.Controls) {
+                    if ($d.Top -gt $c.Top -and $d.Left -lt $c.Right -and $d.Right -gt $c.Left -and $c.Bottom -gt $d.Top) { $overlap = $true }
+                }
+            }
+        }
+        $hintsFit = $true
+        foreach ($c in @($ctls | Where-Object { $_ -is [System.Windows.Forms.Label] })) {
+            if ((Get-WrappedTextHeight $c.Text $c.Font $c.Width) -gt $c.Height) { $hintsFit = $false }
+        }
+        # The summary box scrolls, but for a small plan (one edition) the whole text, totals line included, must be visible.
+        $summaryFits = (Get-WrappedTextHeight $summary.Text $summary.Font ($summary.ClientSize.Width - 30)) -le $summary.ClientSize.Height
+        Write-Host "  Show-PreviewDialog: client $($f.ClientSize.Width)x$($f.ClientSize.Height), $($ctls.Count) controls, replaced-songs list: $([bool]$clbRep), inside: $inside, no overlap: $(-not $overlap), hints fit: $hintsFit, summary fully visible: $summaryFits, scrolling: $([bool]$scroll)"
+        if ($scroll) {
+            # On a small screen the summary may legitimately need scrolling; what must hold is that the buttons are pinned and visible.
+            $pinned = ($btnDl.Parent -eq $scroll.Bar) -and ($scroll.Bar.Bottom -le $f.ClientSize.Height) -and ($f.ClientSize.Height -le (Get-MaxDialogClientHeight)) -and ($scroll.Content.AutoScrollMinSize.Height -gt $scroll.Content.ClientSize.Height)
+            Write-Host "  preview dialog scrolls on a small screen: buttons pinned in the bottom bar: $pinned"
+            if (-not ($pinned -and $inside -and -not $overlap)) { Write-Host "  SELFTEST FAILURE: scrolling preview dialog does not keep its buttons pinned and visible" -ForegroundColor Red }
+        } elseif (-not ($inside -and -not $overlap -and $hintsFit -and $summaryFits)) { Write-Host "  SELFTEST FAILURE: preview dialog controls overlap, overflow or clip" -ForegroundColor Red }
+        Start-Sleep -Milliseconds 100
+        $f.Dispose()
+        return $out
+    }
+
     $f.ShowDialog($script:Form) | Out-Null
 
     if ($f.Tag -eq 'go') {
@@ -1383,6 +1625,11 @@ function Show-PreviewDialog($Plan) {
             $keep = @()
             for ($i = 0; $i -lt $clb.Items.Count; $i++) { if (-not $clb.GetItemChecked($i)) { $keep += [string]$clb.Items[$i] } }
             $out.Keep = $keep
+        }
+        if ($clbRep) {
+            $keepRep = @()
+            for ($i = 0; $i -lt $clbRep.Items.Count; $i++) { if (-not $clbRep.GetItemChecked($i)) { $keepRep += [string]$repItems[$i].Key } }
+            $out.KeepReplaced = $keepRep
         }
     }
     $f.Dispose()
@@ -3892,7 +4139,19 @@ function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
     $pv = Show-PreviewDialog $Plan
     if (-not $pv.Proceed) { return }
 
-    Append-Log ("Found {0} file(s) ({1}) to download." -f $Plan.TotalFiles, (Format-Bytes $Plan.TotalBytes))
+    # Songs unticked in the replaced-songs list become Keep my version locks
+    # (saved first: the download's filter args read KEEPSONGS from config, so
+    # those files are excluded from this very run).
+    $keptCount = 0
+    if (@($pv.KeepReplaced).Count -gt 0) {
+        $keys = Get-KeepKeySet
+        foreach ($k in @($pv.KeepReplaced)) { [void]$keys.Add([string]$k) }
+        Save-Config @{ KeepSongs = (Format-KeepKeySet $keys) }
+        $script:Cfg = Load-Config
+        $keptCount = @($pv.KeepReplaced).Count
+        Append-Log ("Keeping your version of {0} song(s) - not replaced." -f $keptCount)
+    }
+    Append-Log ("Found {0} file(s) ({1}) to download." -f ($Plan.TotalFiles - $keptCount), (Format-Bytes $Plan.TotalBytes))
     Append-Log '----'
     Start-Downloads (Build-DownloadQueue $Plan $pv.Keep)
 }
@@ -4066,7 +4325,7 @@ function Invoke-SongRemovalCleanup([string[]]$OldEditionList, [string]$OldSongFi
     # (Show-RemovalPromptDialog) and returns $false if the user cancelled -
     # the caller must then discard the new selection instead of saving it.
     $newEditionList = @($Res.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
-    $plan = @(Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog)
+    $plan = @(Get-SongRemovalPlan -OldEditions $OldEditionList -OldSongFilters $OldSongFilters -NewEditions $newEditionList -NewSongFilters $Res.SongFilters -Catalog $Res.Catalog -KnownSongs $Res.Known)
     # -KeepSongs from the picker's result, not config: the new locks aren't
     # saved until after this prompt, and a song marked Keep in THIS picker
     # session must already be protected from the Delete choice.
@@ -4386,7 +4645,7 @@ function Build-MainForm {
             param($s, $e)
             if ($script:AutoRunDone) { return }
             $script:AutoRunDone = $true
-            if (@('quicklaunch', 'update') -contains $env:LEGACY_CAPTURE_STATE) { Invoke-CaptureState; return }
+            if (@('quicklaunch', 'update', 'settings', 'preview') -contains $env:LEGACY_CAPTURE_STATE) { Invoke-CaptureState; return }
             if ($script:FirstRunMode -eq 'get' -and -not [string]::IsNullOrWhiteSpace($script:Cfg.GamePath)) {
                 if (Test-GameFolder $script:Cfg.GamePath) { On-Check } else { Start-FirstRunBaseDownload }
                 return
@@ -4432,6 +4691,14 @@ if (-not $env:LEGACY_GUI_SELFTEST -and [string]::IsNullOrWhiteSpace($script:Cfg.
 Build-MainForm
 
 if ($env:LEGACY_GUI_SELFTEST) {
+    # Count every "SELFTEST FAILURE" line as it is printed, so the last line (and the exit code)
+    # can no longer say OK after a failure scrolled past (a dialog that threw used to end 'SELFTEST OK').
+    $script:SelftestFailures = 0
+    function Write-Host {
+        $text = ($args | Where-Object { $_ -is [string] }) -join ' '
+        if ($text -match 'SELFTEST FAILURE') { $script:SelftestFailures++ }
+        Microsoft.PowerShell.Utility\Write-Host @args
+    }
     function Dump-Ctl($c, $d) {
         $pad = ' ' * $d
         Write-Host ("{0}{1}  text='{2}'  @({3},{4}) {5}x{6}" -f $pad, $c.GetType().Name, $c.Text, $c.Left, $c.Top, $c.Width, $c.Height)
@@ -4536,12 +4803,61 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "  Left=$($script:BtnSettings.Left) Width=$($script:BtnSettings.Width) (expect nonzero width, positioned at the fixed left slot)"
     if ($script:BtnSettings.Width -le 0) { Write-Host "  SELFTEST FAILURE: zero width" -ForegroundColor Red }
 
-    Write-Host "`n=== Show-SettingsWindow (structural render only - the Save button's own logic is covered by Core.psm1's Save-Config tests) ==="
+    Write-Host "`n=== Show-SettingsWindow, every language (structural render only - the Save button's own logic is covered by Core.psm1's Save-Config tests) ==="
     try {
-        Show-SettingsWindow
+        $savedLangCodeS = Get-LanguageCode
+        foreach ($lg in $script:Langs) {
+            $null = Initialize-Language -Code $lg.Code
+            Write-Host "  [$($lg.Code)]" -NoNewline
+            Show-SettingsWindow
+        }
+        $null = Initialize-Language -Code $savedLangCodeS
         Write-Host "  ran with no exception"
     } catch {
         Write-Host "  SELFTEST FAILURE: Show-SettingsWindow threw: $($_.Exception.Message)" -ForegroundColor Red
+        try { $null = Initialize-Language -Code $savedLangCodeS } catch { }
+    }
+
+    Write-Host "`n=== Tall dialogs on a simulated small screen (client height capped at 420): scroll panel + pinned buttons ==="
+    try {
+        $env:LEGACY_TEST_MAX_CLIENT_HEIGHT = '420'
+        Write-Host "  [settings]" -NoNewline
+        Show-SettingsWindow
+        $smallPlan = [PSCustomObject]@{
+            Ok = $true; GamePresent = $true; MapsMissing = $false; WrongLevel = $false
+            BaseNormal = @('Legacy.exe'); BaseAsk = @('Legacy.exe'); BaseAskSuspected = @(); KeptSettings = $true
+            Songs = @([PSCustomObject]@{ Edition = '2016'; Count = 3; Files = @() }); SongFilesFlat = @('2016/a_pc.ipk', '2016/b_pc.ipk', '2016/c_pc.ipk')
+            Replacing = @('2016/a_pc.ipk', '2016/b_pc.ipk', '2016/c_pc.ipk'); TotalFiles = 4; TotalBytes = [long]123456789
+        }
+        Write-Host "  [preview]" -NoNewline
+        [void](Show-PreviewDialog $smallPlan)
+    } catch {
+        Write-Host "  SELFTEST FAILURE: small-screen dialog test threw: $($_.Exception.Message)" -ForegroundColor Red
+    } finally { $env:LEGACY_TEST_MAX_CLIENT_HEIGHT = $null }
+
+    Write-Host "`n=== Show-PreviewDialog with replaced songs, every language (with and without the moddable-file list) ==="
+    try {
+        $savedLangCodeP = Get-LanguageCode
+        $fakePlan = [PSCustomObject]@{
+            Ok = $true; GamePresent = $true; MapsMissing = $false; WrongLevel = $false
+            BaseNormal = @('Legacy.exe'); BaseAsk = @('Legacy.exe'); BaseAskSuspected = @(); KeptSettings = $true
+            Songs = @([PSCustomObject]@{ Edition = '2016'; Count = 3; Files = @('2016/a_pc.ipk', '2016/b_pc.ipk', '2016/c_pc.ipk') })
+            SongFilesFlat = @('2016/a_pc.ipk', '2016/b_pc.ipk', '2016/c_pc.ipk')
+            Replacing = @('2016/a_pc.ipk', '2016/b_pc.ipk', '2016/c_pc.ipk', '2016/d_pc.ipk', '2016/e_pc.ipk', '2016/f_pc.ipk', '2016/g_pc.ipk')
+            TotalFiles = 4; TotalBytes = [long]123456789
+        }
+        $fakePlanNoBase = $fakePlan.PSObject.Copy(); $fakePlanNoBase.BaseAsk = @()
+        foreach ($lg in $script:Langs) {
+            $null = Initialize-Language -Code $lg.Code
+            foreach ($pl in @($fakePlan, $fakePlanNoBase)) {
+                Write-Host "  [$($lg.Code)]" -NoNewline
+                [void](Show-PreviewDialog $pl)
+            }
+        }
+        $null = Initialize-Language -Code $savedLangCodeP
+    } catch {
+        Write-Host "  SELFTEST FAILURE: Show-PreviewDialog threw: $($_.Exception.Message)" -ForegroundColor Red
+        try { $null = Initialize-Language -Code $savedLangCodeP } catch { }
     }
     Write-Host "`n=== Format-BwLimitForDisplay round trip ==="
     foreach ($case in @(@{ In = '5M'; Expect = '5' }, @{ In = ''; Expect = '' }, @{ In = '800k'; Expect = '800k' })) {
@@ -4592,6 +4908,11 @@ if ($env:LEGACY_GUI_SELFTEST) {
     Write-Host "`n=== Show-SongBrowserDialog (waits for the real async catalog load) ==="
     $null = Show-SongBrowserDialog
     $script:Form.Dispose()
+    if ($script:SelftestFailures -gt 0) {
+        Write-Host "`nSELFTEST FAILED: $($script:SelftestFailures) failure line(s) above" -ForegroundColor Red
+        # [Environment]::Exit ends the whole process with a non-zero code no matter how deeply this script was dot-sourced.
+        [System.Environment]::Exit(1)
+    }
     Write-Host "`nSELFTEST OK"
     return
 }

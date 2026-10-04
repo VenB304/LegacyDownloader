@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - failed (exit code {code})",
   "gui.requirements_install_cancelled": "{name} - installer was cancelled",
   "gui.requirements_download_failed": "Couldn't download {name}. Get it yourself from:\n{url}",
-  "gui.requirements_all_done": "Everything needed is installed."
+  "gui.requirements_all_done": "Everything needed is installed.",
+  "preview.replace_line": "{count} of these replace a different copy of the same song that is already on your disk (same file name, different size).",
+  "preview.replace_backup_on": "The old copies are backed up first and kept for {days} days (at most {gb} GB).",
+  "preview.replace_backup_off": "Backups are turned off in Settings, so the old copies will be lost.",
+  "preview.replace_keep_hint": "To protect a song, mark it Keep my version in Select maps / songs before downloading.",
+  "preview.list_tag_replace": "replaces your copy",
+  "gui.preview_replace_hint": "These songs are already on your disk but differ from the server's copy, so the download will replace them. Untick a song to keep your own version - it is then never replaced.",
+  "gui.settings_group_backups": "Song backups",
+  "gui.settings_backup_enable": "Back up a song file before an update replaces it",
+  "gui.settings_backup_days": "Delete backups older than (days)",
+  "gui.settings_backup_max": "Keep at most (GB)",
+  "gui.settings_backup_open": "Open backup folder",
+  "gui.settings_backup_none": "There are no backups yet.",
+  "gui.settings_backup_hint": "To get a song back, copy it from the backup folder into the matching folder under maps.",
+  "gui.settings_backup_invalid_days": "Days must be a whole number from 1 to 365.",
+  "gui.settings_backup_invalid_max": "The size limit must be a whole number from 1 to 1000 (GB)."
 }

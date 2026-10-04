@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - mislukt (afsluitcode {code})",
   "gui.requirements_install_cancelled": "{name} - installatie geannuleerd",
   "gui.requirements_download_failed": "Kon {name} niet downloaden. Download het zelf via:\n{url}",
-  "gui.requirements_all_done": "Alles wat nodig is, is geïnstalleerd."
+  "gui.requirements_all_done": "Alles wat nodig is, is geïnstalleerd.",
+  "preview.replace_line": "{count} hiervan vervangen een andere kopie van hetzelfde nummer die al op je schijf staat (dezelfde bestandsnaam, andere grootte).",
+  "preview.replace_backup_on": "De oude kopieën worden eerst geback-upt en {days} dagen bewaard (maximaal {gb} GB).",
+  "preview.replace_backup_off": "Back-ups staan uit in Instellingen, dus de oude kopieën gaan verloren.",
+  "preview.replace_keep_hint": "Om een nummer te beschermen, markeer je het vóór het downloaden met Mijn versie behouden in Kaarten / nummers selecteren.",
+  "preview.list_tag_replace": "vervangt jouw kopie",
+  "gui.preview_replace_hint": "Deze nummers staan al op je schijf maar verschillen van de kopie op de server, dus de download vervangt ze. Haal het vinkje bij een nummer weg om je eigen versie te behouden; die wordt dan nooit vervangen.",
+  "gui.settings_group_backups": "Nummerback-ups",
+  "gui.settings_backup_enable": "Een nummerbestand back-uppen voordat een update het vervangt",
+  "gui.settings_backup_days": "Back-ups verwijderen die ouder zijn dan (dagen)",
+  "gui.settings_backup_max": "Maximaal bewaren (GB)",
+  "gui.settings_backup_open": "Back-upmap openen",
+  "gui.settings_backup_none": "Er zijn nog geen back-ups.",
+  "gui.settings_backup_hint": "Om een nummer terug te halen, kopieer je het uit de back-upmap naar de bijbehorende map onder maps.",
+  "gui.settings_backup_invalid_days": "Dagen moet een geheel getal van 1 tot 365 zijn.",
+  "gui.settings_backup_invalid_max": "De groottelimiet moet een geheel getal van 1 tot 1000 (GB) zijn."
 }

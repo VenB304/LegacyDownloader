@@ -80,6 +80,20 @@ From the main window's "Songs" section you then choose what you want
     are never deleted, and everything it deletes is recorded in
     bin\logs\deleted-files.txt.
 
+  - Songs an update would replace - the update preview also tells you
+    when a download would REPLACE a song file you already have (same
+    file name, different size). That is usually an official re-upload,
+    but it is also what happens to your own modified copy of an official
+    song. Those songs are listed with checkboxes: checked (the default)
+    replaces it, unchecked keeps your version and marks it "Keep my
+    version". Before a file is replaced, the old copy is moved to a
+    .legacydownloader-backups folder inside your game folder, so
+    nothing is lost. Backups older than 30 days are deleted, and so are
+    the oldest ones once the folder passes 5 GB (the newest set is
+    always kept); both limits, and the backup itself, can be changed in
+    Settings. To get a song back, copy it from the backup folder into
+    the matching folder under maps.
+
 
 AFTER SETUP
 -----------
@@ -164,6 +178,10 @@ window) for a few extra options:
   - Automatically check for updates when the app opens
   - Automatically launch the game and close once nothing more is needed
   - Limit download speed (MB/s) - blank/0 means unlimited
+  - Song backups - back up a song file before an update replaces it
+    (on by default), how many days to keep backups (30) and the most
+    space they may use (5 GB); "Open backup folder" shows them. In
+    config.txt these are BACKUPSONGS, BACKUPDAYS and BACKUPMAXGB
   - A custom share URL, if the default one ever needs to change - paste
     either a Nextcloud share link (the friendly one Nextcloud itself
     gives you) or the raw WebDAV link, either works

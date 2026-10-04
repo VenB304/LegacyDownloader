@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - échec (code de sortie {code})",
   "gui.requirements_install_cancelled": "{name} - installation annulée",
   "gui.requirements_download_failed": "Impossible de télécharger {name}. Téléchargez-le vous-même depuis :\n{url}",
-  "gui.requirements_all_done": "Tout ce qui est nécessaire est installé."
+  "gui.requirements_all_done": "Tout ce qui est nécessaire est installé.",
+  "preview.replace_line": "{count} de ces fichiers remplacent une copie différente de la même chanson déjà présente sur votre disque (même nom de fichier, taille différente).",
+  "preview.replace_backup_on": "Les anciennes copies sont d'abord sauvegardées et conservées {days} jours (au maximum {gb} Go).",
+  "preview.replace_backup_off": "Les sauvegardes sont désactivées dans les Paramètres : les anciennes copies seront perdues.",
+  "preview.replace_keep_hint": "Pour protéger une chanson, marquez-la « Garder ma version » dans « Sélectionner des cartes / chansons » avant de télécharger.",
+  "preview.list_tag_replace": "remplace votre copie",
+  "gui.preview_replace_hint": "Ces chansons sont déjà sur votre disque mais diffèrent de la copie du serveur : le téléchargement va donc les remplacer. Décochez une chanson pour garder votre propre version, elle ne sera alors jamais remplacée.",
+  "gui.settings_group_backups": "Sauvegardes des chansons",
+  "gui.settings_backup_enable": "Sauvegarder un fichier de chanson avant qu'une mise à jour ne le remplace",
+  "gui.settings_backup_days": "Supprimer les sauvegardes de plus de (jours)",
+  "gui.settings_backup_max": "Conserver au maximum (Go)",
+  "gui.settings_backup_open": "Ouvrir le dossier de sauvegarde",
+  "gui.settings_backup_none": "Il n'y a pas encore de sauvegarde.",
+  "gui.settings_backup_hint": "Pour récupérer une chanson, copiez-la depuis le dossier de sauvegarde vers le dossier correspondant dans maps.",
+  "gui.settings_backup_invalid_days": "Le nombre de jours doit être un entier de 1 à 365.",
+  "gui.settings_backup_invalid_max": "La limite de taille doit être un entier de 1 à 1000 (Go)."
 }

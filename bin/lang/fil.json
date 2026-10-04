@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - nabigo (exit code {code})",
   "gui.requirements_install_cancelled": "{name} - kinansela ang installer",
   "gui.requirements_download_failed": "Hindi na-download ang {name}. I-download mo na lang mismo dito:\n{url}",
-  "gui.requirements_all_done": "Kumpleto na ang lahat ng kailangan."
+  "gui.requirements_all_done": "Kumpleto na ang lahat ng kailangan.",
+  "preview.replace_line": "{count} sa mga ito ang papalit sa ibang kopya ng parehong kanta na nasa disk mo na (parehong pangalan ng file, iba ang laki).",
+  "preview.replace_backup_on": "Magba-backup muna ng mga lumang kopya at itatago sa loob ng {days} araw (hanggang {gb} GB).",
+  "preview.replace_backup_off": "Naka-off ang mga backup sa Mga Setting, kaya mawawala ang mga lumang kopya.",
+  "preview.replace_keep_hint": "Para protektahan ang isang kanta, markahan ito ng Itago ang bersyon ko sa Pumili ng mapa / kanta bago mag-download.",
+  "preview.list_tag_replace": "papalitan ang kopya mo",
+  "gui.preview_replace_hint": "Nasa disk mo na ang mga kantang ito pero iba sa kopya ng server, kaya papalitan ng download ang mga ito. I-untick ang isang kanta para itago ang sarili mong bersyon - hindi na ito papalitan kailanman.",
+  "gui.settings_group_backups": "Mga backup ng kanta",
+  "gui.settings_backup_enable": "I-backup ang file ng kanta bago ito palitan ng update",
+  "gui.settings_backup_days": "Burahin ang mga backup na mas luma sa (araw)",
+  "gui.settings_backup_max": "Itago hanggang (GB)",
+  "gui.settings_backup_open": "Buksan ang folder ng backup",
+  "gui.settings_backup_none": "Wala pang mga backup.",
+  "gui.settings_backup_hint": "Para maibalik ang isang kanta, kopyahin ito mula sa folder ng backup papunta sa katugmang folder sa ilalim ng maps.",
+  "gui.settings_backup_invalid_days": "Dapat buong numero mula 1 hanggang 365 ang mga araw.",
+  "gui.settings_backup_invalid_max": "Dapat buong numero mula 1 hanggang 1000 (GB) ang limitasyon sa laki."
 }

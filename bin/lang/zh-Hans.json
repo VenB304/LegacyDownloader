@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - 失败 (退出代码 {code})",
   "gui.requirements_install_cancelled": "{name} - 安装已取消",
   "gui.requirements_download_failed": "无法下载 {name}。请自行从这里下载:\n{url}",
-  "gui.requirements_all_done": "所需的一切都已安装。"
+  "gui.requirements_all_done": "所需的一切都已安装。",
+  "preview.replace_line": "其中 {count} 个会替换您磁盘上已有的同一首歌曲的不同副本（文件名相同，大小不同）。",
+  "preview.replace_backup_on": "旧副本会先被备份，并保留 {days} 天（最多 {gb} GB）。",
+  "preview.replace_backup_off": "设置中已关闭备份，因此旧副本将会丢失。",
+  "preview.replace_keep_hint": "要保护某首歌曲，请在下载前于“选择地图 / 歌曲”中将其标记为“保留我的版本”。",
+  "preview.list_tag_replace": "将替换您的副本",
+  "gui.preview_replace_hint": "这些歌曲已在您的磁盘上，但与服务器上的副本不同，因此下载会替换它们。取消勾选某首歌曲即可保留您自己的版本，之后它将不再被替换。",
+  "gui.settings_group_backups": "歌曲备份",
+  "gui.settings_backup_enable": "在更新替换歌曲文件之前先备份",
+  "gui.settings_backup_days": "删除早于以下天数的备份（天）",
+  "gui.settings_backup_max": "最多保留（GB）",
+  "gui.settings_backup_open": "打开备份文件夹",
+  "gui.settings_backup_none": "还没有备份。",
+  "gui.settings_backup_hint": "要找回歌曲，请将其从备份文件夹复制到 maps 下对应的文件夹。",
+  "gui.settings_backup_invalid_days": "天数必须是 1 到 365 之间的整数。",
+  "gui.settings_backup_invalid_max": "大小上限必须是 1 到 1000（GB）之间的整数。"
 }

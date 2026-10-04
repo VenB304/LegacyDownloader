@@ -166,6 +166,8 @@ wat er beschikbaar is. Als er sinds de vorige keer niets is veranderd,
 staat er gewoon **"Alles is al up-to-date"** en stopt het daar — niets om
 op te klikken.
 
+**Nummers die vervangen zouden worden.** Als de kopie van een nummer op de server afwijkt van die op je schijf (dezelfde bestandsnaam, andere grootte) — een officiële update, of je eigen aangepaste kopie van een officieel nummer — meldt het voorbeeld dat en toont het die nummers met selectievakjes. **Aangevinkt** (standaard) = vervangen; het oude bestand wordt eerst naar een back-upmap verplaatst (`.legacydownloader-backups` in je spelmap). **Uitgevinkt** = je eigen versie behouden; het nummer wordt gemarkeerd als **Mijn versie behouden** en updates vervangen het nooit.
+
 <details>
 <summary>Als je je spelbestanden hebt aangepast (Kinect-mod, gepatchte exe) — klik om uit te klappen</summary>
 
@@ -208,6 +210,7 @@ updates"** haalt alles op wat nieuw is sinds je laatste bezoek.
   en een geavanceerde aangepaste share-URL.
 
   ![Instellingenvenster](images/08-settings-nl.png)
+- **Nummerback-ups**: onder **Instellingen** bepaalt **Nummerback-ups** of vervangen nummerbestanden eerst een back-up krijgen (standaard aan), hoeveel dagen back-ups bewaard blijven (30) en hoeveel ruimte ze maximaal mogen innemen (5 GB); oudere back-ups worden automatisch verwijderd. **Back-upmap openen** toont ze — om een nummer terug te halen, kopieer je het naar de bijbehorende map onder `maps`.
 - **Legacy Downloader zelf bijwerken**: wanneer er een nieuwe versie
   beschikbaar is, verschijnt er een knop naast **Instellingen** in het
   hoofdvenster. Klik erop en de tool werkt zichzelf ter plekke bij en opent

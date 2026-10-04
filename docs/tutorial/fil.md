@@ -169,6 +169,8 @@ kunin ang mga file, o **Kanselahin** kung gusto mo lang tingnan ang
 available. Kung walang nagbago mula noong huling beses, sasabihin lang
 nitong **"Updated na ang lahat"** at hihinto doon — walang ii-click.
 
+**Mga kantang papalitan.** Kung iba ang kopya ng kanta sa server sa nasa disk mo na (parehong pangalan ng file, iba ang laki) — isang opisyal na update o ang sarili mong binagong kopya ng opisyal na kanta — sasabihin ito ng preview at ililista ang mga kantang iyon na may checkbox. **May tsek** (default) = papalitan; ililipat muna ang lumang file sa isang folder ng backup (`.legacydownloader-backups` sa loob ng game folder mo). **Walang tsek** = itatago ang bersyon mo; mamarkahan ang kanta bilang **Itago ang bersyon ko** at hindi na ito papalitan ng mga update.
+
 <details>
 <summary>Kung na-modify mo ang mga file ng iyong laro (Kinect mod, na-patch na exe) — i-click para i-expand</summary>
 
@@ -210,6 +212,7 @@ noong huli mong pagbisita.
   mag-check ng update ng LegacyDownloader, at advanced na custom share URL.
 
   ![Window ng Settings](images/08-settings-fil.png)
+- **Mga backup ng kanta**: sa **Mga Setting**, kinokontrol ng **Mga backup ng kanta** kung bina-backup muna ang mga napapalitang file ng kanta (naka-on bilang default), ilang araw itinatago ang mga backup (30), at ang pinakamalaking espasyong puwede nilang gamitin (5 GB); awtomatikong binubura ang mas lumang mga backup. Ipinapakita ng **Buksan ang folder ng backup** ang mga ito — para maibalik ang isang kanta, kopyahin ito sa katugmang folder sa ilalim ng `maps`.
 - **Pag-update sa Legacy Downloader mismo**: kapag may bagong bersyon na
   available, may lalabas na button sa tabi ng **Mga Setting** sa main window.
   I-click ito at ia-update ng tool ang sarili nito doon mismo at awtomatikong

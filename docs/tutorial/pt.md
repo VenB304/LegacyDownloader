@@ -166,6 +166,8 @@ arquivos, ou em **"Cancelar"** se só queria ver o que está disponível. Se
 nada mudou desde a última vez, ela apenas diz **"Tudo já está
 atualizado"** e para por aí — nada para clicar.
 
+**Músicas que seriam substituídas.** Se a cópia de uma música no servidor for diferente da que já está no seu disco (mesmo nome de arquivo, tamanho diferente) — uma atualização oficial ou a sua própria cópia modificada de uma música oficial —, a prévia avisa e lista essas músicas com caixas de seleção. **Marcada** (padrão) = substituir; o arquivo antigo é movido antes para uma pasta de backup (`.legacydownloader-backups` dentro da pasta do jogo). **Desmarcada** = manter a sua versão; a música é marcada como **Manter minha versão** e as atualizações nunca a substituirão.
+
 <details>
 <summary>Se você modificou seus arquivos de jogo (mod de Kinect, exe corrigido) — clique para expandir</summary>
 
@@ -209,6 +211,7 @@ Verificar atualizações"** pega tudo que é novo desde sua última visita.
   LegacyDownloader e uma URL de compartilhamento personalizada avançada.
 
   ![Janela de configurações](images/08-settings-pt.png)
+- **Backups de músicas**: em **Configurações**, **Backups de músicas** controla se os arquivos de música substituídos são salvos antes (ativado por padrão), por quantos dias os backups são mantidos (30) e o espaço máximo que podem usar (5 GB); backups mais antigos são excluídos automaticamente. **Abrir pasta de backups** mostra os backups — para recuperar uma música, copie-a para a pasta correspondente em `maps`.
 - **Atualizar o próprio Legacy Downloader**: quando uma nova versão estiver
   disponível, um botão aparece ao lado de **Configurações** na janela
   principal. Clique nele e a ferramenta se atualiza no mesmo local e reabre

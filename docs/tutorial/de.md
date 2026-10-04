@@ -168,6 +168,8 @@ tatsächlich zu holen, oder auf **„Abbrechen"**, wenn du nur sehen wolltest,
 was verfügbar ist. Wenn sich seit dem letzten Mal nichts geändert hat,
 steht dort einfach **„Alles ist bereits aktuell"** — nichts zu klicken.
 
+**Songs, die ersetzt würden.** Weicht die Kopie eines Songs auf dem Server von der auf deiner Festplatte ab (gleicher Dateiname, andere Größe) – ein offizielles Update oder deine eigene geänderte Kopie eines offiziellen Songs –, nennt die Vorschau das und listet diese Songs mit Kontrollkästchen auf. **Angehakt** (Standard) = ersetzen; die alte Datei wird vorher in einen Sicherungsordner verschoben (`.legacydownloader-backups` in deinem Spieleordner). **Nicht angehakt** = deine Version behalten; der Song wird mit **Meine Version behalten** markiert und von Updates nie ersetzt.
+
 <details>
 <summary>Wenn du deine Spieldateien verändert hast (Kinect-Mod, gepatchte exe) — zum Aufklappen klicken</summary>
 
@@ -210,6 +212,7 @@ Nach Updates suchen"** holt alles Neue seit deinem letzten Besuch.
   LegacyDownloader-Updates und eine erweiterte eigene Share-URL.
 
   ![Einstellungsfenster](images/08-settings-de.png)
+- **Song-Sicherungen**: Unter **Einstellungen** steuert **Song-Sicherungen**, ob ersetzte Songdateien vorher gesichert werden (standardmäßig an), wie viele Tage Sicherungen aufbewahrt werden (30) und wie viel Platz sie höchstens belegen dürfen (5 GB); ältere Sicherungen werden automatisch gelöscht. **Sicherungsordner öffnen** zeigt sie – um einen Song zurückzuholen, kopiere ihn in den passenden Ordner unter `maps`.
 - **Legacy Downloader selbst aktualisieren**: wenn eine neue Version verfügbar
   ist, erscheint ein Button neben **Einstellungen** im Hauptfenster. Klicke
   darauf und das Tool aktualisiert sich direkt an Ort und Stelle und öffnet

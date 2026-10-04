@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - fehlgeschlagen (Exitcode {code})",
   "gui.requirements_install_cancelled": "{name} - Installation abgebrochen",
   "gui.requirements_download_failed": "{name} konnte nicht heruntergeladen werden. Lade es selbst herunter von:\n{url}",
-  "gui.requirements_all_done": "Alles Nötige ist installiert."
+  "gui.requirements_all_done": "Alles Nötige ist installiert.",
+  "preview.replace_line": "{count} davon ersetzen eine andere Kopie desselben Songs, die bereits auf deiner Festplatte liegt (gleicher Dateiname, andere Größe).",
+  "preview.replace_backup_on": "Die alten Kopien werden zuerst gesichert und {days} Tage lang aufbewahrt (höchstens {gb} GB).",
+  "preview.replace_backup_off": "Sicherungen sind in den Einstellungen deaktiviert, die alten Kopien gehen daher verloren.",
+  "preview.replace_keep_hint": "Um einen Song zu schützen, markiere ihn vor dem Download unter „Karten / Songs auswählen“ mit „Meine Version behalten“.",
+  "preview.list_tag_replace": "ersetzt deine Kopie",
+  "gui.preview_replace_hint": "Diese Songs liegen bereits auf deiner Festplatte, unterscheiden sich aber von der Kopie auf dem Server, daher ersetzt der Download sie. Entferne das Häkchen bei einem Song, um deine eigene Version zu behalten – sie wird dann nie ersetzt.",
+  "gui.settings_group_backups": "Song-Sicherungen",
+  "gui.settings_backup_enable": "Songdatei sichern, bevor ein Update sie ersetzt",
+  "gui.settings_backup_days": "Sicherungen löschen, die älter sind als (Tage)",
+  "gui.settings_backup_max": "Höchstens behalten (GB)",
+  "gui.settings_backup_open": "Sicherungsordner öffnen",
+  "gui.settings_backup_none": "Es gibt noch keine Sicherungen.",
+  "gui.settings_backup_hint": "Um einen Song zurückzuholen, kopiere ihn aus dem Sicherungsordner in den passenden Ordner unter maps.",
+  "gui.settings_backup_invalid_days": "Die Tage müssen eine ganze Zahl von 1 bis 365 sein.",
+  "gui.settings_backup_invalid_max": "Das Größenlimit muss eine ganze Zahl von 1 bis 1000 (GB) sein."
 }

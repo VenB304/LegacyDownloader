@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - 失敗しました (終了コード {code})",
   "gui.requirements_install_cancelled": "{name} - インストーラーがキャンセルされました",
   "gui.requirements_download_failed": "{name} をダウンロードできませんでした。こちらから自分でダウンロードしてください:\n{url}",
-  "gui.requirements_all_done": "必要なものはすべて導入済みです。"
+  "gui.requirements_all_done": "必要なものはすべて導入済みです。",
+  "preview.replace_line": "このうち{count}件は、すでにあなたのディスクにある同じ曲の別のコピー（同じファイル名で、サイズが異なる）を置き換えます。",
+  "preview.replace_backup_on": "古いコピーは先にバックアップされ、{days}日間（最大{gb} GB）保存されます。",
+  "preview.replace_backup_off": "設定でバックアップがオフになっているため、古いコピーは失われます。",
+  "preview.replace_keep_hint": "曲を保護するには、ダウンロード前に「マップ / 曲を選択」で「自分のバージョンを保持」を設定してください。",
+  "preview.list_tag_replace": "あなたのコピーを置き換えます",
+  "gui.preview_replace_hint": "これらの曲はすでにディスクにありますが、サーバーのコピーとは異なるため、ダウンロードで置き換えられます。自分のバージョンを残したい曲はチェックを外してください。以後、その曲は置き換えられません。",
+  "gui.settings_group_backups": "曲のバックアップ",
+  "gui.settings_backup_enable": "更新で置き換えられる前に曲ファイルをバックアップする",
+  "gui.settings_backup_days": "次の日数より古いバックアップを削除（日）",
+  "gui.settings_backup_max": "最大保存サイズ（GB）",
+  "gui.settings_backup_open": "バックアップフォルダーを開く",
+  "gui.settings_backup_none": "バックアップはまだありません。",
+  "gui.settings_backup_hint": "曲を元に戻すには、バックアップフォルダーから maps 内の対応するフォルダーにコピーしてください。",
+  "gui.settings_backup_invalid_days": "日数は1～365の整数で指定してください。",
+  "gui.settings_backup_invalid_max": "サイズ上限は1～1000（GB）の整数で指定してください。"
 }

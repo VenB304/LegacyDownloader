@@ -168,6 +168,8 @@ récupérer les fichiers, ou **« Annuler »** si vous vouliez juste voir ce qui
 est disponible. Si rien n'a changé depuis la dernière fois, elle indique
 simplement **« Tout est déjà à jour »** et s'arrête là — rien à cliquer.
 
+**Chansons qui seraient remplacées.** Si la copie d'une chanson sur le serveur diffère de celle déjà présente sur votre disque (même nom de fichier, taille différente) — une mise à jour officielle, ou votre propre copie modifiée d'une chanson officielle —, l'aperçu l'indique et liste ces chansons avec des cases à cocher. **Cochée** (par défaut) = remplacer ; l'ancien fichier est d'abord déplacé dans un dossier de sauvegarde (`.legacydownloader-backups` dans votre dossier du jeu). **Décochée** = garder votre version ; la chanson est marquée **Garder ma version** et les mises à jour ne la remplaceront jamais.
+
 <details>
 <summary>Si vous avez modifié vos fichiers de jeu (mod Kinect, exe patché) — cliquez pour développer</summary>
 
@@ -212,6 +214,7 @@ dernière visite.
   jour de LegacyDownloader, et une URL de partage personnalisée avancée.
 
   ![Fenêtre des paramètres](images/08-settings-fr.png)
+- **Sauvegardes des chansons** : dans **Paramètres**, **Sauvegardes des chansons** permet de choisir si les fichiers de chansons remplacés sont d'abord sauvegardés (activé par défaut), combien de jours les sauvegardes sont conservées (30) et l'espace maximal qu'elles peuvent occuper (5 Go) ; les plus anciennes sont supprimées automatiquement. **Ouvrir le dossier de sauvegarde** les affiche — pour récupérer une chanson, copiez-la dans le dossier correspondant sous `maps`.
 - **Mettre à jour Legacy Downloader lui-même** : quand une nouvelle version est
   disponible, un bouton apparaît à côté de **Paramètres** dans la fenêtre
   principale. Cliquez dessus et l'outil se met à jour sur place et se rouvre

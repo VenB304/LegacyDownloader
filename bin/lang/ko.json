@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - 실패 (종료 코드 {code})",
   "gui.requirements_install_cancelled": "{name} - 설치가 취소되었습니다",
   "gui.requirements_download_failed": "{name}을(를) 다운로드할 수 없습니다. 여기서 직접 받으세요:\n{url}",
-  "gui.requirements_all_done": "필요한 모든 항목이 설치되어 있습니다."
+  "gui.requirements_all_done": "필요한 모든 항목이 설치되어 있습니다.",
+  "preview.replace_line": "이 중 {count}개는 이미 디스크에 있는 같은 노래의 다른 사본(파일 이름은 같고 크기가 다름)을 대체합니다.",
+  "preview.replace_backup_on": "이전 사본은 먼저 백업되며 {days}일 동안(최대 {gb}GB) 보관됩니다.",
+  "preview.replace_backup_off": "설정에서 백업이 꺼져 있어 이전 사본은 사라집니다.",
+  "preview.replace_keep_hint": "노래를 보호하려면 다운로드 전에 '맵 / 노래 선택'에서 '내 버전 유지'로 표시하세요.",
+  "preview.list_tag_replace": "내 사본을 대체함",
+  "gui.preview_replace_hint": "이 노래들은 이미 디스크에 있지만 서버의 사본과 달라 다운로드 시 대체됩니다. 내 버전을 유지하려면 해당 노래의 체크를 해제하세요. 그러면 다시는 대체되지 않습니다.",
+  "gui.settings_group_backups": "노래 백업",
+  "gui.settings_backup_enable": "업데이트가 대체하기 전에 노래 파일 백업",
+  "gui.settings_backup_days": "다음 기간보다 오래된 백업 삭제(일)",
+  "gui.settings_backup_max": "최대 보관 용량(GB)",
+  "gui.settings_backup_open": "백업 폴더 열기",
+  "gui.settings_backup_none": "아직 백업이 없습니다.",
+  "gui.settings_backup_hint": "노래를 되돌리려면 백업 폴더에서 maps 안의 해당 폴더로 복사하세요.",
+  "gui.settings_backup_invalid_days": "일 수는 1에서 365 사이의 정수여야 합니다.",
+  "gui.settings_backup_invalid_max": "용량 제한은 1에서 1000(GB) 사이의 정수여야 합니다."
 }

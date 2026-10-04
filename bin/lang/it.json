@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - fallito (codice di uscita {code})",
   "gui.requirements_install_cancelled": "{name} - installazione annullata",
   "gui.requirements_download_failed": "Impossibile scaricare {name}. Scaricalo tu stesso da:\n{url}",
-  "gui.requirements_all_done": "Tutto il necessario è installato."
+  "gui.requirements_all_done": "Tutto il necessario è installato.",
+  "preview.replace_line": "{count} di questi sostituiscono una copia diversa della stessa canzone già presente sul tuo disco (stesso nome file, dimensione diversa).",
+  "preview.replace_backup_on": "Le vecchie copie vengono prima salvate in un backup e conservate per {days} giorni (al massimo {gb} GB).",
+  "preview.replace_backup_off": "I backup sono disattivati nelle Impostazioni, quindi le vecchie copie andranno perse.",
+  "preview.replace_keep_hint": "Per proteggere una canzone, contrassegnala con «Mantieni la mia versione» in «Seleziona mappe / canzoni» prima di scaricare.",
+  "preview.list_tag_replace": "sostituisce la tua copia",
+  "gui.preview_replace_hint": "Queste canzoni sono già sul tuo disco ma differiscono dalla copia del server, quindi il download le sostituirà. Deseleziona una canzone per mantenere la tua versione: non verrà più sostituita.",
+  "gui.settings_group_backups": "Backup delle canzoni",
+  "gui.settings_backup_enable": "Esegui il backup di un file canzone prima che un aggiornamento lo sostituisca",
+  "gui.settings_backup_days": "Elimina i backup più vecchi di (giorni)",
+  "gui.settings_backup_max": "Conserva al massimo (GB)",
+  "gui.settings_backup_open": "Apri la cartella dei backup",
+  "gui.settings_backup_none": "Non ci sono ancora backup.",
+  "gui.settings_backup_hint": "Per recuperare una canzone, copiala dalla cartella dei backup nella cartella corrispondente dentro maps.",
+  "gui.settings_backup_invalid_days": "I giorni devono essere un numero intero da 1 a 365.",
+  "gui.settings_backup_invalid_max": "Il limite di dimensione deve essere un numero intero da 1 a 1000 (GB)."
 }

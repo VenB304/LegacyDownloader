@@ -330,5 +330,20 @@
   "gui.requirements_install_failed": "{name} - falhou (código de saída {code})",
   "gui.requirements_install_cancelled": "{name} - instalação cancelada",
   "gui.requirements_download_failed": "Não foi possível baixar {name}. Baixe você mesmo em:\n{url}",
-  "gui.requirements_all_done": "Tudo o que é necessário está instalado."
+  "gui.requirements_all_done": "Tudo o que é necessário está instalado.",
+  "preview.replace_line": "{count} destes substituem uma cópia diferente da mesma música que já está no seu disco (mesmo nome de arquivo, tamanho diferente).",
+  "preview.replace_backup_on": "As cópias antigas são salvas em backup primeiro e mantidas por {days} dias (no máximo {gb} GB).",
+  "preview.replace_backup_off": "Os backups estão desativados em Configurações, então as cópias antigas serão perdidas.",
+  "preview.replace_keep_hint": "Para proteger uma música, marque-a como Manter minha versão em Selecionar mapas / músicas antes de baixar.",
+  "preview.list_tag_replace": "substitui a sua cópia",
+  "gui.preview_replace_hint": "Estas músicas já estão no seu disco, mas diferem da cópia do servidor, então o download vai substituí-las. Desmarque uma música para manter a sua versão; ela nunca será substituída.",
+  "gui.settings_group_backups": "Backups de músicas",
+  "gui.settings_backup_enable": "Fazer backup de um arquivo de música antes que uma atualização o substitua",
+  "gui.settings_backup_days": "Excluir backups mais antigos que (dias)",
+  "gui.settings_backup_max": "Manter no máximo (GB)",
+  "gui.settings_backup_open": "Abrir pasta de backups",
+  "gui.settings_backup_none": "Ainda não há backups.",
+  "gui.settings_backup_hint": "Para recuperar uma música, copie-a da pasta de backups para a pasta correspondente em maps.",
+  "gui.settings_backup_invalid_days": "Os dias devem ser um número inteiro de 1 a 365.",
+  "gui.settings_backup_invalid_max": "O limite de tamanho deve ser um número inteiro de 1 a 1000 (GB)."
 }
