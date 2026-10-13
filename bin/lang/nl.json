@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Er zijn nog geen back-ups.",
   "gui.settings_backup_hint": "Om een nummer terug te halen, kopieer je het uit de back-upmap naar de bijbehorende map onder maps.",
   "gui.settings_backup_invalid_days": "Dagen moet een geheel getal van 1 tot 365 zijn.",
-  "gui.settings_backup_invalid_max": "De groottelimiet moet een geheel getal van 1 tot 1000 (GB) zijn."
+  "gui.settings_backup_invalid_max": "De groottelimiet moet een geheel getal van 1 tot 1000 (GB) zijn.",
+  "preview.missing_editions": "Niet meer op de server, dus overgeslagen: {editions}",
+  "preview.missing_editions_drop_q": "Niet meer bijhouden? De nummers die je al hebt gedownload blijven op je pc.",
+  "gui.missing_editions_title": "Niet meer op de server",
+  "gui.missing_editions_body": "Deze bijgehouden edities staan niet meer op de server en kunnen dus niet worden bijgewerkt:\n\n{editions}\n\nNiet meer bijhouden? De nummers die je al hebt gedownload blijven op je pc.\n\nJa - niet meer bijhouden\nNee - blijven bijhouden (voorlopig overgeslagen)",
+  "gui.download_stopped": "Download gestopt. Voltooide nummers blijven behouden - controleer opnieuw om verder te gaan."
 }

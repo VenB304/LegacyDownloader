@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Ainda não há backups.",
   "gui.settings_backup_hint": "Para recuperar uma música, copie-a da pasta de backups para a pasta correspondente em maps.",
   "gui.settings_backup_invalid_days": "Os dias devem ser um número inteiro de 1 a 365.",
-  "gui.settings_backup_invalid_max": "O limite de tamanho deve ser um número inteiro de 1 a 1000 (GB)."
+  "gui.settings_backup_invalid_max": "O limite de tamanho deve ser um número inteiro de 1 a 1000 (GB).",
+  "preview.missing_editions": "Não está mais no servidor, então foi ignorado: {editions}",
+  "preview.missing_editions_drop_q": "Parar de rastrear? As músicas que você já baixou continuam no seu PC.",
+  "gui.missing_editions_title": "Não está mais no servidor",
+  "gui.missing_editions_body": "Estas edições rastreadas não estão mais no servidor e não podem ser atualizadas:\n\n{editions}\n\nParar de rastrear? As músicas que você já baixou continuam no seu PC.\n\nSim - parar de rastrear\nNão - continuar rastreando (ignoradas por enquanto)",
+  "gui.download_stopped": "Download interrompido. As músicas concluídas são mantidas - verifique novamente para continuar."
 }

@@ -4,6 +4,7 @@ config.txt.bak
 config.txt.orig
 rclone.conf
 bin/songcatalog.cache.json
+bin/sharemap.cache.json
 update-helper.log
 bin_old_*/
 bin_new_*/

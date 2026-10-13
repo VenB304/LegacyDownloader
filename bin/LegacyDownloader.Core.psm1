@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V12'
+$script:AppVersion = 'V12.1'
 
 function Get-AppVersion { return $script:AppVersion }
 
@@ -169,6 +169,10 @@ $script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/
 # Google) - only the community sheet's own maintainer does.
 $script:SongSheetUrl        = "https://docs.google.com/spreadsheets/d/1ufh7SAN0Q87UGFU2Yry8naX7hCjJ1q-XOjssqS3ULO4/gviz/tq?tqx=out:json&gid=28291419"
 $script:SongCatalogCachePath = $null
+# Last known edition -> song codes on the share (filled whenever the share is
+# listed). Lets the "Tracking N songs" counter and View tracked count an
+# edition the community sheet has no rows for (3111, the old next folder).
+$script:ShareMapCachePath = $null
 
 $script:RcloneConfigArgs = @()
 $script:SizeOnlyArgs     = @('--size-only')
@@ -253,6 +257,7 @@ function Initialize-LegacyCore {
     }
 
     $script:SongCatalogCachePath = Join-Path $ScriptDir 'songcatalog.cache.json'
+    $script:ShareMapCachePath = Join-Path $ScriptDir 'sharemap.cache.json'
 
     $script:RcloneConfigPath = Join-Path $ScriptDir 'rclone.conf'
     if (-not (Test-Path -LiteralPath $script:RcloneConfigPath)) {
@@ -933,7 +938,114 @@ function Get-RemoteSongMap {
     }
     $map = @{}
     foreach ($ed in $buckets.Keys) { $map[$ed] = @($buckets[$ed] | Sort-Object) }
+    # A full listing replaces the cached copy (an edition that left the share
+    # must stop counting).
+    if ($map.Count -gt 0) { Save-ShareMapCache $map }
     return $map
+}
+
+function Get-CachedShareMap {
+    # edition -> @(codes) from the last share listing, no network. @{} when
+    # nothing was cached yet or the file is unreadable.
+    $map = @{}
+    if (-not $script:ShareMapCachePath -or -not (Test-Path -LiteralPath $script:ShareMapCachePath)) { return $map }
+    try {
+        $obj = [System.IO.File]::ReadAllText($script:ShareMapCachePath, [System.Text.Encoding]::UTF8) | ConvertFrom-Json
+        foreach ($p in $obj.PSObject.Properties) { $map[[string]$p.Name] = @($p.Value | ForEach-Object { [string]$_ }) }
+    } catch { return @{} }
+    return $map
+}
+
+function Save-ShareMapCache {
+    # Writes the edition -> codes cache. -Merge keeps editions not in $Map;
+    # -Forget drops editions that are gone from the share. Never throws.
+    param(
+        [Parameter(Mandatory = $true)]$Map,
+        [switch]$Merge,
+        [string[]]$Forget = @()
+    )
+    if (-not $script:ShareMapCachePath) { return }
+    try {
+        $out = [ordered]@{}
+        if ($Merge) {
+            $old = Get-CachedShareMap
+            foreach ($k in @($old.Keys | Sort-EditionNames)) { $out[[string]$k] = @($old[$k]) }
+        }
+        foreach ($k in @($Map.Keys | Sort-EditionNames)) { $out[[string]$k] = @($Map[$k]) }
+        foreach ($f in @($Forget)) { if ($out.Contains($f)) { $out.Remove($f) } }
+        if ($out.Count -eq 0) { return }
+        ConvertTo-Json -InputObject $out -Depth 3 | Set-Content -LiteralPath $script:ShareMapCachePath -Encoding UTF8
+    } catch { }
+}
+
+function Test-RemoteEditionMissing {
+    # $true only when the share is reachable AND no longer has maps/<edition>.
+    # A failed scan of one edition used to be reported as "no internet" for the
+    # whole check, so one folder that left the share (maps/next) blocked every
+    # other update. rclone exits 3 / says "directory not found" for it; that is
+    # then confirmed against a fresh listing of the share, so a dropped
+    # connection is never mistaken for a missing edition.
+    param(
+        [Parameter(Mandatory = $true)][string]$Edition,
+        [int]$ExitCode = 0,
+        [AllowNull()][AllowEmptyCollection()][string[]]$Lines = @()
+    )
+    $notFound = ($ExitCode -eq 3) -or (@($Lines | Where-Object { $_ -match 'directory not found' }).Count -gt 0)
+    if (-not $notFound) { return $false }
+    $remote = @(Get-RemoteEditions)
+    if ($remote.Count -eq 0) { return $false }
+    return (@($remote | Where-Object { $_ -ieq $Edition }).Count -eq 0)
+}
+
+function Get-TrackedSongTotal {
+    # The number behind the main window's "Tracking: N song(s)". Per edition: a
+    # song filter wins, else the community sheet's row count, else (an edition
+    # the sheet lacks) the last share listing, else the files on disk.
+    param(
+        [AllowNull()][AllowEmptyCollection()][string[]]$Editions = @(),
+        [string]$SongFilters = '',
+        [AllowNull()]$Catalog = @(),
+        [AllowEmptyString()][string]$GamePath = ''
+    )
+    $filterMap = Get-SongFilterMap $SongFilters
+    $catCount = @{}
+    foreach ($rec in @($Catalog)) {
+        if (-not $catCount.ContainsKey($rec.Edition)) { $catCount[$rec.Edition] = 0 }
+        $catCount[$rec.Edition]++
+    }
+    $shareMap = Get-CachedShareMap
+    $localMap = Get-LocalSongMap $GamePath
+    $total = 0
+    foreach ($ed in @($Editions)) {
+        if ($filterMap.Contains($ed)) { $total += @($filterMap[$ed]).Count }
+        elseif ($catCount.ContainsKey($ed)) { $total += $catCount[$ed] }
+        elseif ($shareMap.ContainsKey($ed)) { $total += @($shareMap[$ed]).Count }
+        elseif ($localMap.ContainsKey($ed)) { $total += @($localMap[$ed]).Count }
+    }
+    return $total
+}
+
+function Remove-TrackedEditions {
+    # EDITIONS / SONGFILTERS / KEEPSONGS with the given editions taken out.
+    # Used when an edition has left the share. Returns the three new values;
+    # Editions is '' when nothing would be left - callers must NOT save that
+    # (a blank EDITIONS loads as AUTO = download everything), they leave the
+    # tracking alone instead.
+    param(
+        [Parameter(Mandatory = $true)][AllowEmptyString()][string]$Editions,
+        [string]$SongFilters = '',
+        [string]$KeepSongs = '',
+        [string[]]$Drop = @()
+    )
+    $dropSet = [System.Collections.Generic.HashSet[string]]::new([string[]]@($Drop), [System.StringComparer]::OrdinalIgnoreCase)
+    $list = @($Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' -and -not $dropSet.Contains($_) })
+    $newFilters = [ordered]@{}
+    $fm = Get-SongFilterMap $SongFilters
+    foreach ($ed in @($fm.Keys)) { if (-not $dropSet.Contains($ed)) { $newFilters[$ed] = $fm[$ed] } }
+    $newKeep = [ordered]@{}
+    $km = Get-SongFilterMap $KeepSongs
+    foreach ($ed in @($km.Keys)) { if (-not $dropSet.Contains($ed)) { $newKeep[$ed] = $km[$ed] } }
+    return @{ Editions = ($list -join ','); SongFilters = (Format-SongFilters $newFilters); KeepSongs = (Format-SongFilters $newKeep) }
 }
 
 function Get-LocalEditions([string]$GamePath) {
@@ -1054,6 +1166,25 @@ function Get-TrackedDownloadStatus {
     $downloadedKeys = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     foreach ($ed in $localMap.Keys) {
         foreach ($code in $localMap[$ed]) { [void]$downloadedKeys.Add("$ed|$code") }
+    }
+
+    # Tracked editions the community sheet has no rows for (share-only, e.g.
+    # 3111): the sheet-based set above cannot contain them, so without this they
+    # showed as "downloaded, not tracked" or not at all. Their tracked songs are
+    # the filter's codes, else the last share listing, else what is on disk.
+    if (-not [string]::IsNullOrWhiteSpace($Editions) -and $Editions.ToUpper() -ne 'AUTO') {
+        $catalogEds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($r in $Catalog) { [void]$catalogEds.Add([string]$r.Edition) }
+        $shareMap = Get-CachedShareMap
+        $filterMap = Get-SongFilterMap $SongFilters
+        foreach ($ed in @($Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })) {
+            if ($catalogEds.Contains($ed) -or -not (Test-SafeEditionName $ed)) { continue }
+            $codes = if ($filterMap.Contains($ed)) { @($filterMap[$ed]) }
+                     elseif ($shareMap.ContainsKey($ed)) { @($shareMap[$ed]) }
+                     elseif ($localMap.ContainsKey($ed)) { @($localMap[$ed]) }
+                     else { @() }
+            foreach ($c in $codes) { [void]$trackedKeys.Add("$ed|$c") }
+        }
     }
 
     $byKey = @{}
@@ -2291,6 +2422,7 @@ function Get-UpdatePlan {
         Songs         = @()
         SongFilesFlat = @()
         Replacing     = @()
+        MissingEditions = @()
         SongBytes     = [long]0
         TotalFiles    = 0
         TotalBytes    = [long]0
@@ -2350,10 +2482,16 @@ function Get-UpdatePlan {
         # made the typical case worse, not better. Reverted; left as a
         # per-edition scan.
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
+        $missingEditions = @()
         foreach ($ed in $list) {
             $includeArgs = Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $SongFilters) -GamePath $GamePath
             $r = Invoke-RcloneCapture (@('copy', "$script:Conn`maps/$ed", [System.IO.Path]::Combine($mapsDir, $ed)) + $includeArgs + $script:ScanArgs) -Label "scan-edition-$ed"
-            if ($r.ExitCode -ne 0) { $plan.Ok = $false; $plan.NetFail = $true; return $plan }
+            if ($r.ExitCode -ne 0) {
+                # A tracked edition that has left the share (maps/next) is
+                # skipped and reported, it must not fail the whole check.
+                if (Test-RemoteEditionMissing -Edition $ed -ExitCode $r.ExitCode -Lines $r.Lines) { $missingEditions += $ed; continue }
+                $plan.Ok = $false; $plan.NetFail = $true; return $plan
+            }
             $p = Parse-DryRun $r.Lines
             $songBytes += $p.Bytes
             $prefixed = @($p.Files | ForEach-Object { "$ed/$_" })
@@ -2365,6 +2503,25 @@ function Get-UpdatePlan {
                 $songs += [PSCustomObject]@{ Edition = [string]$ed; Count = $prefixed.Count; Files = $prefixed }
             }
         }
+    }
+
+    if ($Editions.ToUpper() -ne 'AUTO') {
+        $plan.MissingEditions = @($missingEditions)
+        # Remember what the share has for tracked editions the community sheet
+        # lacks, so the Tracking counter can count them. Best effort, tiny.
+        try {
+            $sheetEds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($rec in @(Get-CachedSongCatalog)) { [void]$sheetEds.Add([string]$rec.Edition) }
+            if ($sheetEds.Count -gt 0) {
+                $learned = @{}
+                foreach ($ed in $list) {
+                    if ($missingEditions -contains $ed -or $sheetEds.Contains($ed) -or -not (Test-SafeEditionName $ed)) { continue }
+                    $codes = @(Get-RemoteSongs $ed)
+                    if ($codes.Count -gt 0) { $learned[$ed] = $codes }
+                }
+                if ($learned.Count -gt 0 -or $missingEditions.Count -gt 0) { Save-ShareMapCache $learned -Merge -Forget $missingEditions }
+            }
+        } catch { }
     }
 
     # ---- bucket the changed base files ----
@@ -2572,6 +2729,46 @@ function Complete-RcloneCopy {
     } catch { }
     Remove-Item -LiteralPath $Job.OutFile, $Job.ErrFile -Force -ErrorAction SilentlyContinue
     return $code
+}
+
+function Remove-PartialDownloads {
+    # rclone writes every file as <name>.<8 hex>.partial (preallocated to the
+    # FULL size) and renames it only when the file is complete, so stopping a
+    # download leaves the half-written temp file behind. Removes exactly those
+    # files under $Root that were touched since $Since (the stopped job's start,
+    # so an older run's leftovers and anything else are never touched), without
+    # following any directory link, and logs each one to deleted-files.txt.
+    # Finished songs are never affected: they only exist under their real name.
+    param(
+        [AllowEmptyString()][string]$Root,
+        [Parameter(Mandatory = $true)][datetime]$Since
+    )
+    $count = 0; $bytes = [long]0; $log = New-Object System.Collections.Generic.List[string]
+    if (-not [string]::IsNullOrEmpty($Root) -and (Test-Path -LiteralPath $Root -PathType Container)) {
+        $stack = New-Object System.Collections.Generic.Stack[string]
+        $stack.Push($Root)
+        while ($stack.Count -gt 0) {
+            $dir = $stack.Pop()
+            try {
+                foreach ($e in (New-Object System.IO.DirectoryInfo($dir)).EnumerateFileSystemInfos()) {
+                    if (($e.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) { continue }
+                    if (($e.Attributes -band [System.IO.FileAttributes]::Directory) -ne 0) { $stack.Push($e.FullName); continue }
+                    if ($e.Name -notmatch '\.[0-9a-f]{8}\.partial$') { continue }
+                    if ($e.LastWriteTime -lt $Since) { continue }
+                    $len = ([System.IO.FileInfo]$e).Length
+                    try {
+                        [System.IO.File]::Delete($e.FullName)
+                        $count++; $bytes += $len
+                        $log.Add("REMOVED   half-downloaded file $($e.FullName)  ($len bytes)  [download stopped]")
+                    } catch {
+                        $log.Add("FAILED    $($e.FullName)  (half-downloaded file) $($_.Exception.Message)")
+                    }
+                }
+            } catch { }
+        }
+    }
+    if ($log.Count -gt 0) { Add-DeletionLog $log.ToArray() }
+    return [PSCustomObject]@{ Count = $count; Bytes = $bytes }
 }
 
 function Get-BaseSyncExcludes {
@@ -3188,9 +3385,10 @@ Export-ModuleMember -Function `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
     Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Add-ShareOnlySongs, Get-LocalEditions, Get-LocalSongCount, `
     Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `
+    Get-CachedShareMap, Save-ShareMapCache, Test-RemoteEditionMissing, Get-TrackedSongTotal, Remove-TrackedEditions, `
     ConvertTo-QuotedArg, Invoke-RcloneCapture, ConvertFrom-RcloneSize, `
     Format-Bytes, Parse-DryRun, Get-UpdatePlan, `
-    Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Get-BaseSyncExcludes, `
+    Start-RcloneCopy, Read-RcloneStats, Complete-RcloneCopy, Remove-PartialDownloads, Get-BaseSyncExcludes, `
     Test-ProtectedBaseFile, Get-ProtectedFileHashRecord, Update-ProtectedFileHashes, `
     Initialize-Language, T, Get-AvailableLanguages, Resolve-DefaultLanguage, Get-LanguageCode, Get-TutorialUrl, `
     Get-SongFilterMap, Format-SongFilters, Get-EffectiveSongs, Get-SongIncludeArgs, Get-SongFilterArgs, Get-KeptSongCodes, `

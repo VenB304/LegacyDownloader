@@ -92,7 +92,8 @@ From the main window's "Songs" section you then choose what you want
     the oldest ones once the folder passes 5 GB (the newest set is
     always kept); both limits, and the backup itself, can be changed in
     Settings. To get a song back, copy it from the backup folder into
-    the matching folder under maps.
+    the matching folder under maps. Every backup that gets cleaned up
+    is listed in bin\logs\deleted-files.txt.
 
 
 AFTER SETUP

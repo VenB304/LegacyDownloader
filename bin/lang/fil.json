@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Wala pang mga backup.",
   "gui.settings_backup_hint": "Para maibalik ang isang kanta, kopyahin ito mula sa folder ng backup papunta sa katugmang folder sa ilalim ng maps.",
   "gui.settings_backup_invalid_days": "Dapat buong numero mula 1 hanggang 365 ang mga araw.",
-  "gui.settings_backup_invalid_max": "Dapat buong numero mula 1 hanggang 1000 (GB) ang limitasyon sa laki."
+  "gui.settings_backup_invalid_max": "Dapat buong numero mula 1 hanggang 1000 (GB) ang limitasyon sa laki.",
+  "preview.missing_editions": "Wala na sa server, kaya nilaktawan: {editions}",
+  "preview.missing_editions_drop_q": "Titigilan na ba ang pagsubaybay? Mananatili sa PC mo ang mga kantang na-download mo na.",
+  "gui.missing_editions_title": "Wala na sa server",
+  "gui.missing_editions_body": "Ang mga sinusubaybayang edisyong ito ay wala na sa server, kaya hindi na ma-update:\n\n{editions}\n\nTitigilan na ba ang pagsubaybay? Mananatili sa PC mo ang mga kantang na-download mo na.\n\nOo - itigil ang pagsubaybay\nHindi - ipagpatuloy ang pagsubaybay (lalaktawan muna)",
+  "gui.download_stopped": "Itinigil ang download. Nananatili ang mga natapos nang kanta - suriin ulit para magpatuloy."
 }

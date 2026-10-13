@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "バックアップはまだありません。",
   "gui.settings_backup_hint": "曲を元に戻すには、バックアップフォルダーから maps 内の対応するフォルダーにコピーしてください。",
   "gui.settings_backup_invalid_days": "日数は1～365の整数で指定してください。",
-  "gui.settings_backup_invalid_max": "サイズ上限は1～1000（GB）の整数で指定してください。"
+  "gui.settings_backup_invalid_max": "サイズ上限は1～1000（GB）の整数で指定してください。",
+  "preview.missing_editions": "サーバーに存在しなくなったためスキップしました: {editions}",
+  "preview.missing_editions_drop_q": "追跡をやめますか？ダウンロード済みの曲は PC に残ります。",
+  "gui.missing_editions_title": "サーバーに存在しません",
+  "gui.missing_editions_body": "追跡中の次のエディションはサーバーに存在しなくなったため、更新できません:\n\n{editions}\n\n追跡をやめますか？ダウンロード済みの曲は PC に残ります。\n\nはい - 追跡をやめる\nいいえ - 追跡を続ける (今はスキップ)",
+  "gui.download_stopped": "ダウンロードを停止しました。完了した曲は残ります。続けるには再度確認してください。"
 }

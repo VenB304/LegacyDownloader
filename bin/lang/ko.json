@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "아직 백업이 없습니다.",
   "gui.settings_backup_hint": "노래를 되돌리려면 백업 폴더에서 maps 안의 해당 폴더로 복사하세요.",
   "gui.settings_backup_invalid_days": "일 수는 1에서 365 사이의 정수여야 합니다.",
-  "gui.settings_backup_invalid_max": "용량 제한은 1에서 1000(GB) 사이의 정수여야 합니다."
+  "gui.settings_backup_invalid_max": "용량 제한은 1에서 1000(GB) 사이의 정수여야 합니다.",
+  "preview.missing_editions": "서버에 더 이상 없어서 건너뜁니다: {editions}",
+  "preview.missing_editions_drop_q": "추적을 중단할까요? 이미 다운로드한 노래는 PC에 그대로 남습니다.",
+  "gui.missing_editions_title": "서버에 더 이상 없음",
+  "gui.missing_editions_body": "추적 중인 다음 에디션은 서버에 더 이상 없어 업데이트할 수 없습니다:\n\n{editions}\n\n추적을 중단할까요? 이미 다운로드한 노래는 PC에 그대로 남습니다.\n\n예 - 추적 중단\n아니오 - 계속 추적 (지금은 건너뜀)",
+  "gui.download_stopped": "다운로드를 중지했습니다. 완료된 노래는 유지됩니다 - 계속하려면 다시 확인하세요."
 }

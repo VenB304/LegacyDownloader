@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "还没有备份。",
   "gui.settings_backup_hint": "要找回歌曲，请将其从备份文件夹复制到 maps 下对应的文件夹。",
   "gui.settings_backup_invalid_days": "天数必须是 1 到 365 之间的整数。",
-  "gui.settings_backup_invalid_max": "大小上限必须是 1 到 1000（GB）之间的整数。"
+  "gui.settings_backup_invalid_max": "大小上限必须是 1 到 1000（GB）之间的整数。",
+  "preview.missing_editions": "服务器上已不存在，已跳过：{editions}",
+  "preview.missing_editions_drop_q": "停止跟踪它们吗？已下载的歌曲会保留在你的电脑上。",
+  "gui.missing_editions_title": "服务器上已不存在",
+  "gui.missing_editions_body": "以下正在跟踪的版本已不在服务器上，无法更新：\n\n{editions}\n\n停止跟踪它们吗？已下载的歌曲会保留在你的电脑上。\n\n是 - 停止跟踪\n否 - 继续跟踪（暂时跳过）",
+  "gui.download_stopped": "下载已停止。已完成的歌曲会保留 - 再次检查即可继续。"
 }

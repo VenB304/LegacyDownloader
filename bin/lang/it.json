@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Non ci sono ancora backup.",
   "gui.settings_backup_hint": "Per recuperare una canzone, copiala dalla cartella dei backup nella cartella corrispondente dentro maps.",
   "gui.settings_backup_invalid_days": "I giorni devono essere un numero intero da 1 a 365.",
-  "gui.settings_backup_invalid_max": "Il limite di dimensione deve essere un numero intero da 1 a 1000 (GB)."
+  "gui.settings_backup_invalid_max": "Il limite di dimensione deve essere un numero intero da 1 a 1000 (GB).",
+  "preview.missing_editions": "Non è più sul server, quindi saltato: {editions}",
+  "preview.missing_editions_drop_q": "Smettere di tracciarle? Le canzoni già scaricate restano sul tuo PC.",
+  "gui.missing_editions_title": "Non più sul server",
+  "gui.missing_editions_body": "Queste edizioni tracciate non sono più sul server, quindi non possono essere aggiornate:\n\n{editions}\n\nSmettere di tracciarle? Le canzoni già scaricate restano sul tuo PC.\n\nSì - smetti di tracciarle\nNo - continua a tracciarle (saltate per ora)",
+  "gui.download_stopped": "Download interrotto. Le canzoni completate vengono conservate - ricontrolla per continuare."
 }

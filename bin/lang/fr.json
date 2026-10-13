@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Il n'y a pas encore de sauvegarde.",
   "gui.settings_backup_hint": "Pour récupérer une chanson, copiez-la depuis le dossier de sauvegarde vers le dossier correspondant dans maps.",
   "gui.settings_backup_invalid_days": "Le nombre de jours doit être un entier de 1 à 365.",
-  "gui.settings_backup_invalid_max": "La limite de taille doit être un entier de 1 à 1000 (Go)."
+  "gui.settings_backup_invalid_max": "La limite de taille doit être un entier de 1 à 1000 (Go).",
+  "preview.missing_editions": "N'est plus sur le serveur, ignoré : {editions}",
+  "preview.missing_editions_drop_q": "Arrêter de les suivre ? Les chansons déjà téléchargées restent sur votre PC.",
+  "gui.missing_editions_title": "Plus sur le serveur",
+  "gui.missing_editions_body": "Ces éditions suivies ne sont plus sur le serveur et ne peuvent donc pas être mises à jour :\n\n{editions}\n\nArrêter de les suivre ? Les chansons déjà téléchargées restent sur votre PC.\n\nOui - arrêter de les suivre\nNon - continuer à les suivre (ignorées pour l'instant)",
+  "gui.download_stopped": "Téléchargement arrêté. Les chansons terminées sont conservées - relancez la vérification pour continuer."
 }

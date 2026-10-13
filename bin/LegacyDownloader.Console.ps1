@@ -120,9 +120,12 @@ function Show-LaunchPrompt([string]$GamePath, [bool]$AutoLaunch) {
 function Invoke-CheckAndOfferLaunch {
     param([string]$GamePath, [string]$Editions, [string]$SongFilters, [bool]$AutoLaunch)
     $prev = Show-UpdatePreview -GamePath $GamePath -Editions $Editions -SongFilters $SongFilters
+    if ($null -ne $prev.Drop) {
+        Save-Config @{ Editions = $prev.Drop.Editions; SongFilters = $prev.Drop.SongFilters; KeepSongs = $prev.Drop.KeepSongs }
+    }
     if ($prev.Proceed) {
         Write-Host ""
-        Invoke-Update -GamePath $GamePath -Editions $Editions -BaseExcludes $prev.BaseExcludes -SongFilters $SongFilters -Confirmed
+        Invoke-Update -GamePath $GamePath -Editions $Editions -BaseExcludes $prev.BaseExcludes -SongFilters $SongFilters -Confirmed -SkipEditions $prev.MissingEditions
         Write-Host ""
         Write-Host (T 'menu.up_to_date_play')
         Show-LaunchPrompt -GamePath $GamePath -AutoLaunch $AutoLaunch
@@ -283,14 +286,17 @@ function Invoke-AllMapsSync([string]$GamePath, [switch]$Confirmed) {
     Write-Host ""
 }
 
-function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcludes = @(), [string]$SongFilters = '', [switch]$Confirmed) {
+function Invoke-Update([string]$GamePath, [string]$Editions, [string[]]$BaseExcludes = @(), [string]$SongFilters = '', [switch]$Confirmed, [string[]]$SkipEditions = @()) {
     $script:RunBackupStamp = New-BackupStamp
     Invoke-BaseSync $GamePath $BaseExcludes
     if ($Editions.ToUpper() -eq 'AUTO') {
         Invoke-AllMapsSync $GamePath -Confirmed:$Confirmed
     } else {
         $list = $Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' }
-        foreach ($ed in $list) { Invoke-EditionSync $GamePath $ed (Get-EffectiveSongs $ed $SongFilters) }
+        foreach ($ed in $list) {
+            if (@($SkipEditions) -contains $ed) { continue }   # no longer on the share
+            Invoke-EditionSync $GamePath $ed (Get-EffectiveSongs $ed $SongFilters)
+        }
     }
     # Keep the backup folder inside its age/size limits (never throws).
     try { [void](Remove-OldBackups -GamePath $GamePath) } catch { }
@@ -309,7 +315,7 @@ function Show-UpdatePreview {
     #               where both Proceed and Dismissed are false.
     # Runs the real sync commands with --dry-run first so the user sees
     # exactly what would download (and nothing does) before committing.
-    $result = @{ Proceed = $false; Dismissed = $false; BaseExcludes = @() }
+    $result = @{ Proceed = $false; Dismissed = $false; BaseExcludes = @(); MissingEditions = @(); Drop = $null }
 
     Write-Host (T 'preview.checking')
 
@@ -340,6 +346,21 @@ function Show-UpdatePreview {
         Write-Host (T 'preview.net_fail') -ForegroundColor Yellow
         $result.Dismissed = $true
         return $result
+    }
+
+    # Tracked editions that are no longer on the share were skipped by the scan.
+    # Offer to stop tracking them (the caller applies $result.Drop; never offered
+    # when it would leave nothing tracked - a blank EDITIONS means everything).
+    $missingEds = @($plan.MissingEditions)
+    $result.MissingEditions = $missingEds
+    if ($missingEds.Count -gt 0) {
+        $missingNames = (@($missingEds | ForEach-Object { Format-EditionDisplay $_ })) -join ', '
+        Write-Host ""
+        Write-Host (T 'preview.missing_editions' @{ editions = $missingNames }) -ForegroundColor Yellow
+        $drop = Remove-TrackedEditions -Editions $Editions -SongFilters $SongFilters -KeepSongs ([string](Load-Config).KeepSongs) -Drop $missingEds
+        if ($drop.Editions -ne '' -and $Editions.ToUpper() -ne 'AUTO' -and (Confirm-YesNo (T 'preview.missing_editions_drop_q'))) {
+            $result.Drop = $drop
+        }
     }
 
     $baseNormal = @($plan.BaseNormal)
@@ -962,6 +983,10 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
 
         $prev = Show-UpdatePreview -GamePath $GamePath -Editions $browse.Editions -SongFilters $browse.SongFilters
         if ($prev.Dismissed) { return $result }
+        # The user chose to stop tracking editions that left the share: apply it
+        # to what gets saved. ($browse itself is left alone so the removal check
+        # below does not mistake it for a request to delete their songs.)
+        if ($null -ne $prev.Drop) { $result = @{ Editions = $prev.Drop.Editions; SongFilters = $prev.Drop.SongFilters } }
 
         # Whole editions dropped, or editions narrowed to fewer songs, may
         # have local files the player no longer wants - asked as one batch
@@ -1021,7 +1046,7 @@ function Run-MapsWizard([string]$GamePath, [string]$CurrentEditions, [string]$Cu
 
         if ($prev.Proceed) {
             Write-Host ""
-            Invoke-Update -GamePath $GamePath -Editions $browse.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $browse.SongFilters -Confirmed
+            Invoke-Update -GamePath $GamePath -Editions $browse.Editions -BaseExcludes $prev.BaseExcludes -SongFilters $browse.SongFilters -Confirmed -SkipEditions $prev.MissingEditions
         }
         return $result
     }

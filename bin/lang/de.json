@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Es gibt noch keine Sicherungen.",
   "gui.settings_backup_hint": "Um einen Song zurückzuholen, kopiere ihn aus dem Sicherungsordner in den passenden Ordner unter maps.",
   "gui.settings_backup_invalid_days": "Die Tage müssen eine ganze Zahl von 1 bis 365 sein.",
-  "gui.settings_backup_invalid_max": "Das Größenlimit muss eine ganze Zahl von 1 bis 1000 (GB) sein."
+  "gui.settings_backup_invalid_max": "Das Größenlimit muss eine ganze Zahl von 1 bis 1000 (GB) sein.",
+  "preview.missing_editions": "Nicht mehr auf dem Server, daher übersprungen: {editions}",
+  "preview.missing_editions_drop_q": "Nicht mehr verfolgen? Die bereits heruntergeladenen Songs bleiben auf deinem PC.",
+  "gui.missing_editions_title": "Nicht mehr auf dem Server",
+  "gui.missing_editions_body": "Diese verfolgten Editionen sind nicht mehr auf dem Server und können nicht aktualisiert werden:\n\n{editions}\n\nNicht mehr verfolgen? Die bereits heruntergeladenen Songs bleiben auf deinem PC.\n\nJa - nicht mehr verfolgen\nNein - weiter verfolgen (vorerst übersprungen)",
+  "gui.download_stopped": "Download gestoppt. Fertige Songs bleiben erhalten - prüfe erneut, um fortzufahren."
 }

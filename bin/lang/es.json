@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "Todavía no hay copias de seguridad.",
   "gui.settings_backup_hint": "Para recuperar una canción, cópiala desde la carpeta de copias de seguridad a la carpeta correspondiente dentro de maps.",
   "gui.settings_backup_invalid_days": "Los días deben ser un número entero del 1 al 365.",
-  "gui.settings_backup_invalid_max": "El límite de tamaño debe ser un número entero del 1 al 1000 (GB)."
+  "gui.settings_backup_invalid_max": "El límite de tamaño debe ser un número entero del 1 al 1000 (GB).",
+  "preview.missing_editions": "Ya no está en el servidor, se omite: {editions}",
+  "preview.missing_editions_drop_q": "¿Dejar de seguirlas? Las canciones que ya descargaste se quedan en tu PC.",
+  "gui.missing_editions_title": "Ya no está en el servidor",
+  "gui.missing_editions_body": "Estas ediciones que sigues ya no están en el servidor, así que no se pueden actualizar:\n\n{editions}\n\n¿Dejar de seguirlas? Las canciones que ya descargaste se quedan en tu PC.\n\nSí - dejar de seguirlas\nNo - seguir siguiéndolas (se omiten por ahora)",
+  "gui.download_stopped": "Descarga detenida. Las canciones terminadas se conservan; vuelve a comprobar para continuar."
 }

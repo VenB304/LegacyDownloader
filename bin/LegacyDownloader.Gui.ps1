@@ -1219,9 +1219,55 @@ function Start-Downloads($Jobs) {
         $script:LoggedObjects.Clear()
     }
     Set-Busy $true
+    # The Check button becomes a red Stop button for the length of the download
+    # (same trick as Cancel during the scan). Stop-Downloads kills rclone, drops
+    # the half-written file and leaves every finished song in place.
+    $script:Downloading = $true
+    $script:BtnCheck.Enabled = $true
+    $script:BtnCheck.Text = T 'gui.btn_stop'
+    $script:BtnCheck.BackColor = [System.Drawing.Color]::FromArgb(214, 69, 69)
+    $script:BtnCheck.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(188, 56, 56)
+    $script:BtnCheck.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(162, 45, 45)
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
     $script:DlTimer.Start()
     Advance-Queue
+}
+
+# Puts the Check button back to its normal look after a download ends (finished,
+# failed or stopped). Set-Busy handles .Enabled separately.
+function End-DownloadUi {
+    $script:Downloading = $false
+    End-ScanUi
+}
+
+function Stop-Downloads {
+    if (-not $script:Downloading) { return }
+    $script:DlTimer.Stop()
+    $job = $script:Job
+    $spec = $script:CurrentSpec
+    $script:Queue.Clear()
+    $since = Get-Date
+    if ($job) {
+        try { $since = $job.Process.StartTime.AddMinutes(-1) } catch { }
+        try { if (-not $job.Process.HasExited) { $job.Process.Kill() } } catch { }
+        try { [void]$job.Process.WaitForExit(5000) } catch { }
+        try { [void](Complete-RcloneCopy -Job $job) } catch { }
+    }
+    $script:Job = $null
+    $script:CurrentSpec = $null
+    # rclone leaves its <name>.<hex>.partial temp file (full size) behind when
+    # killed: remove it, from the folder this job was writing to.
+    if ($spec -and $spec.Dest) { try { [void](Remove-PartialDownloads -Root $spec.Dest -Since $since) } catch { } }
+    try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
+    End-DownloadUi
+    $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+    $script:Bar.Value = 0
+    $script:LblProg.Text = T 'gui.download_stopped'
+    Append-Log '----'
+    Append-Log ("$([char]0x2717) " + (T 'gui.download_stopped'))
+    Set-Busy $false
+    Refresh-FolderStatus
+    Refresh-Tracking
 }
 
 function Advance-Queue {
@@ -1252,6 +1298,7 @@ function Advance-Queue {
             $script:Job = $null
             $script:CurrentSpec = $null
             $script:DlTimer.Stop()
+            End-DownloadUi
             Set-Busy $false
             Warn-Box (T 'gui.failed_body' @{ code = $code }) (T 'gui.failed_title')
             return
@@ -1305,6 +1352,7 @@ function Finish-Downloads {
     try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
     $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
     $script:Bar.Value = 100
+    End-DownloadUi
     Set-Busy $false
     Refresh-FolderStatus
     Refresh-Tracking
@@ -1364,6 +1412,8 @@ function Build-DownloadQueue($Plan, $KeepFiles) {
         if ($planEditions.Count -eq 0) {
             $planEditions = @($script:Cfg.Editions -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne '' })
         }
+        # An edition that has left the share (maps/next) has nothing to fetch.
+        $planEditions = @($planEditions | Where-Object { @($Plan.MissingEditions) -notcontains $_ })
         foreach ($ed in $planEditions) {
             $dispLabel = Format-EditionDisplay $ed
             $extra = @(Get-SongFilterArgs -Edition $ed -Songs (Get-EffectiveSongs $ed $script:Cfg.SongFilters) -GamePath $gp) + @(Get-BackupArgs -GamePath $gp -Stamp $backupStamp -Edition $ed)
@@ -4004,22 +4054,13 @@ function Refresh-Tracking {
             if ($null -ne $script:BtnViewTracked) { $script:BtnViewTracked.Visible = $false }
             $script:LblTracking.Width = 464
         } else {
-            $songFilterMap = Get-SongFilterMap $script:Cfg.SongFilters
             # Whole-edition song counts come from whatever catalog was last
             # cached on disk (no live fetch just to render this summary,
-            # same tradeoff the picker's own cache-only lookups make) - an
-            # edition the cache doesn't know about yet just doesn't add to
-            # the total, same as it not appearing in the picker's rows.
-            $cachedCatalog = @(Get-CachedSongCatalog)
-            $catalogCountByEdition = @{}
-            foreach ($rec in $cachedCatalog) {
-                if (-not $catalogCountByEdition.ContainsKey($rec.Edition)) { $catalogCountByEdition[$rec.Edition] = 0 }
-                $catalogCountByEdition[$rec.Edition]++
-            }
-            $totalSongCount = 0
-            foreach ($ed in $list) {
-                $totalSongCount += if ($songFilterMap.Contains($ed)) { $songFilterMap[$ed].Count } elseif ($catalogCountByEdition.ContainsKey($ed)) { $catalogCountByEdition[$ed] } else { 0 }
-            }
+            # same tradeoff the picker's own cache-only lookups make). An
+            # edition the community sheet has no rows for (3111) is counted
+            # from the last share listing, else from the files on disk, so it
+            # no longer counts as zero.
+            $totalSongCount = Get-TrackedSongTotal -Editions $list -SongFilters $script:Cfg.SongFilters -Catalog @(Get-CachedSongCatalog) -GamePath $script:Cfg.GamePath
             # One total-songs number up front - the full per-edition/
             # per-song breakdown, with download status, is one click away
             # via "View tracked".
@@ -4141,6 +4182,29 @@ function On-PlanReady($Plan, $ErrMsg, [bool]$IgnoredWrongLevel) {
     }
 
     if (-not $Plan.Ok) { Warn-Box (T 'gui.netfail_body') (T 'gui.netfail_title'); return }
+
+    # Tracked editions that are no longer on the share were skipped by the scan
+    # (they used to fail the whole check as "no internet"). Say so, and offer to
+    # stop tracking them - never when that would leave nothing tracked (a blank
+    # EDITIONS means everything), and the downloaded songs always stay.
+    $missingEds = @($Plan.MissingEditions)
+    if ($missingEds.Count -gt 0) {
+        $missingNames = (@($missingEds | ForEach-Object { Format-EditionDisplay $_ })) -join ', '
+        Append-Log (T 'preview.missing_editions' @{ editions = $missingNames })
+        $drop = Remove-TrackedEditions -Editions $script:Cfg.Editions -SongFilters $script:Cfg.SongFilters -KeepSongs $script:Cfg.KeepSongs -Drop $missingEds
+        if ($drop.Editions -ne '' -and $script:Cfg.Editions.ToUpper() -ne 'AUTO') {
+            $ans = [System.Windows.Forms.MessageBox]::Show($script:Form,
+                (T 'gui.missing_editions_body' @{ editions = $missingNames }),
+                (T 'gui.missing_editions_title'),
+                [System.Windows.Forms.MessageBoxButtons]::YesNo,
+                [System.Windows.Forms.MessageBoxIcon]::Question)
+            if ($ans -eq [System.Windows.Forms.DialogResult]::Yes) {
+                Save-Config @{ Editions = $drop.Editions; SongFilters = $drop.SongFilters; KeepSongs = $drop.KeepSongs }
+                $script:Cfg = Load-Config
+                Refresh-Tracking
+            }
+        }
+    }
 
     if ($Plan.TotalFiles -eq 0) {
         Append-Log (T 'preview.up_to_date')
@@ -4544,7 +4608,7 @@ function Build-MainForm {
 
     # Check for updates button (Primary CTA)
     $script:BtnCheck = New-Btn '' 12 258 496 38 $true
-    $script:BtnCheck.Add_Click({ param($s, $e) if ($script:Scanning) { Cancel-Scan } else { On-Check } })
+    $script:BtnCheck.Add_Click({ param($s, $e) if ($script:Scanning) { Cancel-Scan } elseif ($script:Downloading) { Stop-Downloads } else { On-Check } })
 
     # Progress bar & Status
     $script:Bar = New-Object System.Windows.Forms.ProgressBar
@@ -4632,8 +4696,12 @@ function Build-MainForm {
             param($s, $e)
             if ($script:Busy -and $script:Job) {
                 if (-not (Ask-YesNo (T 'gui.cancel_download_q') (T 'gui.btn_stop'))) { $e.Cancel = $true; return }
+                $closeSince = Get-Date
+                try { $closeSince = $script:Job.Process.StartTime.AddMinutes(-1) } catch { }
                 try { $script:Job.Process.Kill() } catch { }
+                try { [void]$script:Job.Process.WaitForExit(5000) } catch { }
                 try { Complete-RcloneCopy -Job $script:Job | Out-Null } catch { }
+                if ($script:CurrentSpec -and $script:CurrentSpec.Dest) { try { [void](Remove-PartialDownloads -Root $script:CurrentSpec.Dest -Since $closeSince) } catch { } }
             }
             try { $script:DlTimer.Stop() } catch { }
             try { $script:ScanTimer.Stop() } catch { }

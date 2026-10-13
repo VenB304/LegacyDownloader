@@ -345,5 +345,10 @@
   "gui.settings_backup_none": "There are no backups yet.",
   "gui.settings_backup_hint": "To get a song back, copy it from the backup folder into the matching folder under maps.",
   "gui.settings_backup_invalid_days": "Days must be a whole number from 1 to 365.",
-  "gui.settings_backup_invalid_max": "The size limit must be a whole number from 1 to 1000 (GB)."
+  "gui.settings_backup_invalid_max": "The size limit must be a whole number from 1 to 1000 (GB).",
+  "preview.missing_editions": "Not on the server anymore, so skipped: {editions}",
+  "preview.missing_editions_drop_q": "Stop tracking them? The songs you already downloaded stay on your PC.",
+  "gui.missing_editions_title": "No longer on the server",
+  "gui.missing_editions_body": "These tracked editions are no longer on the server, so they can't be updated:\n\n{editions}\n\nStop tracking them? The songs you already downloaded stay on your PC.\n\nYes - stop tracking\nNo - keep tracking (skipped for now)",
+  "gui.download_stopped": "Download stopped. Finished songs are kept - check again to continue."
 }
