@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # Single source of truth for the version shown in the GUI title bar and the
 # console header, and used by tools\build-release.ps1 to name the release
 # zip - bump this one line for a new release, nowhere else.
-$script:AppVersion = 'V12.1'
+$script:AppVersion = 'V12.2'
 
 function Get-AppVersion { return $script:AppVersion }
 
@@ -148,7 +148,7 @@ $script:ShareUrl         = $null
 # This is the built-in default; a user can override it with a SHAREURL= line
 # in config.txt (see Get-ShareConn / Save-Config) so the tool keeps working
 # if the share ever moves and this repo is no longer maintained.
-$script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/TqaYM8TnT2RPNr2/"
+$script:DefaultShareUrl  = "https://cloud.ovosimpatico.com/public.php/dav/files/DZkT2z2Qf82nK9W/"
 
 # Community-maintained song-name spreadsheet (title/artist/difficulty/effort
 # per song, keyed by edition + internal codename). Fetched live every time
@@ -213,6 +213,17 @@ function Get-ShareConn {
     if ($m.Success) { $token = $m.Groups[1].Value }
 
     return ":webdav,url='$url',vendor='nextcloud',user='$token':"
+}
+
+function Update-ShareConn {
+    # Re-read SHAREURL from config.txt and rebuild the connection string in this
+    # process. The scan / song-list background jobs start a fresh Core and read
+    # config.txt themselves, so without this a link saved from Settings was used
+    # for listing but the running window kept downloading from the old share.
+    # Returns the new connection string for the caller's own copy.
+    $script:ShareUrl = Read-ConfigValue 'SHAREURL'
+    $script:Conn     = Get-ShareConn $script:ShareUrl
+    return $script:Conn
 }
 
 function Initialize-LegacyCore {
@@ -3381,7 +3392,7 @@ function Invoke-RequirementInstall {
 }
 
 Export-ModuleMember -Function `
-    Initialize-LegacyCore, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
+    Initialize-LegacyCore, Update-ShareConn, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
     Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Add-ShareOnlySongs, Get-LocalEditions, Get-LocalSongCount, `
     Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `

@@ -1029,6 +1029,10 @@ function Show-SettingsWindow {
             BackupMaxGB     = $bkMax
         }
         $script:Cfg = Load-Config
+        # A changed share link applies to downloads started from this window too,
+        # and the picker's cached listing came from the old share.
+        $script:Conn = Update-ShareConn
+        $script:SbRemoteMapCache = $null
         # New limits apply now, not only after the next download (never throws).
         try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
         $f.Tag = 'save'
