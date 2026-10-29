@@ -830,26 +830,28 @@ function Show-SettingsWindow {
     # --- Downloads ---
     $grpDownloads = New-GroupBox (T 'gui.settings_group_downloads') 16 146 428 70
     $lblBwLimit = New-Label (T 'gui.settings_bwlimit_label') 16 22 190 22
-    $txtBwLimit = New-Object System.Windows.Forms.TextBox
-    $txtBwLimit.Font = $script:FontBase
-    $txtBwLimit.BackColor = [System.Drawing.Color]::White
-    $txtBwLimit.TextAlign = [System.Windows.Forms.HorizontalAlignment]::Right
-    $txtBwLimit.SetBounds(210, 20, 56, 22)
-    # Show the limit actually in force: an old config's 50M or 0 is really 15M
-    # now, and showing it as typed would block saving ANY change in this window.
-    # (A bare number in a hand-edited config is rclone's KiB/s, so it is shown with
-    # its k: this box reads a bare number as MB/s.)
-    $bwShown = Resolve-BwLimit $script:Cfg.BwLimit
-    if ($bwShown -match '^\d+$') { $bwShown += 'k' }
-    $txtBwLimit.Text = if ([string]::IsNullOrWhiteSpace($script:Cfg.BwLimit)) { '' } else { Format-BwLimitForDisplay $bwShown }
-    $lblBwUnit = New-Label (T 'gui.settings_bwlimit_unit') 274 22 100 22
+    # A drop-down of the speeds that are allowed (1 .. 15 MB/s, 15 = the default and the
+    # maximum), so a number outside the range can't even be entered. It selects the limit
+    # actually in force: an old config's 50M, 0 or blank is really 15M now, and a valid
+    # hand-edited lower value (800k) gets its own entry so saving something else keeps it.
+    $bwChoices = @(Get-BwLimitChoices $script:Cfg.BwLimit)
+    $cmbBwLimit = New-Object System.Windows.Forms.ComboBox
+    $cmbBwLimit.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
+    $cmbBwLimit.Font = $script:FontBase
+    $cmbBwLimit.MaxDropDownItems = 16
+    $cmbBwLimit.SetBounds(210, 19, 64, 24)
+    foreach ($bc in $bwChoices) { [void]$cmbBwLimit.Items.Add($bc.Text) }
+    $bwSelIdx = 0
+    for ($bi = 0; $bi -lt $bwChoices.Count; $bi++) { if ($bwChoices[$bi].Selected) { $bwSelIdx = $bi } }
+    $cmbBwLimit.SelectedIndex = $bwSelIdx
+    $lblBwUnit = New-Label (T 'gui.settings_bwlimit_unit') 282 22 100 22
     $hintBwLimit = New-Hint (T 'gui.settings_bwlimit_hint') 16 48 380
     # The hint now says what the default and the maximum are, so it wraps to two or
     # three lines in most languages: measure it and grow the group (same as Backups).
     $hintBwLimit.AutoSize = $false
     $hintBwLimit.Height = [Math]::Max(16, (Get-WrappedTextHeight $hintBwLimit.Text $hintBwLimit.Font 380) + 2)
     $grpDownloads.Height = $hintBwLimit.Bottom + 6
-    $grpDownloads.Controls.AddRange(@($lblBwLimit, $txtBwLimit, $lblBwUnit, $hintBwLimit))
+    $grpDownloads.Controls.AddRange(@($lblBwLimit, $cmbBwLimit, $lblBwUnit, $hintBwLimit))
 
     # --- Song backups ---
     # Rows are laid out from MEASURED label heights (a translation can wrap to a
@@ -976,48 +978,12 @@ function Show-SettingsWindow {
 
     $btnSave.Add_Click({
         param($s, $e)
-        $bwText = $txtBwLimit.Text.Trim()
+        # The drop-down only offers allowed speeds (1 .. 15 MB/s, plus the user's own valid
+        # lower value if they hand-edited one), so there is nothing to validate: the chosen
+        # entry's ConfigValue is saved as is ('' for 15 = the default and the maximum).
         $bwOut = ''
-        if ($bwText -ne '') {
-            if ($bwText -match '^\d+$') {
-                # The plain-number case this field's UI is actually built
-                # for (always means MB/s) - [int]::TryParse instead of a
-                # bare [int] cast so a huge value (>2,147,483,647, past
-                # int32 range) fails the same clean validation path
-                # instead of throwing an unhandled OverflowException.
-                $bwNum = 0
-                if (-not [int]::TryParse($bwText, [ref]$bwNum) -or $bwNum -lt 1 -or $bwNum -gt 15) {
-                    Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
-                    return
-                }
-                $bwOut = "${bwText}M"
-            } elseif ($bwText -match '^(\d+)[KkMmGg]$') {
-                # Already valid rclone bandwidth syntax (e.g. a hand-edited
-                # config.txt's "800k", which config.txt's own comment
-                # explicitly documents as supported) - pass through as-is
-                # rather than rejecting it just because this field's own
-                # simple "type a number" convention only produces the
-                # M-suffixed form itself. Without this, opening Settings to
-                # change something unrelated (AutoLaunch, say) with an
-                # existing non-M BWLIMIT already in config.txt blocked
-                # saving ANY change in the whole dialog.
-                #
-                # Still needs its own range check ("0M"/"0k"/"0G" all mean
-                # zero bytes/s to rclone, i.e. block everything, and the
-                # share's host asks for 15 MB/s at most) - the numeric-only
-                # branch above checks this for its own case, but this branch
-                # is a separate code path that doesn't automatically inherit
-                # that check.
-                $bwBytes = ConvertTo-BwLimitBytes $bwText
-                if ($bwBytes -le 0 -or $bwBytes -gt (ConvertTo-BwLimitBytes '15M')) {
-                    Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
-                    return
-                }
-                $bwOut = $bwText
-            } else {
-                Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
-                return
-            }
+        if ($cmbBwLimit.SelectedIndex -ge 0 -and $cmbBwLimit.SelectedIndex -lt $bwChoices.Count) {
+            $bwOut = [string]$bwChoices[$cmbBwLimit.SelectedIndex].ConfigValue
         }
         # Backup limits: whole numbers in range (TryParse so a huge value fails the
         # same clean path instead of throwing). Only checked while backups are on.
@@ -1077,6 +1043,10 @@ function Show-SettingsWindow {
         }
         if ($hintShareUrl.Bottom -gt $grpAdvanced.Height) { $hintsAllFit = $false }
         if (-not $hintsAllFit) { Write-Host "  SELFTEST FAILURE: a Settings hint is taller than its box (text would be cut off)" -ForegroundColor Red }
+        # The speed drop-down sits between its label and the unit; it must not run into either, the hint under it, or the group edge.
+        $bwRowFits = ($cmbBwLimit.Left -ge ($lblBwLimit.Left + 4)) -and ($cmbBwLimit.Right -le $lblBwUnit.Left) -and ($lblBwUnit.Right -le ($grpDownloads.Width - 8)) -and ($cmbBwLimit.Bottom -le $hintBwLimit.Top) -and ($cmbBwLimit.Items.Count -eq $bwChoices.Count) -and ($cmbBwLimit.SelectedIndex -ge 0)
+        Write-Host "  speed drop-down: $($cmbBwLimit.Items.Count) entries, selected '$($cmbBwLimit.SelectedItem)', Left@$($cmbBwLimit.Left) Right@$($cmbBwLimit.Right), unit label $($lblBwUnit.Left)-$($lblBwUnit.Right) of $($grpDownloads.Width), row fits: $bwRowFits"
+        if (-not $bwRowFits) { Write-Host "  SELFTEST FAILURE: the speed drop-down overlaps its unit label, the hint or the group edge" -ForegroundColor Red }
         Write-Host "  settings groups stack without overlap: $stackOk; backup rows fit: $backupFits; window holds everything: $windowFits (backup group $($grpBackups.Top)-$($grpBackups.Bottom), window $($f.ClientSize.Height) high, scrolling: $([bool]$scroll))"
         if (-not ($stackOk -and $backupFits -and $windowFits)) { Write-Host "  SELFTEST FAILURE: settings window layout overlaps or overflows" -ForegroundColor Red }
         if ($scroll) {

@@ -262,6 +262,40 @@ function Resolve-BwLimit {
     return ([string]$Value).Trim()
 }
 
+function Get-BwLimitChoices {
+    # The speeds the Settings drop-down offers, lowest first: every whole MB/s from 1 up
+    # to the 15 MB/s maximum. 15 is the default, so it is saved as blank (ConfigValue '').
+    # $Current is the BWLIMIT now in config.txt; the matching entry is marked Selected
+    # (blank, 0, unparseable or above the maximum select 15, as Resolve-BwLimit does).
+    # A valid lower value that is not a whole MB/s (a hand-edited 800k) gets an entry of
+    # its own, shown as MB/s (0.78), so opening Settings and saving something else never
+    # changes it. Each entry: Text (what the drop-down shows), ConfigValue, Selected, Bytes.
+    param([AllowEmptyString()][AllowNull()][string]$Current)
+    $inv = [System.Globalization.CultureInfo]::InvariantCulture
+    $maxMb = [int]($script:BwLimitMaxBytes / 1MB)
+    $choices = New-Object System.Collections.Generic.List[object]
+    for ($n = 1; $n -le $maxMb; $n++) {
+        $choices.Add([PSCustomObject]@{
+            Bytes       = [double]($n * 1MB)
+            Text        = $n.ToString($inv)
+            ConfigValue = $(if ($n -eq $maxMb) { '' } else { "${n}M" })
+            Selected    = $false
+        })
+    }
+    $effective = Resolve-BwLimit $Current
+    $bytes = ConvertTo-BwLimitBytes $effective
+    $hit = $null
+    foreach ($c in $choices) { if ($c.Bytes -eq $bytes) { $hit = $c } }
+    if ($hit) {
+        $hit.Selected = $true
+    } else {
+        $text = ([Math]::Round($bytes / 1MB, 2)).ToString('0.##', $inv)
+        if ($text -eq '0') { $text = '<0.01' }
+        $choices.Add([PSCustomObject]@{ Bytes = $bytes; Text = $text; ConfigValue = $effective; Selected = $true })
+    }
+    return @($choices | Sort-Object Bytes)
+}
+
 function Test-RcloneBusyOutput {
     # True when rclone's output shows the SERVER refusing us for load (HTTP 429
     # Too Many Requests or 503 Service Unavailable) - the cue to wait and try
@@ -3508,7 +3542,7 @@ function Invoke-RequirementInstall {
 }
 
 Export-ModuleMember -Function `
-    Initialize-LegacyCore, Update-ShareConn, ConvertTo-BwLimitBytes, Resolve-BwLimit, Test-RcloneBusyOutput, Test-RcloneJobBusy, Get-BusyWaitSeconds, Get-BusyWaitLimit, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
+    Initialize-LegacyCore, Update-ShareConn, ConvertTo-BwLimitBytes, Resolve-BwLimit, Get-BwLimitChoices, Test-RcloneBusyOutput, Test-RcloneJobBusy, Get-BusyWaitSeconds, Get-BusyWaitLimit, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
     Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Add-ShareOnlySongs, Get-LocalEditions, Get-LocalSongCount, `
     Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `

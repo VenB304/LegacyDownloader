@@ -146,8 +146,8 @@ window) for a few extra options:
 
 - Automatically check for updates when the app opens
 - Automatically launch the game and close once nothing more is needed
-- Limit download speed (MB/s) — blank means the default, 15 MB/s, which is
-  also the maximum; you can set it lower, not higher (see the note below)
+- Limit download speed — pick 1 to 15 MB/s from the drop-down; 15 MB/s is the
+  default and also the maximum (see the note below)
 - Song backups — back up a song file before an update replaces it (on by
   default), how many days to keep backups (30) and the most space they may
   use (5 GB); **Open backup folder** shows them. In `config.txt` these are
