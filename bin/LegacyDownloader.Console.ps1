@@ -211,16 +211,34 @@ function Invoke-RcloneCopy([string]$Source, [string]$Dest, [string[]]$ExtraArgs 
         $quotedSource = ConvertTo-QuotedArg $Source
         $quotedDest   = ConvertTo-QuotedArg $Dest
         $quotedCommonArgs = $CommonArgs | ForEach-Object { ConvertTo-QuotedArg $_ }
-        $logPath = New-RcloneLogPath $Label
-        $quotedLogArgs = if ($logPath) { @('-v', '--log-file', (ConvertTo-QuotedArg $logPath)) } else { @() }
         # $ExtraArgs carries --exclude <pattern> pairs; a pattern with a space
         # (a moddable file the user chose to keep) must be quoted like everything
         # else or rclone splits it into two argv tokens.
         $quotedExtra  = $ExtraArgs | ForEach-Object { ConvertTo-QuotedArg $_ }
-        $argLine = (@('copy', $quotedSource, $quotedDest) + $quotedCommonArgs + $quotedLogArgs + $quotedExtra) -join ' '
-        $proc = Start-Process -FilePath $Rclone -ArgumentList $argLine -NoNewWindow -Wait -PassThru
-        if ($logPath) { Invoke-RcloneLogRotation }
-        return $proc.ExitCode
+        # A share that answers 429/503 is busy, not broken: wait (30, 60, 120 s ...)
+        # and run the same copy again - finished files are skipped (--size-only).
+        # Every attempt gets its own log file, so an earlier attempt's 429 can
+        # never be mistaken for the current one.
+        $busyTries = 0
+        while ($true) {
+            $logPath = New-RcloneLogPath $Label
+            $quotedLogArgs = if ($logPath) { @('-v', '--log-file', (ConvertTo-QuotedArg $logPath)) } else { @() }
+            $argLine = (@('copy', $quotedSource, $quotedDest) + $quotedCommonArgs + $quotedLogArgs + $quotedExtra) -join ' '
+            $proc = Start-Process -FilePath $Rclone -ArgumentList $argLine -NoNewWindow -Wait -PassThru
+            if ($logPath) { Invoke-RcloneLogRotation }
+            $exit = $proc.ExitCode
+            if ($exit -eq 0 -or -not $logPath) { return $exit }
+            $busy = Test-RcloneBusyOutput @(Get-Content -LiteralPath $logPath -ErrorAction SilentlyContinue)
+            if (-not $busy) { return $exit }
+            $wait = Get-BusyWaitSeconds ($busyTries + 1)
+            if ($wait -le 0) {
+                Write-Host (T 'net.server_busy_gaveup') -ForegroundColor Red
+                return $exit
+            }
+            $busyTries++
+            Write-Host (T 'net.server_busy_wait' @{ sec = $wait; n = $busyTries; max = (Get-BusyWaitLimit) }) -ForegroundColor Yellow
+            Start-Sleep -Seconds $wait
+        }
     } finally {
         Exit-NoScrollBuffer $savedBuffer
     }

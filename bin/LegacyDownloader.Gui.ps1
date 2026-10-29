@@ -32,6 +32,8 @@ $script:ScanIgnoredWrongLevel = $false
 $script:Job       = $null                 # current Start-RcloneCopy handle
 $script:CurrentSpec = $null               # the {Label;Source;Dest;Extra;Kind;Keep} queue entry $script:Job was started from
 $script:Queue     = @()                   # remaining {Label;Source;Dest;Extra}
+$script:BusyWaitUntil = $null             # set while waiting out a 429/503 from the share before retrying $script:Queue[0]
+$script:BusyWaitLabel = ''
 $script:LastObject = ''
 $script:FirstRunMode  = $null             # 'get' / 'have' when the setup dialog just ran
 $script:AutoRunDone   = $false            # one-shot guard for the first-run auto action
@@ -833,15 +835,26 @@ function Show-SettingsWindow {
     $txtBwLimit.BackColor = [System.Drawing.Color]::White
     $txtBwLimit.TextAlign = [System.Windows.Forms.HorizontalAlignment]::Right
     $txtBwLimit.SetBounds(210, 20, 56, 22)
-    $txtBwLimit.Text = Format-BwLimitForDisplay $script:Cfg.BwLimit
+    # Show the limit actually in force: an old config's 50M or 0 is really 15M
+    # now, and showing it as typed would block saving ANY change in this window.
+    # (A bare number in a hand-edited config is rclone's KiB/s, so it is shown with
+    # its k: this box reads a bare number as MB/s.)
+    $bwShown = Resolve-BwLimit $script:Cfg.BwLimit
+    if ($bwShown -match '^\d+$') { $bwShown += 'k' }
+    $txtBwLimit.Text = if ([string]::IsNullOrWhiteSpace($script:Cfg.BwLimit)) { '' } else { Format-BwLimitForDisplay $bwShown }
     $lblBwUnit = New-Label (T 'gui.settings_bwlimit_unit') 274 22 100 22
     $hintBwLimit = New-Hint (T 'gui.settings_bwlimit_hint') 16 48 380
+    # The hint now says what the default and the maximum are, so it wraps to two or
+    # three lines in most languages: measure it and grow the group (same as Backups).
+    $hintBwLimit.AutoSize = $false
+    $hintBwLimit.Height = [Math]::Max(16, (Get-WrappedTextHeight $hintBwLimit.Text $hintBwLimit.Font 380) + 2)
+    $grpDownloads.Height = $hintBwLimit.Bottom + 6
     $grpDownloads.Controls.AddRange(@($lblBwLimit, $txtBwLimit, $lblBwUnit, $hintBwLimit))
 
     # --- Song backups ---
     # Rows are laid out from MEASURED label heights (a translation can wrap to a
     # second line), so nothing clips and the groups below simply shift down.
-    $grpBackups = New-GroupBox (T 'gui.settings_group_backups') 16 228 428 100
+    $grpBackups = New-GroupBox (T 'gui.settings_group_backups') 16 ($grpDownloads.Bottom + 12) 428 100
     $chkBackup = New-Object System.Windows.Forms.CheckBox
     $chkBackup.Text = T 'gui.settings_backup_enable'
     $chkBackup.Font = $script:FontBase
@@ -973,7 +986,7 @@ function Show-SettingsWindow {
                 # int32 range) fails the same clean validation path
                 # instead of throwing an unhandled OverflowException.
                 $bwNum = 0
-                if (-not [int]::TryParse($bwText, [ref]$bwNum) -or $bwNum -eq 0) {
+                if (-not [int]::TryParse($bwText, [ref]$bwNum) -or $bwNum -lt 1 -or $bwNum -gt 15) {
                     Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
                     return
                 }
@@ -989,13 +1002,14 @@ function Show-SettingsWindow {
                 # existing non-M BWLIMIT already in config.txt blocked
                 # saving ANY change in the whole dialog.
                 #
-                # Still needs its own zero check ("0M"/"0k"/"0G" all mean
-                # zero bytes/s to rclone, i.e. block everything, the exact
-                # thing this field's docstring already warns never to pass
-                # as --bwlimit) - the numeric-only branch above checks this
-                # for its own case, but this branch is a separate code path
-                # that doesn't automatically inherit that check.
-                if ([int]$Matches[1] -eq 0) {
+                # Still needs its own range check ("0M"/"0k"/"0G" all mean
+                # zero bytes/s to rclone, i.e. block everything, and the
+                # share's host asks for 15 MB/s at most) - the numeric-only
+                # branch above checks this for its own case, but this branch
+                # is a separate code path that doesn't automatically inherit
+                # that check.
+                $bwBytes = ConvertTo-BwLimitBytes $bwText
+                if ($bwBytes -le 0 -or $bwBytes -gt (ConvertTo-BwLimitBytes '15M')) {
                     Warn-Box (T 'gui.settings_bwlimit_invalid') (T 'gui.err_title')
                     return
                 }
@@ -1217,6 +1231,7 @@ function Start-Downloads($Jobs) {
     $script:Queue = [System.Collections.ArrayList]::new()
     foreach ($j in $Jobs) { [void]$script:Queue.Add($j) }
     $script:Job = $null
+    $script:BusyWaitUntil = $null
     if ($null -eq $script:LoggedObjects) {
         $script:LoggedObjects = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
     } else {
@@ -1250,6 +1265,7 @@ function Stop-Downloads {
     $job = $script:Job
     $spec = $script:CurrentSpec
     $script:Queue.Clear()
+    $script:BusyWaitUntil = $null
     $since = Get-Date
     if ($job) {
         try { $since = $job.Process.StartTime.AddMinutes(-1) } catch { }
@@ -1287,6 +1303,10 @@ function Advance-Queue {
             }
         }
 
+        # Did the share refuse us for load (HTTP 429/503)? Read the log BEFORE
+        # Complete-RcloneCopy deletes it; only worth doing for a failed run.
+        $busy = $false
+        try { if ($script:Job.Process.ExitCode -ne 0) { $busy = Test-RcloneJobBusy -Job $script:Job } } catch { }
         $code = Complete-RcloneCopy -Job $script:Job
         if ($code -eq 0) {
             Append-Log ("$([char]0x2713) " + (T 'gui.progress_done_line' @{ label = $script:Job.Label }))
@@ -1298,13 +1318,45 @@ function Advance-Queue {
                 Update-ProtectedFileHashes -GamePath $script:Cfg.GamePath -KeepFiles $script:CurrentSpec.Keep
             }
         } else {
-            Append-Log ("$([char]0x2717) " + (T 'gui.progress_failed_line' @{ label = $script:Job.Label; code = $code }))
+            $failedLabel = $script:Job.Label
+            $failedSpec = $script:CurrentSpec
             $script:Job = $null
             $script:CurrentSpec = $null
+            # A busy server is not a broken download: wait (30, 60, 120 s ...) and
+            # run the same job again. Finished files are skipped (--size-only), so
+            # the retry only fetches what is left.
+            $wait = 0
+            if ($busy -and $failedSpec) { $wait = Get-BusyWaitSeconds ([int]$failedSpec.BusyTries + 1) }
+            if ($wait -gt 0) {
+                $failedSpec.BusyTries = [int]$failedSpec.BusyTries + 1
+                Append-Log (T 'net.server_busy_wait' @{ sec = $wait; n = $failedSpec.BusyTries; max = (Get-BusyWaitLimit) })
+                $script:Queue.Insert(0, $failedSpec)
+                $script:BusyWaitLabel = $failedLabel
+                $script:BusyWaitUntil = (Get-Date).AddSeconds($wait)
+                $script:LblProg.Text = T 'gui.server_busy_label' @{ label = $failedLabel; sec = $wait }
+                $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Marquee
+                return
+            }
+            $failedText = T 'gui.progress_failed_line' @{ label = $failedLabel; code = $code }
+            Append-Log ("$([char]0x2717) " + $failedText)
+            # The rest of the queue is dropped (the dialog says to check again), and the
+            # window goes back to a calm state like after Stop: jobs that finished before
+            # this one may have changed the folder, so refresh what it shows.
+            $script:Queue.Clear()
             $script:DlTimer.Stop()
             End-DownloadUi
+            $script:Bar.Style = [System.Windows.Forms.ProgressBarStyle]::Continuous
+            $script:Bar.Value = 0
+            $script:LblProg.Text = $failedText
+            try { [void](Remove-OldBackups -GamePath $script:Cfg.GamePath) } catch { }
             Set-Busy $false
-            Warn-Box (T 'gui.failed_body' @{ code = $code }) (T 'gui.failed_title')
+            Refresh-FolderStatus
+            Refresh-Tracking
+            if ($busy) {
+                Warn-Box (T 'net.server_busy_gaveup') (T 'gui.failed_title')
+            } else {
+                Warn-Box (T 'gui.failed_body' @{ code = $code }) (T 'gui.failed_title')
+            }
             return
         }
         $script:Job = $null
@@ -1320,7 +1372,20 @@ function Advance-Queue {
 }
 
 function Poll-Download {
-    if (-not $script:Job) { return }
+    if (-not $script:Job) {
+        # Between attempts while the share is busy: count down, then run the
+        # requeued job (Advance-Queue starts Queue[0]).
+        if ($script:BusyWaitUntil) {
+            $left = [int][Math]::Ceiling(($script:BusyWaitUntil - (Get-Date)).TotalSeconds)
+            if ($left -le 0) {
+                $script:BusyWaitUntil = $null
+                Advance-Queue
+            } else {
+                $script:LblProg.Text = T 'gui.server_busy_label' @{ label = $script:BusyWaitLabel; sec = $left }
+            }
+        }
+        return
+    }
     $s = Read-RcloneStats -Job $script:Job
     if ($s) {
         if ($s.HasStats) {

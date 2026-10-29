@@ -178,6 +178,26 @@ $script:RcloneConfigArgs = @()
 $script:SizeOnlyArgs     = @('--size-only')
 $script:CommonArgs       = @()
 $script:ScanArgs         = @()
+$script:NetArgs          = @()   # user agent + bounded retries, on every rclone call
+$script:RcloneUserAgent  = ''
+
+# Speed limit the share's host asked for (issue #2): 15 MB/s is the default AND
+# the maximum; lower is allowed. Waits (seconds) the front-ends use between
+# attempts when the server answers 429/503 - see Get-BusyWaitSeconds.
+$script:BwLimitDefault   = '15M'
+$script:BwLimitMaxBytes  = [double](15 * 1MB)
+$script:BusyWaitLadder   = @(30, 60, 120, 120, 120)
+
+# The explanatory comment above BWLIMIT= in config.txt (written by Save-Config,
+# and swapped in by Update-StaleConfigComments for configs written by V10-V12.2,
+# whose comment said a blank limit meant "unlimited").
+$script:BwLimitCommentLines = @(
+    "# BWLIMIT (also settable from Settings) - caps the download speed, in"
+    "# rclone's own bandwidth syntax (e.g. 5M = 5 MB/s, 800k = 800 KB/s)."
+    "# The share's host asks for at most 15 MB/s: blank/absent means 15M, and"
+    "# anything above 15M (or 0) is treated as 15M. Lower values are fine."
+    "# Takes effect the next time the tool starts."
+)
 
 # --- i18n state, filled in by Initialize-Language ---
 $script:LangDir          = $null
@@ -213,6 +233,65 @@ function Get-ShareConn {
     if ($m.Success) { $token = $m.Groups[1].Value }
 
     return ":webdav,url='$url',vendor='nextcloud',user='$token':"
+}
+
+function ConvertTo-BwLimitBytes {
+    # An rclone bandwidth value as bytes per second: a whole number with an
+    # optional K/M/G suffix (a bare number is KiB/s, rclone's own rule). Returns
+    # 0 for anything else (blank, timetables like "08:00,512k", "up:down" pairs),
+    # so a caller can treat 0 as "not a plain limit".
+    param([AllowEmptyString()][AllowNull()][string]$Value)
+    $m = [regex]::Match(([string]$Value).Trim(), '^(\d+)([KkMmGg]?)$')
+    if (-not $m.Success) { return [double]0 }
+    $n = [double]::Parse($m.Groups[1].Value, [System.Globalization.CultureInfo]::InvariantCulture)
+    switch ($m.Groups[2].Value.ToUpper()) {
+        'M'     { return [double]($n * 1MB) }
+        'G'     { return [double]($n * 1GB) }
+        default { return [double]($n * 1KB) }
+    }
+}
+
+function Resolve-BwLimit {
+    # The value to hand rclone as --bwlimit. A plain limit between 1 byte/s and
+    # 15 MB/s is kept as written (lower is always allowed); blank, zero,
+    # unparseable or above the maximum becomes the 15M default. Never returns a
+    # value that blocks all transfer (0) or goes above the 15 MB/s maximum.
+    param([AllowEmptyString()][AllowNull()][string]$Value)
+    $b = ConvertTo-BwLimitBytes $Value
+    if ($b -le 0 -or $b -gt $script:BwLimitMaxBytes) { return $script:BwLimitDefault }
+    return ([string]$Value).Trim()
+}
+
+function Test-RcloneBusyOutput {
+    # True when rclone's output shows the SERVER refusing us for load (HTTP 429
+    # Too Many Requests or 503 Service Unavailable) - the cue to wait and try
+    # again instead of reporting a broken download. Only meaningful for a run
+    # that failed; a transient 429 that rclone's own retry got past never fails.
+    param([AllowNull()][string[]]$Lines)
+    foreach ($l in @($Lines)) {
+        if ($l -and $l -match 'Too Many Requests|Service Unavailable') { return $true }
+    }
+    return $false
+}
+
+function Test-RcloneJobBusy {
+    # Test-RcloneBusyOutput for a GUI download job (Start-RcloneCopy): read its
+    # log BEFORE Complete-RcloneCopy deletes it.
+    param([Parameter(Mandatory = $true)]$Job)
+    try { return (Test-RcloneBusyOutput @(Get-Content -LiteralPath $Job.ErrFile -ErrorAction Stop)) } catch { return $false }
+}
+
+function Get-BusyWaitSeconds {
+    # How long to wait before retry number $Attempt (1-based) of a job the busy
+    # server refused: 30, 60, 120, 120, 120 s. 0 = out of attempts, give up.
+    param([int]$Attempt)
+    if ($Attempt -lt 1 -or $Attempt -gt $script:BusyWaitLadder.Count) { return 0 }
+    return [int]$script:BusyWaitLadder[$Attempt - 1]
+}
+
+function Get-BusyWaitLimit {
+    # How many times a front-end waits and retries a job the busy server refused.
+    return [int]$script:BusyWaitLadder.Count
 }
 
 function Update-ShareConn {
@@ -267,6 +346,9 @@ function Initialize-LegacyCore {
         try { Move-Item -LiteralPath $legacyConfigPath -Destination $script:ConfigPath -Force } catch { }
     }
 
+    # An older config.txt still explains BWLIMIT with the pre-V12.3 "unlimited" wording.
+    Update-StaleConfigComments
+
     $script:SongCatalogCachePath = Join-Path $ScriptDir 'songcatalog.cache.json'
     $script:ShareMapCachePath = Join-Path $ScriptDir 'sharemap.cache.json'
 
@@ -280,33 +362,38 @@ function Initialize-LegacyCore {
     $script:ShareUrl = Read-ConfigValue 'SHAREURL'
     $script:Conn     = Get-ShareConn $script:ShareUrl
 
-    # BWLIMIT, same early-read story as SHAREURL. Blank/'0' means unlimited -
-    # never pass --bwlimit=0 to rclone, which means "block all transfer", not
-    # "no limit". Baked into CommonArgs/GuiSyncArgs below once here, same as
-    # SHAREURL is baked into $script:Conn - a change made from the Settings
-    # window takes effect the next time the tool starts, not immediately.
+    # Being polite to the share host (V12.3, issue #2). The share is a
+    # volunteer's Nextcloud; its host asked every client for a per-user speed
+    # limit, few connections, an identifying user agent and a real back-off
+    # when the server answers 429/503. BWLIMIT is read here, same early-read
+    # story as SHAREURL, and baked into CommonArgs/GuiSyncArgs once - a change
+    # made from the Settings window takes effect the next time the tool
+    # starts. Resolve-BwLimit turns blank, zero ('0', '0M' - rclone reads that
+    # as "block everything", never "no limit"), unparseable and anything above
+    # the 15 MB/s maximum into the 15M default; config.txt can be hand-edited
+    # straight past the Settings validation, so the clamp lives here.
     #
-    # --multi-thread-streams=0 is bundled in alongside --bwlimit, and ONLY
-    # when a real limit is set: live-tested (2026-09-22) against the actual
-    # base-game files, --bwlimit alone does NOT cap a file at/above rclone's
-    # multi-thread-cutoff (default 250MiB - bundle_pc.ipk is ~900MB,
-    # patch_pc.ipk ~277MB, both routinely hit by a base-game sync) - a real
-    # --bwlimit=1M copy of patch_pc.ipk measured ~17 MiB/s, completely
-    # unthrottled, while the exact same copy with --multi-thread-streams=0
-    # added measured ~0.8 MiB/s, right at the configured cap. Root cause:
-    # rclone's multi-thread chunked-download mode doesn't respect the global
-    # limiter the same way a normal single-stream transfer does. Scoped to
-    # only fire when BWLIMIT is actually set (not the unlimited/default
-    # case) - forcing single-stream unconditionally would cost real transfer
-    # speed on a fast connection for no reason when there's no cap to honor.
-    $bwLimit = Read-ConfigValue 'BWLIMIT'
-    # A zero value means "unlimited" regardless of unit suffix - '0M'/'0K'/
-    # '0G' all mean zero bytes/s to rclone (block everything) just as much
-    # as bare '0' does. The Settings window's own Save validation now
-    # rejects a zero-with-suffix input too, but this still needs the same
-    # check independently since config.txt can be hand-edited straight
-    # past that GUI validation entirely.
-    $bwLimitArgs = if ([string]::IsNullOrWhiteSpace($bwLimit) -or $bwLimit -match '^0+[KkMmGg]?$') { @() } else { @("--bwlimit=$bwLimit", '--multi-thread-streams=0') }
+    # --multi-thread-streams=0 is ALWAYS on: it keeps one connection per file
+    # (default rclone opens 4 for files over 250 MiB - bundle_pc.ipk, patch_pc.ipk).
+    $bwLimit = Resolve-BwLimit (Read-ConfigValue 'BWLIMIT')
+    $bwLimitArgs = @("--bwlimit=$bwLimit", '--multi-thread-streams=0')
+
+    # Identify ourselves on every request. The environment variable reaches
+    # every rclone we spawn (scans, listings, downloads, background jobs that
+    # re-run this function); the flag in the arg sets below is belt and braces
+    # (the flag wins if both are set). Never contains "rclone" or the official
+    # launcher's name - the host throttles those.
+    $script:RcloneUserAgent = "LegacyDownloader/$($script:AppVersion)"
+    $env:RCLONE_USER_AGENT = $script:RcloneUserAgent
+
+    # Back off instead of hammering: rclone's defaults retry a 429/503 without
+    # end at one request every ~2 s and ignore Retry-After (measured, see
+    # docs/notes/spike-v12-3-rclone-behaviour-2026-10-30.md). Two low-level
+    # retries and three attempts make it give up in under half a minute (with
+    # --retries-sleep 10s between attempts, used for downloads; every failed
+    # download, offline included, shows its error that much later); the GUI and
+    # console then wait out a busy server themselves and requeue the job.
+    $script:NetArgs = @('--low-level-retries=2', '--retries=3', "--user-agent=$($script:RcloneUserAgent)")
 
     $script:RcloneConfigArgs = @('--config', $script:RcloneConfigPath)
 
@@ -328,8 +415,8 @@ function Initialize-LegacyCore {
     # most a little extra disk zero-fill instead of sparse pre-allocation,
     # which is far cheaper than detecting the filesystem type up front.
     $script:CommonArgs = @(
-        '-P', '--transfers=4', '--checkers=8', '--stats=1s', '--local-no-sparse'
-    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $bwLimitArgs
+        '-P', '--transfers=2', '--checkers=4', '--stats=1s', '--local-no-sparse', '--retries-sleep=10s'
+    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $script:NetArgs + $bwLimitArgs
 
     # Args for the pre-download "what would change" scan: no progress meter,
     # verbose so every already-current file is named, dry-run so nothing moves.
@@ -338,16 +425,16 @@ function Initialize-LegacyCore {
     # No --bwlimit here on purpose - a --dry-run scan never transfers a
     # single byte, so a bandwidth cap has nothing to apply to.
     $script:ScanArgs = @(
-        '--transfers=4', '--checkers=8', '--dry-run', '-v'
-    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs
+        '--transfers=2', '--checkers=4', '--dry-run', '-v'
+    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $script:NetArgs
 
     # Args for a real GUI download: JSON logs so the front-end can parse a
     # progress percentage / speed / ETA out of the periodic stats records
     # (see Read-RcloneStats). No -P: the interactive meter and clean logging
     # don't mix.
     $script:GuiSyncArgs = @(
-        '-v', '--use-json-log', '--stats=1s', '--transfers=4', '--checkers=8', '--local-no-sparse'
-    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $bwLimitArgs
+        '-v', '--use-json-log', '--stats=1s', '--transfers=2', '--checkers=4', '--local-no-sparse', '--retries-sleep=10s'
+    ) + $script:SizeOnlyArgs + $script:RcloneConfigArgs + $script:NetArgs + $bwLimitArgs
 
     return [PSCustomObject]@{
         ScriptDir        = $ScriptDir
@@ -505,6 +592,31 @@ function Read-ConfigValue([string]$Key) {
     return $found
 }
 
+function Update-StaleConfigComments {
+    # config.txt written by V10-V12.2 explains BWLIMIT with "Blank/absent means
+    # unlimited". Since V12.3 blank means the 15 MB/s default (and maximum), so swap
+    # exactly that old 4-line comment for the current one. Nothing else in the file
+    # is touched (no value, no other comment); BOM and line endings are kept; a file
+    # without the old comment is not even rewritten. Never throws (it also runs in
+    # the background jobs, where two writers just write the same text).
+    try {
+        if ([string]::IsNullOrWhiteSpace($script:ConfigPath) -or -not (Test-Path -LiteralPath $script:ConfigPath)) { return }
+        $bytes = [System.IO.File]::ReadAllBytes($script:ConfigPath)
+        $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+        $text = [System.Text.Encoding]::UTF8.GetString($bytes, $(if ($hasBom) { 3 } else { 0 }), $bytes.Length - $(if ($hasBom) { 3 } else { 0 }))
+        $old = "(?m)^# BWLIMIT \(also settable from Settings\) - caps rclone's download(\r?\n)" +
+               "# speed, in rclone's own bandwidth syntax \(e\.g\. 5M = 5 MB/s, 800k =\r?\n" +
+               "# 800 KB/s\)\. Blank/absent means unlimited\. Takes effect the next\r?\n" +
+               "# time the tool starts\."
+        if ($text -notmatch $old) { return }
+        $new = [regex]::Replace($text, $old, { param($m) $script:BwLimitCommentLines -join $m.Groups[1].Value })
+        if ($new -ceq $text) { return }
+        $out = [System.Text.Encoding]::UTF8.GetBytes($new)
+        if ($hasBom) { $out = [byte[]](0xEF, 0xBB, 0xBF) + $out }
+        [System.IO.File]::WriteAllBytes($script:ConfigPath, $out)
+    } catch { }
+}
+
 function Load-Config {
     if (-not (Test-Path -LiteralPath $script:ConfigPath)) {
         Save-Config @{ GamePath = ''; Editions = 'AUTO'; Lang = (Resolve-DefaultLanguage) }
@@ -641,10 +753,7 @@ function Save-Config([hashtable]$Values = @{}) {
         "# only - never on a fresh first-run setup). Default false."
         "AUTOCHECK=$AutoCheckOut"
         ""
-        "# BWLIMIT (also settable from Settings) - caps rclone's download"
-        "# speed, in rclone's own bandwidth syntax (e.g. 5M = 5 MB/s, 800k ="
-        "# 800 KB/s). Blank/absent means unlimited. Takes effect the next"
-        "# time the tool starts."
+        $script:BwLimitCommentLines
         "BWLIMIT=$BwLimit"
         ""
         "# CHECKAPPUPDATES (also settable from Settings) - when true, checks"
@@ -908,7 +1017,7 @@ function Format-EditionDisplay([string]$Edition) {
 # called straight from the GUI thread, which is why the plan scan runs in
 # a child job.)
 function Get-RemoteEditions {
-    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
+    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs + $script:NetArgs
     $ErrorActionPreference = 'SilentlyContinue'
     try { $out = & $rc lsf "$conn`maps" --dirs-only @cfgArgs 2>$null } catch { return @() }
     if ($LASTEXITCODE -ne 0) { return @() }
@@ -916,7 +1025,7 @@ function Get-RemoteEditions {
 }
 
 function Get-RemoteSongs([string]$Edition) {
-    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
+    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs + $script:NetArgs
     $ErrorActionPreference = 'SilentlyContinue'
     try { $out = & $rc lsf "$conn`maps/$Edition" --files-only @cfgArgs 2>$null } catch { return @() }
     if ($LASTEXITCODE -ne 0) { return @() }
@@ -934,7 +1043,7 @@ function Get-RemoteSongMap {
     # connection and returns paths already relative to it (e.g.
     # "2023/song_pc.ipk"), so grouping by the first path segment recovers
     # the same edition -> codes map for free.
-    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs
+    $rc = $script:Rclone; $conn = $script:Conn; $cfgArgs = $script:RcloneConfigArgs + $script:NetArgs
     $ErrorActionPreference = 'SilentlyContinue'
     try { $out = & $rc lsf "$conn`maps" --files-only -R @cfgArgs 2>$null } catch { return @{} }
     if ($LASTEXITCODE -ne 0) { return @{} }
@@ -2647,6 +2756,11 @@ function Start-RcloneCopy {
     $argLine = ($allArgs | ForEach-Object { ConvertTo-QuotedArg $_ }) -join ' '
     $proc = Start-Process -FilePath $script:Rclone -ArgumentList $argLine -NoNewWindow -PassThru `
                 -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+    # Windows PowerShell 5.1: without -Wait the Process object does not keep its
+    # handle, so .ExitCode stays $null after the exit and [int]$null is 0 - every
+    # failed download used to read as a success. Touching .Handle caches it
+    # (measured: ExitCode 1 for a failing rclone, 0 for a good one).
+    try { $null = $proc.Handle } catch { }
     return [PSCustomObject]@{
         Label   = $Label
         Process = $proc
@@ -2733,7 +2847,9 @@ function Complete-RcloneCopy {
     # code and delete the temp files.
     param([Parameter(Mandatory = $true)]$Job)
     $code = -1
-    try { $code = [int]$Job.Process.ExitCode } catch { $code = -1 }
+    # A null ExitCode (process object without its handle) is "unknown", never 0:
+    # [int]$null would silently turn a failed download into a success.
+    try { $raw = $Job.Process.ExitCode; if ($null -ne $raw) { $code = [int]$raw } } catch { $code = -1 }
     try {
         $lines = @(Get-Content -LiteralPath $Job.ErrFile -ErrorAction SilentlyContinue)
         Save-RcloneLogLines -Label $Job.Label -Lines $lines
@@ -3392,7 +3508,7 @@ function Invoke-RequirementInstall {
 }
 
 Export-ModuleMember -Function `
-    Initialize-LegacyCore, Update-ShareConn, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
+    Initialize-LegacyCore, Update-ShareConn, ConvertTo-BwLimitBytes, Resolve-BwLimit, Test-RcloneBusyOutput, Test-RcloneJobBusy, Get-BusyWaitSeconds, Get-BusyWaitLimit, Get-AppVersion, Test-GameFolder, Resolve-GameFolder, `
     Load-Config, Save-Config, Sort-EditionNames, Get-EditionTitle, Format-EditionDisplay, `
     Get-RemoteEditions, Get-RemoteSongs, Get-RemoteSongMap, Add-ShareOnlySongs, Get-LocalEditions, Get-LocalSongCount, `
     Get-LocalSongMap, Get-LocalSongSelection, Get-TrackedDownloadStatus, `

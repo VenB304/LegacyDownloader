@@ -146,7 +146,8 @@ window) for a few extra options:
 
 - Automatically check for updates when the app opens
 - Automatically launch the game and close once nothing more is needed
-- Limit download speed (MB/s) — blank/0 means unlimited
+- Limit download speed (MB/s) — blank means the default, 15 MB/s, which is
+  also the maximum; you can set it lower, not higher (see the note below)
 - Song backups — back up a song file before an update replaces it (on by
   default), how many days to keep backups (30) and the most space they may
   use (5 GB); **Open backup folder** shows them. In `config.txt` these are
@@ -157,8 +158,16 @@ window) for a few extra options:
 - Check for LegacyDownloader updates automatically — see
   [Keeping the tool itself updated](#keeping-the-tool-itself-updated) below
 
-Bandwidth limit and share URL changes take effect the next time you start
-the tool, not immediately.
+Bandwidth limit changes take effect the next time you start the tool, not
+immediately. A share URL you save applies right away.
+
+**Why the speed is capped.** The song share is run by volunteers on their own
+server, so the tool is gentle with it: it downloads two files at a time, one
+connection each, at no more than 15 MB/s, and it introduces itself as
+`LegacyDownloader/<version>`. If the server ever answers that it is busy
+("too many requests"), the tool does not give up: it waits (30 seconds, then
+longer, up to 5 times), tries again by itself, and tells you in the log.
+Files that already finished are kept.
 
 ## Keeping the tool itself updated
 
